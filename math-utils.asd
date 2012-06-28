@@ -1,4 +1,5 @@
 (defsystem math-utils
   :serial t
   :depends (ol-utils)
-  :components ())
+  :components ((:file "generic-math")
+               (:file "number-theory-basic")))
