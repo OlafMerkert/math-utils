@@ -58,6 +58,18 @@
                              p)
                    :mod p)))
 
+(defmethod generic-/ ((a integer-mod) (b integer-mod))
+  (assert-same-modulus p (a b)
+    (multiple-value-bind (d u v) (nt:xgcd (remainder b) (modulus b))
+      (declare (ignore v))
+      (when (/= d 1)
+        (error "Cannot invert ~A." b))
+      (make-instance 'integer-mod
+                    :rem (mod (* (remainder a)
+                                 u)
+                              p)
+                    :mod p))))
+
 (defmethod +-unit ((a integer-mod))
   (make-instance 'integer-mod :rem 0 :mod (modulus a)))
 
