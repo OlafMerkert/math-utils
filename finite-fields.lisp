@@ -17,6 +17,11 @@
 (defun int% (r m)
   (make-instance 'integer-mod :rem r :mod m))
 
+(defmacro with-modulus ((p) &body body)
+  "Consider all verbatim integers appearing in body as being mod p."
+  ;; TODO test whether p is actually prime
+  `(progn ,@ (map-tree-if #'integerp #`(int% ,a1 ,p) body)))
+
 (defmacro assert-same-modulus (modulus numbers &body body)
   `(let ((,modulus (modulus ,(first numbers))))
      (unless (= ,modulus ,@(mapcar #`(modulus ,a1) (rest numbers)))
