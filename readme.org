@@ -1,0 +1,2 @@
+* math-utils
+collect all the useful math algorithms and functions that might come in handy in many places.
