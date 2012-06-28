@@ -1,5 +1,5 @@
 (defpackage :generic-math
-  (:shadow :+ :- :* :/ :expt)
+  (:shadow :+ :- :* :/ :expt :=)
   (:use :cl :ol)
   (:export
    :argument
@@ -7,6 +7,10 @@
    :- :generic--
    :* :generic-*
    :/ :generic-/
+   := :generic-=
+   :+-unit
+   :*-unit
+   :simplify
    :expt
    :define-generic-binary-operation))
 
@@ -41,7 +45,11 @@ as :from-end parameter to reduce."
 (defmethod generic-+ ((a number) (b number))
   (cl:+ a b))
 
-(define-generic-binary-operation - :none (generic-- 0 argument))
+(defgeneric +-unit (number))
+(defmethod +-unit ((number number))
+  0)
+
+(define-generic-binary-operation - :none (generic-- (+-unit argument) argument))
 (defmethod generic-- ((a number) (b number))
   (cl:- a b))
 
@@ -49,10 +57,36 @@ as :from-end parameter to reduce."
 (defmethod generic-* ((a number) (b number))
   (cl:* a b))
 
-(define-generic-binary-operation / :none (generic-- 1 argument))
+(defgeneric *-unit (number))
+(defmethod *-unit ((number number))
+  1)
+
+(define-generic-binary-operation / :none (generic-- (*-unit argument) argument))
 (defmethod generic-/ ((a number) (b number))
   (cl:/ a b))
 
 (defgeneric expt (base power))
 (defmethod expt ((base number) (power number))
   (cl:expt base power))
+
+(defgeneric simplify (number)
+  (:documentation "Get the number into a unique, canonical
+  representation, such that equality comparison is more efficient."))
+
+(defmethod simplify (number)) ; by default no simplification is done.
+
+(defgeneric generic-= (a b))
+
+(defun = (&rest summands)
+   (case (length summands)
+     ((0) (error "invalid number of arguments: 0"))
+     ((1) t)
+     ((2)
+      (simplify (first summands))
+      (simplify (second summands))
+      (apply #'generic-= summands))
+     (t (mapc #'simplify summands)
+        (every #'generic-= summands (rest summands)))))
+
+(defmethod generic-= ((a number) (b number))
+  (= a b))
