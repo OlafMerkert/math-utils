@@ -17,7 +17,9 @@
    :sqrt
    :->
    :define-generic-binary-operation
-   :simplified-p))
+   :simplified-p
+   :zero-p
+   :one-p))
 
 (in-package :generic-math)
 
