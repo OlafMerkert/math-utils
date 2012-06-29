@@ -224,6 +224,31 @@ pipe ends before."
   (make-constant-series (generic-+ (constant-coefficient series-a)
                                    (constant-coefficient series-b))))
 
+(defmethod gm:sqrt ((series power-series))
+  "Calculate a square root of this series--as long as the degree is
+  even."
+  (unless (and (simplified-p series)
+               (evenp (degree series)))
+    (error "Cannot take the root of SERIES ~A unless the degree is known to be even!" series))
+  ;; now we essentially reduce to the case degree = 0
+  (let ((a0 (gm:sqrt (nth-coefficient% series 0)))
+        (b  (coefficients series)))
+    (make-instance 'power-series
+     :degree (gm:/ (degree series) 2)
+     :coefficients (make-lazy-array (:start (a0)
+                                            :index-var n)
+                     (gm:/ (gm:- (lazy-aref b n)
+                                 (loop for i from 1 below n
+                                    for pr = (gm:* (aref this i)
+                                                   (aref this (- n i)))
+                                    for sum = pr then (gm:+ sum pr)
+                                    finally (return sum)))
+                           a0 2)))))
+
+(defmethod gm:sqrt ((series constant-series))
+  (multiple-value-bind (root nice) (gm:sqrt (constant-coefficient series))
+   (values (make-constant-series root) nice)))
+
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
 
