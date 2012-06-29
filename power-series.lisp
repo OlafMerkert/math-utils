@@ -80,3 +80,66 @@ pipe ends before."
          (if (= non-zero depth)
              (- non-zero)
              non-zero)))))
+
+(defmethod generic-* ((series-a power-series) (series-b power-series))
+  (let ((array-a (coefficients series-a))
+        (array-b (coefficients series-b)))
+    (make-instance 'power-series
+                   :degree (+ (degree series-a)
+                              (degree series-b))
+                   :coefficients
+                   (make-lazy-array
+                       (:index-var n
+                                   :default-value 0
+                                   :finite (la-finite-test (array-a array-b)
+                                             (+ array-a array-b)))
+                     (loop for i from 0 to n
+                        for pr = (gm:* (lazy-aref array-a i)
+                                       (lazy-aref array-b (- n i)))
+                        for sum = pr then (gm:+ sum pr)
+                        finally (return sum))))))
+
+(defmethod gm:expt ((base power-series) (power (eql 2)))
+  (generic-* base base))
+
+(defmethod generic-/ ((series-numer power-series) (series-denom power-series))
+  (unless (series-normalised-p series-denom)
+    (error "Cannot dive by the SERIES-DENOM ~A unless it is
+    normalised, i.e. the first coefficient is non-zero." series-denom))
+  (let ((a0 (nth-coefficient% series-denom 0))
+        (an (coefficients series-denom))
+        (cn (coefficients series-numer)))
+    (make-instance 'power-series
+                   :degree (- (degree series-numer)
+                              (degree series-denom))
+                   :coefficients (make-lazy-array (:start ((gm:/ (lazy-aref cn 0) a0))
+                                                          :index-var n
+                                                          :default-value 0)
+                                   (gm:/ (- (lazy-aref cn n)
+                                            (loop for i from 1 to n
+                                               for pr = (gm:* (lazy-aref an i)
+                                                              (aref this (- n i)))
+                                               for sum = pr then (gm:+ sum pr)
+                                               finally (return sum)))
+                                         a0)))))
+
+(defmethod generic-+ ((series-a power-series) (series-b power-series))
+  "Add two series together.  Careful: This might destroy
+  normalisation."
+  (if (> (degree series-a) (degree series-b))
+      (generic-+ series-b series-a)
+      ;; now series-b has the higher degree
+      (let ((coeff-a (coefficients series-a))
+            (coeff-b (coefficients series-b))
+            (d (- (degree series-b) (degree series-a))))
+        (make-instance 'power-series
+                       :degree (degree series-b)
+                       :coefficients
+                       (make-lazy-array (:index-var n :default-value 0
+                                                    :finite
+                                                    (la-finite-test (coeff-a coeff-b)
+                                                      (max coeff-a coeff-b)))
+                         (if (< n d)
+                             (lazy-aref coeff-b n)
+                             (gm:+ (lazy-aref coeff-b n)
+                                   (lazy-aref coeff-a (- n d)))))))))
