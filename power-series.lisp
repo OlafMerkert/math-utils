@@ -11,7 +11,8 @@
    :power-series
    :constant-series
    :make-constant-series
-   :constant-coefficient))
+   :constant-coefficient
+   :degree))
 
 (in-package :power-series)
 
@@ -131,8 +132,7 @@ pipe ends before."
                                              (+ array-a array-b)))
                      (summing (i 0 n)
                               (gm:* (lazy-aref array-a i)
-                                    (lazy-aref array-b (- n i))))
-                     ))))
+                                    (lazy-aref array-b (- n i))))))))
 
 (defmethod generic-* ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-* (constant-coefficient series-a)
@@ -268,6 +268,8 @@ match, consider the series equal."
              always (gm:= (lazy-aref co-1 i)
                           (lazy-aref co-2 i)))
         confidence))))
+;; TODO fix problems with possibly not yet simplified series (for
+;; instance a series representing 0, but without "knowing" it)
 
 (defmethod generic-= ((series-1 constant-series) (series-2 constant-series))
   (generic-= (constant-coefficient series-1) (constant-coefficient series-2)))
@@ -299,3 +301,18 @@ match, consider the series equal."
 
 (defmethod series-remainder ((series constant-series))
   (zero series))
+
+;;; output of the power series
+(defparameter print-additional-terms 10)
+
+(defmethod print-object ((series power-series) stream)
+  (loop
+     for i from 0 upto (max (+ (degree series) print-additional-terms)
+                            print-additional-terms)
+     unless (zerop i)
+     do (format t " + ")
+     do (format t "~A X^~A"
+                (nth-coefficient% series i)
+                (- (degree series) i)))
+  (format t " + ...")
+  (terpri))
