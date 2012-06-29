@@ -1,6 +1,12 @@
 (defpackage :finite-fields
   (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
-  (:use :cl :ol :generic-math))
+  (:use :cl :ol :generic-math)
+  (:export
+   :with-modulus
+   :int%
+   :integer-mod
+   :remainder
+   :modulus))
 
 (in-package :finite-fields)
 
@@ -87,4 +93,16 @@
 (defmethod -> ((target-type integer-mod) (number integer) &key)
   (-> 'integer-mod number :mod (modulus target-type)))
 
-;; TODO Quadratwurzeln in endlichen Körpern
+;; TODO Quadratwurzeln in endlichen Körpern // besserer Algorithmus
+(defmethod gm:sqrt ((a integer-mod))
+  (with-slots ((r remainder) (p modulus)) a
+    ;; for now, just do brute force.  if a root exists, its square can
+    ;; be assumed to be less than p^2
+    (loop
+         for i from 0 to p
+         for b = (mod r p) then (+ b p)
+         do
+         (multiple-value-bind (root nice) (gm:sqrt b)
+           (when nice
+             (return root)))
+         finally (error "~A has no square root mod ~A" r p))))

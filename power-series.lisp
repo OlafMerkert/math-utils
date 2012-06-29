@@ -65,7 +65,7 @@ pipe ends before."
       0))
 
 (defun make-power-series/polynomial (leading-coefficient &rest coefficients)
-  (when (zerop leading-coefficient)
+  (when (zero-p leading-coefficient)
     (error "Cannot define a power series [~A~{ ~A~}] with zero leading coefficient."
            leading-coefficient coefficients))
   (make-instance 'power-series
@@ -303,7 +303,7 @@ match, consider the series equal."
   (zero series))
 
 ;;; output of the power series
-(defparameter print-additional-terms 10)
+(defparameter print-additional-terms 5)
 
 (defmethod print-object ((series power-series) stream)
   (loop
