@@ -129,6 +129,24 @@ pipe ends before."
                         for sum = pr then (gm:+ sum pr)
                         finally (return sum))))))
 
+(defmethod generic-* ((series-a constant-series) (series-b constant-series))
+  (make-constant-series (generic-* (constant-coefficient series-a)
+                                   (constant-coefficient series-b))))
+
+(defmethod generic-* ((series-a power-series) (series-b constant-series))
+  (generic-* series-b series-a))
+
+(defmethod generic-* ((series-a constant-series) (series-b power-series))
+  "Multiply the SERIES-B with the scalar NUMBER."
+  (let ((number (constant-coefficient series-a)))
+    (make-instance 'power-series
+                   :degree (degree series-b)
+                   :coefficients
+                   (make-lazy-array (:index-var n :default-value 0
+                                                :finite (lazy-array-finite (coefficients series-b)))
+                                   (* number (lazy-aref (coefficients series-b) n))))))
+
+
 (defmethod gm:expt ((base power-series) (power (eql 2)))
   (generic-* base base))
 
@@ -153,6 +171,34 @@ pipe ends before."
                                                finally (return sum)))
                                          a0)))))
 
+(defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
+  (make-constant-series (generic-/ (constant-coefficient series-numer)
+                                   (constant-coefficient series-denom))))
+
+(defmethod generic-/ ((series-numer power-series) (series-denom constant-series))
+  (generic-* (make-constant-series (gm:/ (constant-coefficient series-denom)))
+             series-numer))
+
+(defmethod generic-/ ((series-numer constant-series) (series-denom power-series))
+  "Calculate the inverse series of the given Laurentseries."
+  (unless (simplified-p series-denom)
+    (error "Cannot invert the SERIES ~A unless it is properly
+    normalised, i.e. first coefficient is non-zero." series-denom))
+  (let ((b0 (gm:/ (nth-coefficient% series-denom 0) (constant-coefficient series-numer)))
+        (an (coefficients series-denom)))
+    (make-instance 'power-series
+                   :degree (- (degree series-denom))
+                   :coefficients (make-lazy-array (:start (b0)
+                                                          :index-var n)
+                                   (gm:* -1 b0
+                                         (loop for i from 1 to n
+                                            for pr = (gm:* (lazy-aref an i)
+                                                           (aref this (- n i)))
+                                            for sum = pr then (gm:+ sum pr)
+                                            finally (return sum)))))))
+
+;; TODO perhaps consider additional simplification for units
+
 (defmethod generic-+ ((series-a power-series) (series-b power-series))
   "Add two series together.  Careful: This might destroy
   normalisation."
@@ -173,6 +219,11 @@ pipe ends before."
                              (lazy-aref coeff-b n)
                              (gm:+ (lazy-aref coeff-b n)
                                    (lazy-aref coeff-a (- n d)))))))))
+
+(defmethod generic-+ ((series-a constant-series) (series-b constant-series))
+  (make-constant-series (generic-+ (constant-coefficient series-a)
+                                   (constant-coefficient series-b))))
+
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
 
@@ -188,6 +239,9 @@ match, consider the series equal."
              always (gm:= (lazy-aref co-1 i)
                           (lazy-aref co-2 i)))
         confidence))))
+
+(defmethod generic-= ((series-1 constant-series) (series-2 constant-series))
+  (generic-= (constant-coefficient series-1) (constant-coefficient series-2)))
 
 ;; extracting and removing polynomial part of the laurent series
 (defun series-truncate (series)
