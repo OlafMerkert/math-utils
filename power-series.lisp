@@ -1,6 +1,8 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
-  (:use :cl :ol :generic-math))
+  (:use :cl :ol :generic-math)
+  (:export
+   :confidence))
 
 (in-package :power-series)
 
@@ -15,6 +17,8 @@
         :accessor var)|#)
   (:documentation "Model a laurent series in VAR^-1 with the first
   coefficient being for VAR^DEGREE."))
+
+;; TODO add support for different variables.
 
 (defun series-normalised-p (series)
   "Test whether the first coefficient is indeed not 0, so the degree is
@@ -143,3 +147,40 @@ pipe ends before."
                              (lazy-aref coeff-b n)
                              (gm:+ (lazy-aref coeff-b n)
                                    (lazy-aref coeff-a (- n d)))))))))
+(defparameter confidence 40
+  "How many coefficient of a power series should be compared in order to say they are equal.")
+
+(defmethod generic-= ((series-1 power-series) (series-2 power-series))
+  "Compare the first CONFIDENCE coefficients of the series.  If they
+match, consider the series equal."
+  (when (= (degree series-1)
+           (degree series-2))
+    (let ((co-1 (coefficients series-1))
+          (co-2 (coefficients series-2)))
+      (when
+          (loop for i from 0 to confidence
+             always (gm:= (lazy-aref co-1 i)
+                          (lazy-aref co-2 i)))
+        confidence))))
+
+;; extracting and removing polynomial part of the laurent series
+(defun series-truncate (series)
+  "Take the polynomial part of the given SERIES."
+  ;; Evaluate (all) the coefficients of polynomial parts
+  (let ((d (degree series)))
+   (if (< d 0)
+       (+-unit series)
+       (make-instance 'power-series
+                      :degree d
+                      :coefficients (lazy-array-take (coefficients series) (+ d 1))))))
+
+(defun series-remainder (series)
+  "Remove the polynomial part from the given SERIES -- thus equivalent
+ to SERIES - (series-truncate SERIES).  Careful, the result is
+ possibly not yet simplified."
+  (let ((d (degree series)))
+    (if (< d 0)
+        series ; no polynomial part -> nothing to do
+        (make-instance 'power-series
+                       :degree -1 
+                       :coefficients (lazy-array-drop (coefficients series) (+ d 1))))))
