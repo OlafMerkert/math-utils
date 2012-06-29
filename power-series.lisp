@@ -272,7 +272,7 @@ match, consider the series equal."
 ;; instance a series representing 0, but without "knowing" it)
 
 (defmethod generic-= ((series-1 constant-series) (series-2 constant-series))
-  (generic-= (constant-coefficient series-1) (constant-coefficient series-2)))
+  (= (constant-coefficient series-1) (constant-coefficient series-2)))
 
 ;; extracting and removing polynomial part of the laurent series
 (defmethod series-truncate ((series power-series))

@@ -88,7 +88,10 @@ as :from-end parameter to reduce."
 (defmethod simplify (number &key)
   number) ; by default no simplification is done.
 
-(defgeneric generic-= (a b))
+(defgeneric generic-= (a b)
+  (:documentation "Use this function to implement generic equality.
+  But never call this, call instead GM:=, which first simplifies
+  everything!"))
 
 (defun = (&rest arguments)
    (case (length arguments)
@@ -120,7 +123,7 @@ as :from-end parameter to reduce."
   (:documentation "Test whether the given number is zero."))
 
 (defmethod zero-p (number)
-  (generic-= (zero number) number))
+  (= (zero number) number))
 
 (defmethod zero-p ((number number))
   (cl:zerop number))
@@ -129,7 +132,7 @@ as :from-end parameter to reduce."
   (:documentation "Test whether the given number is one."))
 
 (defmethod one-p (number)
-  (generic-= (one number) number))
+  (= (one number) number))
 
 (defmacro! summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
