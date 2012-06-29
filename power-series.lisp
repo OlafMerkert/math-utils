@@ -45,7 +45,7 @@
 (defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
   meaningful."
-  (not (gm:= 0 (lazy-aref (coefficients series) 0))))
+  (not (zero-p (lazy-aref (coefficients series) 0))))
 
 (defmethod simplified-p ((series constant-series))
   t)
@@ -71,10 +71,10 @@ pipe ends before."
                  :degree (length coefficients)
                  :coefficients (apply #'la% 0 leading-coefficient coefficients)))
 
-(defmethod +-unit ((number power-series))
+(defmethod zero ((number power-series))
   (make-constant-series 0))
 
-(defmethod *-unit ((number power-series))
+(defmethod one ((number power-series))
   (make-constant-series 1))
 
 ;; TODO visualising polynomials and power series
@@ -92,14 +92,14 @@ pipe ends before."
   (let* ((coeff (coefficients series))
          (non-zero (loop
                       for i from 0 below depth
-                      for zp = (gm:= 0 (lazy-aref coeff i))
+                      for zp = (zero-p (lazy-aref coeff i))
                       while zp
                       finally (return (if zp (+ i 1) i)))))
     (if (and (lazy-array-finite coeff)
              (= non-zero depth))
         ;; for finite series, treat reaching normalisation-depth as
         ;; having found the 0 series.
-        (+-unit series)
+        (zero series)
         (values
          (make-instance 'power-series
                         :degree (- (degree series) non-zero)
@@ -249,7 +249,7 @@ match, consider the series equal."
   ;; Evaluate (all) the coefficients of polynomial parts
   (let ((d (degree series)))
    (if (< d 0)
-       (+-unit series)
+       (zero series)
        (make-instance 'power-series
                       :degree d
                       :coefficients (lazy-array-take (coefficients series) (+ d 1))))))
@@ -269,4 +269,4 @@ match, consider the series equal."
                        :coefficients (lazy-array-drop (coefficients series) (+ d 1))))))
 
 (defmethod series-remainder ((series constant-series))
-  (+-unit series))
+  (zero series))

@@ -10,8 +10,8 @@
    :* :generic-*
    :/ :generic-/
    := :generic-=
-   :+-unit
-   :*-unit
+   :zero
+   :one
    :simplify
    :expt
    :sqrt
@@ -50,11 +50,11 @@ as :from-end parameter to reduce."
 (defmethod generic-+ ((a number) (b number))
   (cl:+ a b))
 
-(defgeneric +-unit (number))
-(defmethod +-unit ((number number))
+(defgeneric zero (number))
+(defmethod zero ((number number))
   0)
 
-(define-generic-binary-operation - :none (generic-- (+-unit argument) argument))
+(define-generic-binary-operation - :none (generic-- (zero argument) argument))
 (defmethod generic-- ((a number) (b number))
   (cl:- a b))
 
@@ -62,11 +62,11 @@ as :from-end parameter to reduce."
 (defmethod generic-* ((a number) (b number))
   (cl:* a b))
 
-(defgeneric *-unit (number))
-(defmethod *-unit ((number number))
+(defgeneric one (number))
+(defmethod one ((number number))
   1)
 
-(define-generic-binary-operation / :none (generic-- (*-unit argument) argument))
+(define-generic-binary-operation / :none (generic-- (one argument) argument))
 (defmethod generic-/ ((a number) (b number))
   (cl:/ a b))
 
@@ -111,3 +111,15 @@ as :from-end parameter to reduce."
 (defgeneric -> (target-type number &key)
   (:documentation "Transform a NUMBER, if possible to target type,
   which is either a symbol designating a type, or another object."))
+
+(defgeneric zero-p (number)
+  (:documentation "Test whether the given number is zero."))
+
+(defmethod zero-p (number)
+  (generic-= (zero number) number))
+
+(defgeneric one-p (number)
+  (:documentation "Test whether the given number is one."))
+
+(defmethod one-p (number)
+  (generic-= (one number) number))

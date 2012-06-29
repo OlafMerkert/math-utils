@@ -75,10 +75,10 @@
                               p)
                     :mod p))))
 
-(defmethod +-unit ((a integer-mod))
+(defmethod zero ((a integer-mod))
   (make-instance 'integer-mod :rem 0 :mod (modulus a)))
 
-(defmethod *-unit ((a integer-mod))
+(defmethod one ((a integer-mod))
   (make-instance 'integer-mod :rem 1 :mod (modulus a)))
 
 (defmethod -> ((target-type (eql 'integer-mod)) (number integer) &key (mod 2))
