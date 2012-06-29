@@ -35,17 +35,17 @@ that is automatically defined--whereby REDUCE-RIGHT is passed
 as :from-end parameter to reduce."
   `(progn
      (defgeneric ,(symb 'generic- name) (a b))
-     (defun ,name (&rest ,g!summands)
-      (case (length ,g!summands)
+     (defun ,name (&rest ,g!arguments)
+      (case (length ,g!arguments)
         ((0) ,(if (eq unit :none)
                   `(error "Invalid number of arguments: 0")
                   unit))
         ((1) ,(if single-argument
-                  `(let ((argument (first ,g!summands)))
+                  `(let ((argument (first ,g!arguments)))
                      ,single-argument)
-                  `(first ,g!summands)))
-        ((2) (apply #',(symb 'generic- name) ,g!summands))
-        (t   (reduce #',(symb 'generic- name) ,g!summands
+                  `(first ,g!arguments)))
+        ((2) (apply #',(symb 'generic- name) ,g!arguments))
+        (t   (reduce #',(symb 'generic- name) ,g!arguments
                      :from-end ,reduce-right))))))
 
 (define-generic-binary-operation + 0)
@@ -84,21 +84,22 @@ as :from-end parameter to reduce."
 
 (defgeneric simplified-p (number))
 
-(defmethod simplify (number &key)) ; by default no simplification is done.
+(defmethod simplify (number &key)
+  number) ; by default no simplification is done.
 
 (defgeneric generic-= (a b))
 
-(defun = (&rest summands)
-   (case (length summands)
+(defun = (&rest arguments)
+   (case (length arguments)
      ((0) (error "invalid number of arguments: 0"))
      ((1) t)
      ((2)
-      (apply #'generic-= (mapcar #'simplify summands)))
-     (t (let ((simple-summands (mapcar #'simplify summands)))
-          (every #'generic-= simple-summands (rest simple-summands))))))
+      (apply #'generic-= (mapcar #'simplify arguments)))
+     (t (let ((simple-arguments (mapcar #'simplify arguments)))
+          (every #'generic-= simple-arguments (rest simple-arguments))))))
 
 (defmethod generic-= ((a number) (b number))
-  (= a b))
+  (cl:= a b))
 
 (defgeneric sqrt (number)
   (:documentation

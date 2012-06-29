@@ -74,7 +74,13 @@ pipe ends before."
 (defmethod zero ((number power-series))
   (make-constant-series 0))
 
+ (defmethod zero ((number (eql 'power-series)))
+  (make-constant-series 0))
+
 (defmethod one ((number power-series))
+  (make-constant-series 1))
+
+(defmethod one ((number (eql 'power-series)))
   (make-constant-series 1))
 
 ;; TODO visualising polynomials and power series
