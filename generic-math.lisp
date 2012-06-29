@@ -1,5 +1,7 @@
 (defpackage :generic-math
-  (:shadow :+ :- :* :/ :expt :=)
+  (:nicknames :gm)
+  (:shadow :+ :- :* :/ :=
+           :expt :sqrt)
   (:use :cl :ol)
   (:export
    :argument
@@ -12,6 +14,7 @@
    :*-unit
    :simplify
    :expt
+   :sqrt
    :define-generic-binary-operation))
 
 (in-package :generic-math)
@@ -90,3 +93,13 @@ as :from-end parameter to reduce."
 
 (defmethod generic-= ((a number) (b number))
   (= a b))
+
+(defgeneric sqrt (number)
+  (:documentation
+   "Find a square root of NUMBER and try to preserve the type of
+   number if possible.  Return two values, with the first being the
+   result, the second indicating whether type preservation was
+   successfull."))
+
+(defmethod sqrt ((number number))
+  (values (sqrt number) t))

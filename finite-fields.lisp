@@ -1,5 +1,5 @@
 (defpackage :finite-fields
-  (:shadowing-import-from :cl :+ :- :* :/ :expt :=)
+  (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
   (:use :cl :ol :generic-math))
 
 (in-package :finite-fields)
@@ -80,3 +80,5 @@
 
 (defmethod *-unit ((a integer-mod))
   (make-instance 'integer-mod :rem 1 :mod (modulus a)))
+
+;; TODO Quadratwurzeln in endlichen Körpern

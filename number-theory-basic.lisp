@@ -6,6 +6,8 @@
 
 (in-package :number-theory-basic)
 
+;;; gcd
+
 (defun xgcd (m n)
   "Calculate the greatest common divisor D of integers M and N.
 Return (values D U V) with D = U * M + V * N."
@@ -28,3 +30,20 @@ Return (values D U V) with D = U * M + V * N. (recursive version)"
       (multiple-value-bind (q r) (floor m n)
         (multiple-value-bind (d u v) (xgcd n r)
           (values d v (- u (* v q)))))))
+
+;;; square roots of rationals and integers
+(defmethod gm:sqrt ((number integer))
+  (let ((r1 (isqrt number))
+        (r2 (sqrt number)))
+    (if (= r1 r2)
+        (values r1 t)
+        (values r2 nil))))
+
+(defmethod gm:sqrt ((number rational))
+  (let ((num (numerator number))
+        (den (denominator number)))
+    (multiple-value-bind (num-r num-nice) (gm:sqrt num)
+      (multiple-value-bind (den-r den-nice) (gm:sqrt den)
+        (if (and num-nice den-nice)
+            (values (/ num-r den-r) t)
+            (values (sqrt number) nil))))))
