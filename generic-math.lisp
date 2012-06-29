@@ -76,7 +76,9 @@ as :from-end parameter to reduce."
 
 (defgeneric simplify (number &key)
   (:documentation "Get the number into a unique, canonical
-  representation, such that equality comparison is more efficient."))
+  representation, such that equality comparison is more efficient.
+  Implementations may modify the given NUMBER, but it is expected that
+  the simplified version is returned (as the first value)."))
 
 (defgeneric simplified-p (number))
 
@@ -89,11 +91,9 @@ as :from-end parameter to reduce."
      ((0) (error "invalid number of arguments: 0"))
      ((1) t)
      ((2)
-      (simplify (first summands))
-      (simplify (second summands))
-      (apply #'generic-= summands))
-     (t (mapc #'simplify summands)
-        (every #'generic-= summands (rest summands)))))
+      (apply #'generic-= (mapcar #'simplify summands)))
+     (t (let ((simple-summands (mapcar #'simplify summands)))
+          (every #'generic-= simple-summands (rest simple-summands))))))
 
 (defmethod generic-= ((a number) (b number))
   (= a b))
