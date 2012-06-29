@@ -16,7 +16,8 @@
    :expt
    :sqrt
    :->
-   :define-generic-binary-operation))
+   :define-generic-binary-operation
+   :simplified-p))
 
 (in-package :generic-math)
 
@@ -76,6 +77,8 @@ as :from-end parameter to reduce."
 (defgeneric simplify (number &key)
   (:documentation "Get the number into a unique, canonical
   representation, such that equality comparison is more efficient."))
+
+(defgeneric simplified-p (number))
 
 (defmethod simplify (number &key)) ; by default no simplification is done.
 

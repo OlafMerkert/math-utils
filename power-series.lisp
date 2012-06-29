@@ -2,7 +2,12 @@
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:use :cl :ol :generic-math)
   (:export
-   :confidence))
+   :confidence
+   :nth-coefficient%
+   :nth-coefficient
+   :default-series-simplification-depth
+   :series-truncate
+   :series-remainder))
 
 (in-package :power-series)
 
@@ -20,7 +25,7 @@
 
 ;; TODO add support for different variables.
 
-(defun series-normalised-p (series)
+(defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
   meaningful."
   (not (gm:= 0 (lazy-aref (coefficients series) 0))))
@@ -107,7 +112,7 @@ pipe ends before."
   (generic-* base base))
 
 (defmethod generic-/ ((series-numer power-series) (series-denom power-series))
-  (unless (series-normalised-p series-denom)
+  (unless (simplified-p series-denom)
     (error "Cannot dive by the SERIES-DENOM ~A unless it is
     normalised, i.e. the first coefficient is non-zero." series-denom))
   (let ((a0 (nth-coefficient% series-denom 0))
