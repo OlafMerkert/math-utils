@@ -240,7 +240,7 @@ pipe ends before."
   (let ((a0 (gm:sqrt (nth-coefficient% series 0)))
         (b  (coefficients series)))
     (make-instance 'power-series
-     :degree (gm:/ (degree series) 2)
+     :degree (/ (degree series) 2)
      :coefficients (make-lazy-array (:start (a0)
                                             :index-var n
                                             :default-value 0)
