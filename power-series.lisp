@@ -7,7 +7,11 @@
    :nth-coefficient
    :default-series-simplification-depth
    :series-truncate
-   :series-remainder))
+   :series-remainder
+   :power-series
+   :constant-series
+   :make-constant-series
+   :constant-coefficient))
 
 (in-package :power-series)
 
@@ -23,6 +27,19 @@
   (:documentation "Model a laurent series in VAR^-1 with the first
   coefficient being for VAR^DEGREE."))
 
+(defclass constant-series (power-series)
+  ()
+  (:documentation "optimisation of constant series, with only a
+  coefficient in VAR^0."))
+
+(defun make-constant-series (constant)
+  (make-instance 'constant-series :coefficients (la% 0 constant)))
+
+(defun constant-coefficient (series)
+  #|(unless (zerop (degree series))
+    (error "CONSTANT-COEFFICIENT only works with 0 DEGREE."))|#
+  (nth-coefficient% series 0))
+
 ;; TODO add support for different variables.
 
 (defmethod simplified-p ((series power-series))
@@ -30,14 +47,17 @@
   meaningful."
   (not (gm:= 0 (lazy-aref (coefficients series) 0))))
 
-(defun nth-coefficient% (series n)
+(defmethod simplified-p ((series constant-series))
+  t)
+
+(defmethod nth-coefficient% ((series power-series) n)
   "Return the nth element of the coefficients pipe--or zero, if the
 pipe ends before."
   (unless (>= n 0)
     (error "Non negative index ~A in NTH-COEFFICIENT%." n))
   (lazy-aref (coefficients series) n))
 
-(defun nth-coefficient (series n)
+(defmethod nth-coefficient ((series power-series) n)
   "Return the coefficient of X^n"
   (if (<= n (degree series))
       (nth-coefficient% series (- (degree series) n))
@@ -52,12 +72,10 @@ pipe ends before."
                  :coefficients (apply #'la% 0 leading-coefficient coefficients)))
 
 (defmethod +-unit ((number power-series))
-  (make-instance 'power-series
-                 :degree 0
-                 :coefficients (la% 0)))
+  (make-constant-series 0))
 
 (defmethod *-unit ((number power-series))
-  (make-power-series/polynomial 1))
+  (make-constant-series 1))
 
 ;; TODO visualising polynomials and power series
 
@@ -89,6 +107,9 @@ pipe ends before."
          (if (= non-zero depth)
              (- non-zero)
              non-zero)))))
+
+(defmethod simplify ((series constant-series) &key)
+  (values series 0))
 
 (defmethod generic-* ((series-a power-series) (series-b power-series))
   (let ((array-a (coefficients series-a))
