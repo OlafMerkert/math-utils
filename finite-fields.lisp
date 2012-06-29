@@ -18,7 +18,9 @@
               :reader  modulus))
   (:documentation "A number"))
 
-(create-standard-print-object integer-mod (remainder "mod" modulus))
+(defmethod print-object ((object integer-mod) stream)
+  (with-slots (remainder modulus) object
+    (format stream "[~a mod ~a]" remainder modulus)))
 
 (defun int% (r m)
   (make-instance 'integer-mod :rem r :mod m))
