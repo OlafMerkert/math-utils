@@ -29,7 +29,7 @@
      ,@body))
 
 ;; choose a unique representation
-(defmethod simplify ((a integer-mod))
+(defmethod simplify ((a integer-mod) &key)
   (with-slots (remainder modulus) a
     (setf remainder (mod remainder modulus))
     a))
