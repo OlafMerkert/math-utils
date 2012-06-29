@@ -81,4 +81,10 @@
 (defmethod *-unit ((a integer-mod))
   (make-instance 'integer-mod :rem 1 :mod (modulus a)))
 
+(defmethod -> ((target-type (eql 'integer-mod)) (number integer) &key (mod 2))
+  (make-instance 'integer-mod :rem number :mod mod))
+
+(defmethod -> ((target-type integer-mod) (number integer) &key)
+  (-> 'integer-mod number :mod (modulus target-type)))
+
 ;; TODO Quadratwurzeln in endlichen Körpern

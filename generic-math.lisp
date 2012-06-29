@@ -15,6 +15,7 @@
    :simplify
    :expt
    :sqrt
+   :->
    :define-generic-binary-operation))
 
 (in-package :generic-math)
@@ -72,11 +73,11 @@ as :from-end parameter to reduce."
 (defmethod expt ((base number) (power number))
   (cl:expt base power))
 
-(defgeneric simplify (number)
+(defgeneric simplify (number &key)
   (:documentation "Get the number into a unique, canonical
   representation, such that equality comparison is more efficient."))
 
-(defmethod simplify (number)) ; by default no simplification is done.
+(defmethod simplify (number &key)) ; by default no simplification is done.
 
 (defgeneric generic-= (a b))
 
@@ -103,3 +104,7 @@ as :from-end parameter to reduce."
 
 (defmethod sqrt ((number number))
   (values (sqrt number) t))
+
+(defgeneric -> (target-type number &key)
+  (:documentation "Transform a NUMBER, if possible to target type,
+  which is either a symbol designating a type, or another object."))
