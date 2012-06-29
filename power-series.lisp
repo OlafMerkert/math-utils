@@ -244,7 +244,7 @@ match, consider the series equal."
   (generic-= (constant-coefficient series-1) (constant-coefficient series-2)))
 
 ;; extracting and removing polynomial part of the laurent series
-(defun series-truncate (series)
+(defmethod series-truncate ((series power-series))
   "Take the polynomial part of the given SERIES."
   ;; Evaluate (all) the coefficients of polynomial parts
   (let ((d (degree series)))
@@ -254,7 +254,10 @@ match, consider the series equal."
                       :degree d
                       :coefficients (lazy-array-take (coefficients series) (+ d 1))))))
 
-(defun series-remainder (series)
+(defmethod series-truncate ((series constant-series))
+  series)
+
+(defmethod series-remainder ((series power-series))
   "Remove the polynomial part from the given SERIES -- thus equivalent
  to SERIES - (series-truncate SERIES).  Careful, the result is
  possibly not yet simplified."
@@ -264,3 +267,6 @@ match, consider the series equal."
         (make-instance 'power-series
                        :degree -1 
                        :coefficients (lazy-array-drop (coefficients series) (+ d 1))))))
+
+(defmethod series-remainder ((series constant-series))
+  (+-unit series))
