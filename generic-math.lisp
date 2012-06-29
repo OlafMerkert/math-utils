@@ -155,6 +155,6 @@ as :from-end parameter to reduce."
      ,@(when (member :right sides)
         (mapcar
          #`(defmethod ,a1 ((,to ,to) (,from ,from))
-             (,a1 (-> ',to ,from ,@params)
-                  ,to))
+             (,a1 ,to
+                  (-> ',to ,from ,@params)))
          generic-functions))))
