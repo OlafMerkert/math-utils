@@ -20,7 +20,8 @@
    :simplified-p
    :zero-p
    :one-p
-   :summing))
+   :summing
+   :create-binary->-wrappers))
 
 (in-package :generic-math)
 
@@ -142,3 +143,18 @@ as :from-end parameter to reduce."
           ,g!sum)
        (setf ,g!sum
              (+ ,g!sum ,expr)))))
+
+(defmacro create-binary->-wrappers (to from params sides &body generic-functions)
+  `(progn
+     ,@(when (member :left sides)
+        (mapcar
+         #`(defmethod ,a1 ((,from ,from) (,to ,to))
+             (,a1 (-> ',to ,from ,@params)
+                  ,to))
+         generic-functions))
+     ,@(when (member :right sides)
+        (mapcar
+         #`(defmethod ,a1 ((,to ,to) (,from ,from))
+             (,a1 (-> ',to ,from ,@params)
+                  ,to))
+         generic-functions))))

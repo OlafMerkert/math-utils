@@ -106,3 +106,10 @@
            (when nice
              (return root)))
          finally (error "~A has no square root mod ~A" r p))))
+
+(create-binary->-wrappers integer-mod integer
+    (:mod (modulus integer-mod)) (:left :right)
+  generic-+
+  generic--
+  generic-*
+  generic-/)
