@@ -131,6 +131,11 @@ as :from-end parameter to reduce."
 (defmethod one-p (number)
   (generic-= (one number) number))
 
-(defmacro! summing ((var start stop &optional below) expr)
-  `(ol::do-range* (,var ,start ,stop 1 ,g!sum 0 ,(not below))
-       ((,g!sum 0 (gm:+ ,g!sum ,expr)))))
+(defmacro! summing ((var o!start o!stop &optional below) expr)
+  `(let ((,g!sum 0))
+     (do ((,var ,g!start (+ 1 ,var)))
+         ((,(if below '>= '>)
+            ,var ,g!stop)
+          ,g!sum)
+       (setf ,g!sum
+             (+ ,g!sum ,expr)))))
