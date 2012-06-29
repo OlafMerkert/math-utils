@@ -221,6 +221,11 @@ pipe ends before."
                              (gm:+ (lazy-aref coeff-b n)
                                    (lazy-aref coeff-a (- n d)))))))))
 
+(defmethod generic-- ((series-a power-series) (series-b power-series))
+  (generic-+ series-a
+             (generic-* (make-constant-series -1)
+                        series-b)))
+
 (defmethod generic-+ ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-+ (constant-coefficient series-a)
                                    (constant-coefficient series-b))))
