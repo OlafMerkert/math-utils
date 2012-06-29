@@ -73,7 +73,7 @@
 
 (defmethod generic-/ ((a integer-mod) (b integer-mod))
   (assert-same-modulus p (a b)
-    (multiple-value-bind (d u v) (nt:xgcd (remainder b) (modulus b))
+    (multiple-value-bind (d u v) (nt:xgcd (remainder b) p)
       (declare (ignore v))
       (when (/= d 1)
         (error "Cannot invert ~A." b))
@@ -106,7 +106,7 @@
          do
          (multiple-value-bind (root nice) (gm:sqrt b)
            (when nice
-             (return root)))
+             (return (int% root p))))
          finally (error "~A has no square root mod ~A" r p))))
 
 (create-binary->-wrappers integer-mod integer
