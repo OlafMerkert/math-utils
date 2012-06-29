@@ -171,7 +171,7 @@ pipe ends before."
                                    (gm:/ (- (lazy-aref cn n)
                                             (summing (i 1 n)
                                                      (gm:* (lazy-aref an i)
-                                                              (aref this (- n i)))))
+                                                           (aref this (- n i)))))
                                          a0)))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
@@ -187,16 +187,16 @@ pipe ends before."
   (unless (simplified-p series-denom)
     (error "Cannot invert the SERIES ~A unless it is properly
     normalised, i.e. first coefficient is non-zero." series-denom))
-  (let ((b0 (gm:/ (nth-coefficient% series-denom 0) (constant-coefficient series-numer)))
+  (let ((b0 (gm:/ (nth-coefficient% series-denom 0)))
         (an (coefficients series-denom)))
     (make-instance 'power-series
                    :degree (- (degree series-denom))
-                   :coefficients (make-lazy-array (:start (b0)
+                   :coefficients (make-lazy-array (:start ((gm:* (constant-coefficient series-numer) b0))
                                                           :index-var n
                                                           :default-value 0)
                                    (gm:* -1 b0
                                          (summing (i 1 n) (gm:* (lazy-aref an i)
-                                                           (aref this (- n i)))))))))
+                                                                (aref this (- n i)))))))))
 
 ;; TODO perhaps consider additional simplification for units
 

@@ -69,7 +69,7 @@ as :from-end parameter to reduce."
 (defmethod one ((number number))
   1)
 
-(define-generic-binary-operation / :none (generic-- (one argument) argument))
+(define-generic-binary-operation / :none (generic-/ (one argument) argument))
 (defmethod generic-/ ((a number) (b number))
   (cl:/ a b))
 
