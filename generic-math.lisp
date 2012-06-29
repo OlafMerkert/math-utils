@@ -19,7 +19,8 @@
    :define-generic-binary-operation
    :simplified-p
    :zero-p
-   :one-p))
+   :one-p
+   :summing))
 
 (in-package :generic-math)
 
@@ -109,7 +110,7 @@ as :from-end parameter to reduce."
    successfull."))
 
 (defmethod sqrt ((number number))
-  (values (sqrt number) t))
+  (values (cl:sqrt number) t))
 
 (defgeneric -> (target-type number &key)
   (:documentation "Transform a NUMBER, if possible to target type,
@@ -121,8 +122,15 @@ as :from-end parameter to reduce."
 (defmethod zero-p (number)
   (generic-= (zero number) number))
 
+(defmethod zero-p ((number number))
+  (cl:zerop number))
+
 (defgeneric one-p (number)
   (:documentation "Test whether the given number is one."))
 
 (defmethod one-p (number)
   (generic-= (one number) number))
+
+(defmacro! summing ((var start stop &optional below) expr)
+  `(ol::do-range* (,var ,start ,stop 1 ,g!sum 0 ,(not below))
+       ((,g!sum 0 (gm:+ ,g!sum ,expr)))))

@@ -129,11 +129,10 @@ pipe ends before."
                                    :default-value 0
                                    :finite (la-finite-test (array-a array-b)
                                              (+ array-a array-b)))
-                     (loop for i from 0 to n
-                        for pr = (gm:* (lazy-aref array-a i)
-                                       (lazy-aref array-b (- n i)))
-                        for sum = pr then (gm:+ sum pr)
-                        finally (return sum))))))
+                     (summing (i 0 n)
+                              (gm:* (lazy-aref array-a i)
+                                    (lazy-aref array-b (- n i))))
+                     ))))
 
 (defmethod generic-* ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-* (constant-coefficient series-a)
@@ -170,11 +169,9 @@ pipe ends before."
                                                           :index-var n
                                                           :default-value 0)
                                    (gm:/ (- (lazy-aref cn n)
-                                            (loop for i from 1 to n
-                                               for pr = (gm:* (lazy-aref an i)
-                                                              (aref this (- n i)))
-                                               for sum = pr then (gm:+ sum pr)
-                                               finally (return sum)))
+                                            (summing (i 1 n)
+                                                     (gm:* (lazy-aref an i)
+                                                              (aref this (- n i)))))
                                          a0)))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
@@ -195,13 +192,11 @@ pipe ends before."
     (make-instance 'power-series
                    :degree (- (degree series-denom))
                    :coefficients (make-lazy-array (:start (b0)
-                                                          :index-var n)
+                                                          :index-var n
+                                                          :default-value 0)
                                    (gm:* -1 b0
-                                         (loop for i from 1 to n
-                                            for pr = (gm:* (lazy-aref an i)
-                                                           (aref this (- n i)))
-                                            for sum = pr then (gm:+ sum pr)
-                                            finally (return sum)))))))
+                                         (summing (i 1 n) (gm:* (lazy-aref an i)
+                                                           (aref this (- n i)))))))))
 
 ;; TODO perhaps consider additional simplification for units
 
@@ -242,13 +237,11 @@ pipe ends before."
     (make-instance 'power-series
      :degree (gm:/ (degree series) 2)
      :coefficients (make-lazy-array (:start (a0)
-                                            :index-var n)
+                                            :index-var n
+                                            :default-value 0)
                      (gm:/ (gm:- (lazy-aref b n)
-                                 (loop for i from 1 below n
-                                    for pr = (gm:* (aref this i)
-                                                   (aref this (- n i)))
-                                    for sum = pr then (gm:+ sum pr)
-                                    finally (return sum)))
+                                 (summing (i 1 n t) (gm:* (aref this i)
+                                                          (aref this (- n i)))))
                            a0 2)))))
 
 (defmethod gm:sqrt ((series constant-series))
