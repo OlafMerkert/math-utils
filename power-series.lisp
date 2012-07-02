@@ -339,9 +339,12 @@ match, consider the series equal."
      for i from 0 upto (max (+ (degree series) print-additional-terms)
                             print-additional-terms)
      unless (zerop i)
-     do (format t " + ")
-     do (format t "~A X^~A"
+     do (format stream " + ")
+     do (format stream "~A X^~A"
                 (nth-coefficient% series i)
                 (- (degree series) i)))
-  (format t " + ...")
-  (terpri))
+  (format stream " + ...")
+  (terpri stream))
+
+(defmethod print-object ((series constant-series) stream)
+  (format stream "~A X^0 + .." (constant-coefficient series)))

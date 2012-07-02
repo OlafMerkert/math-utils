@@ -113,3 +113,26 @@
 
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (generic-* -1 poly-b)))
+
+;;; comparison
+(defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
+  "Compare two polynomials for equality, assuming both are already
+  simplified."
+  (let ((d (degree poly-a)))
+    (and (= d (degree poly-b))
+         (let ((coeff-a (coefficients poly-a))
+               (coeff-b (coefficients poly-b)))
+          (loop for i from 0 to d
+             always (gm:= (aref coeff-a i)
+                          (aref coeff-b i)))))))
+
+;;; output of polynomials
+(defmethod print-object ((polynomial polynomial) stream)
+  (loop
+     for i from 0 upto  (degree polynomial)
+     unless (zerop i)
+     do (format stream " + ")
+     do (format stream "~A X^~A"
+                (nth-coefficient% polynomial i)
+                (- (degree polynomial) i)))
+  (terpri))
