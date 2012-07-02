@@ -149,7 +149,7 @@ pipe ends before."
                    :coefficients
                    (make-lazy-array (:index-var n :default-value 0
                                                 :finite (lazy-array-finite (coefficients series-b)))
-                                   (* number (lazy-aref (coefficients series-b) n))))))
+                                   (gm:* number (lazy-aref (coefficients series-b) n))))))
 
 
 (defmethod gm:expt ((base power-series) (power (eql 2)))
