@@ -1,6 +1,7 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
-  (:use :cl :ol :generic-math)
+  (:use :cl :ol :generic-math
+        :polynomials)
   (:export
    :confidence
    :nth-coefficient%
@@ -37,11 +38,6 @@
 (defun make-constant-series (constant)
   (make-instance 'constant-series :coefficients (la% 0 constant)))
 
-(defun constant-coefficient (series)
-  #|(unless (zerop (degree series))
-    (error "CONSTANT-COEFFICIENT only works with 0 DEGREE."))|#
-  (nth-coefficient% series 0))
-
 ;; TODO add support for different variables.
 
 (defmethod simplified-p ((series power-series))
@@ -65,14 +61,6 @@ pipe ends before."
       (nth-coefficient% series (- (degree series) n))
       0))
 
-(defun make-power-series/polynomial (leading-coefficient &rest coefficients)
-  (when (zero-p leading-coefficient)
-    (error "Cannot define a power series [~A~{ ~A~}] with zero leading coefficient."
-           leading-coefficient coefficients))
-  (make-instance 'power-series
-                 :degree (length coefficients)
-                 :coefficients (apply #'la% 0 leading-coefficient coefficients)))
-
 (defmethod zero ((number power-series))
   (make-constant-series 0))
 
@@ -84,6 +72,38 @@ pipe ends before."
 
 (defmethod one ((number (eql 'power-series)))
   (make-constant-series 1))
+
+
+(defmethod -> ((target-type (eql 'power-series)) (polynomial polynomial) &key)
+  (if (zerop (degree polynomial))
+      (make-constant-series (constant-coefficient polynomial))
+      (make-instance 'power-series
+                  :degree (degree polynomial)
+                  :coefficients (la% 0 (coefficients polynomial)))))
+
+(defmethod -> ((target-type power-series) (polynomial polynomial) &key)
+  (-> 'power-series polynomial))
+
+(create-binary->-wrappers power-series polynomial
+    () (:left :right)
+  generic-+
+  generic--
+  generic-*
+  generic-/
+  generic-=)
+
+(defun make-power-series (degree leading-coefficient &rest coefficients)
+  "Create a new power-series with finitely many non-zero COEFFICIENTS.
+The LEADING-COEFFICIENT must be non-zero.  If DEGREE is nil, we assume
+you want to define a polynomial, thus the DEGREE is just the number of
+COEFFICIENTS."
+  (when (zero-p leading-coefficient)
+    (error "Cannot define a power series [~A~{ ~A~}] with zero leading coefficient."
+           leading-coefficient coefficients))
+  (make-instance 'power-series
+                 :degree (or degree (length coefficients))
+                 :coefficients (apply #'la% 0 leading-coefficient coefficients)))
+
 
 ;; TODO visualising polynomials and power series
 
@@ -254,6 +274,12 @@ pipe ends before."
   (multiple-value-bind (root nice) (gm:sqrt (constant-coefficient series))
    (values (make-constant-series root) nice)))
 
+(defmethod gm:sqrt ((polynomial polynomial))
+  "With power-series available, we can also take the square roots of
+polynomials."
+  ;; TODO check whether the root is a polynomial.
+  (gm:sqrt (-> 'power-series polynomial)))
+
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
 
@@ -281,13 +307,15 @@ match, consider the series equal."
   ;; Evaluate (all) the coefficients of polynomial parts
   (let ((d (degree series)))
    (if (< d 0)
-       (zero series)
-       (make-instance 'power-series
+       (zero 'polynomial)
+       (make-instance 'polynomial
                       :degree d
-                      :coefficients (lazy-array-take (coefficients series) (+ d 1))))))
+                      :coefficients (lazy-array-take (coefficients series)
+                                                     (+ d 1)
+                                                     nil)))))
 
 (defmethod series-truncate ((series constant-series))
-  series)
+  (make-polynomial (constant-coefficient series)))
 
 (defmethod series-remainder ((series power-series))
   "Remove the polynomial part from the given SERIES -- thus equivalent

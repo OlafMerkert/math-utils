@@ -6,7 +6,8 @@
    :nth-coefficient%
    :nth-coefficient
    :polynomial
-   :coefficients))
+   :coefficients
+   :make-polynomial))
 
 (in-package :polynomials)
 
@@ -31,9 +32,8 @@
     (nth-coefficient% polynomial (- d n))))
 
 (defun constant-coefficient (polynomial)
-  #|(unless (zerop (degree series))
-    (error "CONSTANT-COEFFICIENT only works with 0 DEGREE."))|#
-  (nth-coefficient% polynomial 0))
+  "This is just an abbreviation for (nth-coefficient p 0)"
+  (nth-coefficient polynomial 0))
 
 (defmethod simplified-p ((polynomial polynomial))
   (or (zerop (degree polynomial))
@@ -56,7 +56,7 @@
   (make-polynomial 1))
 
 (defmethod simplify ((polynomial polynomial) &key)
-  "Remove all leading zeros from the coefficients.  If all
+  ") Remove all leading zeros from the coefficients.  If all
   coefficients are zero, keep the last zero."
   (with-slots (coefficients) polynomial
    (let ((nz (position-if-not #'zero-p coefficients :end (1- (length coefficients)))))
