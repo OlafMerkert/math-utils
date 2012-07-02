@@ -63,3 +63,53 @@
      (setf coefficients
            (subseq coefficients nz))
      (values polynomial nz))))
+
+;;; arithmetic of polynomials
+(defmethod generic-* ((poly-a polynomial) (poly-b polynomial))
+  "Multiply two polynomials."
+  (let ((array-a (coefficients poly-a))
+        (array-b (coefficients poly-b))
+        (deg-a   (degree poly-a))
+        (deg-b   (degree poly-b)))
+    (make-instance 'polynomial
+                   :coefficients
+                   (make-nlazy-array
+                       (:index-var n
+                                   :default-value 0
+                                   :finite (nla-finite-test (array-a array-b)
+                                             (+ array-a array-b)))
+                     (summing (i (max 0 (- n deg-b))
+                                 (min n deg-a))
+                              (gm:* (aref array-a i)
+                                    (aref array-b (- n i))))))))
+
+(defmethod generic-* ((poly-b polynomial) (int integer))
+  (generic-* int poly-b))
+
+(defmethod generic-* ((int integer) (poly-b polynomial))
+  (make-instance 'polynomial
+                 :coefficients
+                 (map 'vector (lambda (x) (gm:* int x)) (coefficients poly-b))))
+
+(defmethod generic-+ ((poly-a polynomial) (poly-b polynomial))
+  "Add two polynomials together."
+  (if (> (degree poly-a) (degree poly-b))
+      (generic-+ poly-b poly-a)
+      ;; now poly-b has the higher degree
+      (let ((coeff-a (coefficients poly-a))
+            (coeff-b (coefficients poly-b))
+            (deg-a   (degree poly-a))
+            (deg-b   (degree poly-b)))
+        (make-instance 'polynomial
+                       :coefficients
+                       (make-nlazy-array
+                           (:index-var n
+                                       :default-value 0
+                                       :finite deg-b)
+                         (if (<= n deg-a)
+                             (gm:+ (aref coeff-a n)
+                                   (aref coeff-b n))
+                             (aref coeff-b n)))))))
+
+(defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
+  (generic-+ poly-a (generic-* -1 poly-b)))
