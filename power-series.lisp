@@ -186,10 +186,10 @@ COEFFICIENTS."
                    :coefficients (make-lazy-array (:start ((gm:/ (lazy-aref cn 0) a0))
                                                           :index-var n
                                                           :default-value 0)
-                                   (gm:/ (- (lazy-aref cn n)
-                                            (summing (i 1 n)
-                                                     (gm:* (lazy-aref an i)
-                                                           (aref this (- n i)))))
+                                   (gm:/ (gm:- (lazy-aref cn n)
+                                               (summing (i 1 n)
+                                                        (gm:* (lazy-aref an i)
+                                                              (aref this (- n i)))))
                                          a0)))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))

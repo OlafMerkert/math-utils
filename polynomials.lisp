@@ -141,10 +141,10 @@ Keep this in mind when using."
                                                                       :index-var n
                                                                       :finite (+ deg 1)
                                                                       :default-value 0)
-                                              (gm:/ (- (aref cn n)
-                                                       (summing (i 1 (min n deg-a))
-                                                                (gm:* (aref an i)
-                                                                      (aref this (- n i)))))
+                                              (gm:/ (gm:- (aref cn n)
+                                                          (summing (i 1 (min n deg-a))
+                                                                   (gm:* (aref an i)
+                                                                         (aref this (- n i)))))
                                                     a0)))))
           (values result (gm:- poly-numer (gm:* poly-denom result)))))))
 
