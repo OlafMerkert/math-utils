@@ -174,7 +174,7 @@ COEFFICIENTS."
 
 (defmethod generic-/ ((series-numer power-series) (series-denom power-series))
   (unless (simplified-p series-denom)
-    (error "Cannot dive by the SERIES-DENOM ~A unless it is
+    (error "Cannot divide by the SERIES-DENOM ~A unless it is
     normalised, i.e. the first coefficient is non-zero." series-denom))
   (let ((a0 (nth-coefficient% series-denom 0))
         (an (coefficients series-denom))

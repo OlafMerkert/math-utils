@@ -119,6 +119,35 @@
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (generic-* -1 poly-b)))
 
+(defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
+  "This actually implements polynomial division with a remainder.
+Keep this in mind when using."
+  (unless (simplified-p poly-denom)
+    (error "Cannot divide by the POLY-DENOM ~A unless it is
+    normalised, i.e. the first coefficient is non-zero." poly-denom))
+  (when (zero-p poly-denom)
+    (error "Cannot divide by ZERO."))
+  (let ((a0 (nth-coefficient% poly-denom 0))
+        (an (coefficients poly-denom))
+        (cn (coefficients poly-numer))
+        (deg-a (degree poly-denom)) 
+        (deg (- (degree poly-numer)
+                (degree poly-denom))))
+    (if (minusp deg)
+        (values (zero 'polynomial) poly-numer)
+        (let ((result
+               (make-instance 'polynomial
+                              :coefficients (make-nlazy-array (:start ((gm:/ (aref cn 0) a0))
+                                                                      :index-var n
+                                                                      :finite (+ deg 1)
+                                                                      :default-value 0)
+                                              (gm:/ (- (aref cn n)
+                                                       (summing (i 1 (min n deg-a))
+                                                                (gm:* (aref an i)
+                                                                      (aref this (- n i)))))
+                                                    a0)))))
+          (values result (gm:- poly-numer (gm:* poly-denom result)))))))
+
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
   "Compare two polynomials for equality, assuming both are already
