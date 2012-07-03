@@ -7,7 +7,8 @@
    :nth-coefficient
    :polynomial
    :coefficients
-   :make-polynomial))
+   :make-polynomial
+   :constant-coefficient))
 
 (in-package :polynomials)
 
@@ -56,13 +57,16 @@
   (make-polynomial 1))
 
 (defmethod simplify ((polynomial polynomial) &key)
-  ") Remove all leading zeros from the coefficients.  If all
+  "Remove all leading zeros from the coefficients.  If all
   coefficients are zero, keep the last zero."
   (with-slots (coefficients) polynomial
-   (let ((nz (position-if-not #'zero-p coefficients :end (1- (length coefficients)))))
-     (setf coefficients
-           (subseq coefficients nz))
-     (values polynomial nz))))
+    (let* ((deg (- (length coefficients) 1))
+           (nz (or (position-if-not #'zero-p coefficients
+                                    :end deg)
+                   deg)))
+      (setf coefficients
+            (subseq coefficients nz))
+      (values polynomial nz))))
 
 ;;; arithmetic of polynomials
 (defmethod generic-* ((poly-a polynomial) (poly-b polynomial))
@@ -100,16 +104,17 @@
             (coeff-b (coefficients poly-b))
             (deg-a   (degree poly-a))
             (deg-b   (degree poly-b)))
-        (make-instance 'polynomial
-                       :coefficients
-                       (make-nlazy-array
-                           (:index-var n
-                                       :default-value 0
-                                       :finite deg-b)
-                         (if (<= n deg-a)
-                             (gm:+ (aref coeff-a n)
-                                   (aref coeff-b n))
-                             (aref coeff-b n)))))))
+        (simplify ; automatically simplify--this is more convenient here.
+         (make-instance 'polynomial
+                        :coefficients
+                        (make-nlazy-array
+                            (:index-var n
+                                        :default-value 0
+                                        :finite deg-b)
+                          (if (<= n deg-a)
+                              (gm:+ (aref coeff-a n)
+                                    (aref coeff-b n))
+                              (aref coeff-b n))))))))
 
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (generic-* -1 poly-b)))
