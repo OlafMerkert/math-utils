@@ -205,16 +205,17 @@ COEFFICIENTS."
   (unless (simplified-p series-denom)
     (error "Cannot invert the SERIES ~A unless it is properly
     normalised, i.e. first coefficient is non-zero." series-denom))
-  (let ((b0 (gm:/ (nth-coefficient% series-denom 0)))
+  (let ((a0 (nth-coefficient% series-denom 0))
         (an (coefficients series-denom)))
     (make-instance 'power-series
                    :degree (- (degree series-denom))
-                   :coefficients (make-lazy-array (:start ((gm:* (constant-coefficient series-numer) b0))
+                   :coefficients (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
                                                           :index-var n
                                                           :default-value 0)
-                                   (gm:* -1 b0
-                                         (summing (i 1 n) (gm:* (lazy-aref an i)
-                                                                (aref this (- n i)))))))))
+                                   (gm:/ (gm:- (summing (i 1 n)
+                                                        (gm:* (lazy-aref an i)
+                                                                      (aref this (- n i)))))
+                                         a0)))))
 
 ;; TODO perhaps consider additional simplification for units
 
@@ -233,7 +234,7 @@ COEFFICIENTS."
                        (make-lazy-array (:index-var n :default-value 0
                                                     :finite
                                                     (la-finite-test (coeff-a coeff-b)
-                                                      (max coeff-a coeff-b)))
+                                                      (max (+ d coeff-a) coeff-b)))
                          (if (< n d)
                              (lazy-aref coeff-b n)
                              (gm:+ (lazy-aref coeff-b n)
@@ -303,7 +304,7 @@ match, consider the series equal."
   "Take the polynomial part of the given SERIES."
   ;; Evaluate (all) the coefficients of polynomial parts
   (let ((d (degree series)))
-   (if (< d 0)
+   (if (minusp d)
        (zero 'polynomial)
        (make-instance 'polynomial
                       ;; :degree d
