@@ -79,8 +79,8 @@ pipe ends before."
   (if (zerop (degree polynomial))
       (make-constant-series (constant-coefficient polynomial))
       (make-instance 'power-series
-                  :degree (degree polynomial)
-                  :coefficients (la% 0 (coefficients polynomial)))))
+                     :degree (degree polynomial)
+                     :coefficients (la% 0 (coefficients polynomial)))))
 
 (defmethod -> ((target-type power-series) (polynomial polynomial) &key)
   (-> 'power-series polynomial))
@@ -306,7 +306,7 @@ match, consider the series equal."
    (if (< d 0)
        (zero 'polynomial)
        (make-instance 'polynomial
-                      :degree d
+                      ;; :degree d
                       :coefficients (lazy-array-take (coefficients series)
                                                      (+ d 1)
                                                      nil)))))
