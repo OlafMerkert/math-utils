@@ -133,6 +133,7 @@
 
 ;;; output of polynomials
 (defmethod print-object ((polynomial polynomial) stream)
+  (princ #\[ stream)
   (loop
      for i from 0 upto  (degree polynomial)
      unless (zerop i)
@@ -140,4 +141,5 @@
      do (format stream "~A X^~A"
                 (nth-coefficient% polynomial i)
                 (- (degree polynomial) i)))
+  (princ #\] stream)
   (terpri))

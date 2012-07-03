@@ -331,6 +331,7 @@ match, consider the series equal."
 (defparameter print-additional-terms 5)
 
 (defmethod print-object ((series power-series) stream)
+    (princ #\[ stream)
   (loop
      for i from 0 upto (max (+ (degree series) print-additional-terms)
                             print-additional-terms)
@@ -340,7 +341,8 @@ match, consider the series equal."
                 (nth-coefficient% series i)
                 (- (degree series) i)))
   (format stream " + ...")
+  (princ #\] stream)
   (terpri stream))
 
 (defmethod print-object ((series constant-series) stream)
-  (format stream "~A X^0 + .." (constant-coefficient series)))
+  (format stream "[~A X^0 + ..]" (constant-coefficient series)))
