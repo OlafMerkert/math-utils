@@ -14,7 +14,8 @@
    :make-constant-series
    :constant-coefficient
    :degree
-   :coefficients))
+   :coefficients
+   :make-power-series))
 
 (in-package :power-series)
 
