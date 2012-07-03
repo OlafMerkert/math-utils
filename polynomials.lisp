@@ -80,8 +80,7 @@
                    (make-nlazy-array
                        (:index-var n
                                    :default-value 0
-                                   :finite (nla-finite-test (array-a array-b)
-                                             (+ array-a array-b)))
+                                   :finite (+ deg-a deg-b 1))
                      (summing (i (max 0 (- n deg-b))
                                  (min n deg-a))
                               (gm:* (aref array-a i)
@@ -110,7 +109,7 @@
                         (make-nlazy-array
                             (:index-var n
                                         :default-value 0
-                                        :finite deg-b)
+                                        :finite (+ deg-b 1))
                           (if (<= n deg-a)
                               (gm:+ (aref coeff-a n)
                                     (aref coeff-b n))
