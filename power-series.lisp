@@ -172,10 +172,6 @@ COEFFICIENTS."
                                                 :finite (lazy-array-finite (coefficients series-b)))
                                    (gm:* number (lazy-aref (coefficients series-b) n))))))
 
-
-(defmethod gm:expt ((base power-series) (power (eql 2)))
-  (generic-* base base))
-
 (defmethod generic-/ ((series-numer power-series) (series-denom power-series))
   (unless (simplified-p series-denom)
     (error "Cannot dive by the SERIES-DENOM ~A unless it is

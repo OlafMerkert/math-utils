@@ -115,3 +115,10 @@
   generic--
   generic-*
   generic-/)
+
+(defmethod gm:expt ((base integer-mod) (power integer))
+  (make-instance 'integer-mod
+                 :rem (cl-utilities:expt-mod (remainder base)
+                                             power
+                                             (modulus base))
+                 :mod (modulus base)))

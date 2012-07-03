@@ -78,6 +78,15 @@ as :from-end parameter to reduce."
 (defmethod expt ((base number) (power number))
   (cl:expt base power))
 
+(defmethod gm:expt (base  (power integer))
+  "Generic exponentation algorithm using SQUARE-MULTIPLY.  Feel free
+to override this if a better algorithm is available."
+  (cond ((zerop power) (one base))
+        ((= power 1) base)
+        ((= power 2) (generic-* base base))
+        ((minusp power) (gm:expt (generic-/ (one base) base) (- power)))
+        (t (square-multiply base power #'generic-*))))
+
 (defgeneric simplify (number &key)
   (:documentation "Get the number into a unique, canonical
   representation, such that equality comparison is more efficient.
