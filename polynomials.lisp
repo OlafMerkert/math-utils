@@ -170,4 +170,4 @@ Keep this in mind when using."
                 (nth-coefficient% polynomial i)
                 (- (degree polynomial) i)))
   (princ #\] stream)
-  (terpri))
+  #|(terpri)|#)

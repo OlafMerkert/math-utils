@@ -344,7 +344,7 @@ match, consider the series equal."
                 (- (degree series) i)))
   (format stream " + ...")
   (princ #\] stream)
-  (terpri stream))
+  #|(terpri stream)|#)
 
 (defmethod print-object ((series constant-series) stream)
   (format stream "[~A X^0 + ..]" (constant-coefficient series)))
