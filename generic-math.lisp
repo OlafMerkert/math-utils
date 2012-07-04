@@ -144,6 +144,26 @@ to override this if a better algorithm is available."
 (defmethod one-p (number)
   (= (one number) number))
 
+(defmethod generic-= ((a (eql 0)) b)
+  (if (numberp b)
+      (zerop b)
+      (zero-p b)))
+
+(defmethod generic-= (b (a (eql 0)))
+  (if (numberp b)
+      (zerop b)
+      (zero-p b)))
+
+(defmethod generic-= ((a (eql 1)) b)
+  (if (numberp b)
+      (= 1 b)
+      (one-p b)))
+
+(defmethod generic-= (b (a (eql 1)))
+  (if (numberp b)
+      (= 1 b)
+      (one-p b)))
+
 (defmacro! summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
      (do ((,var ,g!start (cl:+ 1 ,var)))
