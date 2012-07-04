@@ -146,7 +146,7 @@ to override this if a better algorithm is available."
 
 (defmacro! summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
-     (do ((,var ,g!start (+ 1 ,var)))
+     (do ((,var ,g!start (cl:+ 1 ,var)))
          ((,(if below '>= '>)
             ,var ,g!stop)
           ,g!sum)

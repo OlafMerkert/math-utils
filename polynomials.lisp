@@ -95,25 +95,22 @@
                  (map 'vector (lambda (x) (gm:* int x)) (coefficients poly-b))))
 
 (defmethod generic-+ ((poly-a polynomial) (poly-b polynomial))
-  "Add two polynomials together."
+  "Add two polynomials together.  Implicitly simplify."
   (if (> (degree poly-a) (degree poly-b))
       (generic-+ poly-b poly-a)
       ;; now poly-b has the higher degree
       (let ((coeff-a (coefficients poly-a))
             (coeff-b (coefficients poly-b))
-            (deg-a   (degree poly-a))
-            (deg-b   (degree poly-b)))
-        (simplify ; automatically simplify--this is more convenient here.
+            (d (- (degree poly-b) (degree poly-a))))
+        (simplify
          (make-instance 'polynomial
                         :coefficients
-                        (make-nlazy-array
-                            (:index-var n
-                                        :default-value 0
-                                        :finite (+ deg-b 1))
-                          (if (<= n deg-a)
-                              (gm:+ (aref coeff-a n)
-                                    (aref coeff-b n))
-                              (aref coeff-b n))))))))
+                        (make-nlazy-array (:index-var n :default-value 0
+                                                      :finite (+ (degree poly-b) 1))
+                          (if (< n d)
+                              (aref coeff-b n)
+                              (gm:+ (aref coeff-b n)
+                                    (aref coeff-a (- n d))))))))))
 
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (generic-* -1 poly-b)))
