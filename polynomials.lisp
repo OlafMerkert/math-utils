@@ -8,7 +8,8 @@
    :polynomial
    :coefficients
    :make-polynomial
-   :constant-coefficient))
+   :constant-coefficient
+   :format-monomial/tex))
 
 (in-package :polynomials)
 
@@ -133,15 +134,16 @@ Keep this in mind when using."
         (values (zero 'polynomial) poly-numer)
         (let ((result
                (make-instance 'polynomial
-                              :coefficients (make-nlazy-array (:start ((gm:/ (aref cn 0) a0))
-                                                                      :index-var n
-                                                                      :finite (+ deg 1)
-                                                                      :default-value 0)
-                                              (gm:/ (gm:- (aref cn n)
-                                                          (summing (i 1 (min n deg-a))
-                                                                   (gm:* (aref an i)
-                                                                         (aref this (- n i)))))
-                                                    a0)))))
+                              :coefficients
+                              (make-nlazy-array (:start ((gm:/ (aref cn 0) a0))
+                                                        :index-var n
+                                                        :finite (+ deg 1)
+                                                        :default-value 0)
+                                (gm:/ (gm:- (aref cn n)
+                                            (summing (i 1 (min n deg-a))
+                                                     (gm:* (aref an i)
+                                                           (aref this (- n i)))))
+                                      a0)))))
           (values result (gm:- poly-numer (gm:* poly-denom result)))))))
 
 ;;; comparison
@@ -168,3 +170,30 @@ Keep this in mind when using."
                 (- (degree polynomial) i)))
   (princ #\] stream)
   #|(terpri)|#)
+
+(defun format-monomial/tex (stream coefficient exponent)
+  "Format a monomial expression nicely, such that nothing like X^0 =
+1, X^1 = X or 1 \, X^n = X^n appears.  Something like 0 \, X^n will
+not be handled here, however."
+  (if (one-p coefficient)
+      (case exponent
+        ((0) (print-object/tex coefficient stream))
+        ((1) (princ "X" stream))
+        (t   (format stream "X^{~A}" exponent)))
+      (progn
+        (print-object/tex coefficient stream)
+        (case exponent
+          ((0))
+          ((1) (princ " \\, X" stream))
+          (t   (format stream " \\, X^{~A}" exponent))))))
+
+(defmethod print-object/tex ((polynomial polynomial) stream)
+  (loop
+     for i from 0 upto (degree polynomial)
+     for coefficient = (nth-coefficient% polynomial i)
+     for exponent    = (- (degree polynomial) i)
+     for zero-p      = (zero-p coefficient)
+     unless (or (zerop i) zero-p)
+     do (format stream " + ")
+     unless zero-p 
+     do (format-monomial/tex stream coefficient exponent)))

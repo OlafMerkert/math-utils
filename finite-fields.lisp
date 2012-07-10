@@ -20,7 +20,12 @@
 
 (defmethod print-object ((object integer-mod) stream)
   (with-slots (remainder modulus) object
-    (format stream "[~a mod ~a]" remainder modulus)))
+    (format stream "[~A mod ~A]" remainder modulus)))
+
+(defmethod print-object/tex ((object integer-mod) stream)
+  (with-slots (remainder modulus) object
+    ;; modulus has to be tracked manually
+    (format stream "~A" remainder)))
 
 (defun int% (r m)
   (make-instance 'integer-mod :rem r :mod m))

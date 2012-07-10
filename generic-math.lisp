@@ -21,7 +21,8 @@
    :zero-p
    :one-p
    :summing
-   :create-binary->-wrappers))
+   :create-binary->-wrappers
+   :print-object/tex))
 
 (in-package :generic-math)
 
@@ -187,3 +188,19 @@ to override this if a better algorithm is available."
              (,a1 ,to
                   (-> ',to ,from ,@params)))
          generic-functions))))
+
+(defgeneric print-object/tex (object stream)
+  (:documentation "Generate a string representation suitable for
+  insertion into TeX documents."))
+
+(defmethod print-object/tex (object stream)
+  ;; by default fall back to standard format call
+  (format stream "~A" object))
+
+
+(defmethod print-object/tex ((number integer) stream)
+  (format stream "~A" number))
+
+(defmethod print-object/tex ((number rational) stream)
+  (format stream "~:[~;-~]\\frac{~A}{~A}" (minusp number)
+          (abs (numerator number)) (denominator number)))

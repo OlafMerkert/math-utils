@@ -346,5 +346,21 @@ match, consider the series equal."
   (princ #\] stream)
   #|(terpri stream)|#)
 
+(defmethod print-object/tex ((series power-series) stream)
+  (loop
+     for i from 0 upto (max (+ (degree series) print-additional-terms)
+                            print-additional-terms)
+     for coefficient = (nth-coefficient% series i)
+     for exponent    = (- (degree series) i)
+     for zero-p      = (zero-p coefficient)
+     unless (or (zerop i) zero-p)
+     do (format stream " + ")
+     unless zero-p
+     do (format-monomial/tex stream coefficient exponent))
+  (format stream " + \\dots"))
+
 (defmethod print-object ((series constant-series) stream)
   (format stream "[~A X^0 + ..]" (constant-coefficient series)))
+
+(defmethod print-object/tex ((series constant-series) stream)
+  (print-object/tex (constant-coefficient series) stream))
