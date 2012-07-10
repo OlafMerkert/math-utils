@@ -141,8 +141,8 @@ to override this if a better algorithm is available."
 (defgeneric one-p (number)
   (:documentation "Test whether the given number is one."))
 
-(defmethod one-p (number)
-  (= (one number) number))
+(defmethod one-p ((number number))
+  (cl:= (one number) number))
 
 (defmethod generic-= ((a (eql 0)) b)
   (if (numberp b)
