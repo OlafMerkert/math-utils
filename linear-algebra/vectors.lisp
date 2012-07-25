@@ -47,18 +47,6 @@
 
 (defsetf mref/human set-mref/human)
 
-(defun split-last (list)
-  "destructively split the last entry from the list. return (values
-list last)"
-  (if (cdr list)
-      ;; first deal with lists of more than 1 element
-      (let* ((l (last list 2))
-             (e (second l)))
-        (setf (cdr l) nil)
-        (values list e))
-      ;; then the special case of just one or none element.
-      (values nil (first list))))
-
 (defsymconstant +unfilled+
     "a symbolic constant to mark unfilled entries in vectors.")
 
