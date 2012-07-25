@@ -144,7 +144,8 @@ Keep this in mind when using."
                                                      (gm:* (aref an i)
                                                            (aref this (- n i)))))
                                       a0)))))
-          (values result (gm:- poly-numer (gm:* poly-denom result)))))))
+          (values result ;(gm:- poly-numer (gm:* poly-denom result))
+                  )))))
 
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))

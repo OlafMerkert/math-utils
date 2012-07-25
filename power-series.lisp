@@ -209,13 +209,14 @@ COEFFICIENTS."
         (an (coefficients series-denom)))
     (make-instance 'power-series
                    :degree (- (degree series-denom))
-                   :coefficients (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
-                                                          :index-var n
-                                                          :default-value 0)
-                                   (gm:/ (gm:- (summing (i 1 n)
-                                                        (gm:* (lazy-aref an i)
-                                                                      (aref this (- n i)))))
-                                         a0)))))
+                   :coefficients
+                   (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
+                                            :index-var n
+                                            :default-value 0)
+                     (gm:/ (gm:- (summing (i 1 n)
+                                          (gm:* (lazy-aref an i)
+                                                (aref this (- n i)))))
+                           a0)))))
 
 ;; TODO perhaps consider additional simplification for units
 
