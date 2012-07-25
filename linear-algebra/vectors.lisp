@@ -6,7 +6,8 @@
    :coefficients
    :vector
    :dimensions
-   :mref))
+   :mref
+   :mref/human))
 
 (in-package :linear-algebra/vectors)
 
@@ -19,14 +20,30 @@
   (array-dimensions (coefficients vector)))
 
 (defun mref (vector-or-matrix &rest indices)
-  "doc"
+  "access vector or matrix entreis, where indexing start with 0."
   (apply #'aref (coefficients vector-or-matrix) indices))
 
 (defun set-mref (vector-or-matrix &rest indices+value)
-  "doc"
+  "setf method for MREF."
   (multiple-value-bind (indices value) (split-last indices+value)
     (setf (apply #'aref (coefficients vector-or-matrix) indices)
           value)))
+
+(defsetf mref set-mref)
+
+(defun mref/human (vector-or-matrix &rest indices)
+  "access vector or matrix entries, where indexing starts with 1."
+  (apply #'aref (coefficients vector-or-matrix)
+         (mapcar #'1- indices)))
+
+(defun set-mref/human (vector-or-matrix &rest indices+value)
+  "setf method for MMREF."
+  (multiple-value-bind (indices value) (split-last indices+value)
+    (setf (apply #'aref (coefficients vector-or-matrix)
+                 (mapcar #'1- indices))
+          value)))
+
+(defsetf mref/human set-mref/human)
 
 (defun split-last (list)
   "destructively split the last entry from the list. return (values
@@ -40,7 +57,6 @@ list last)"
       ;; then the special case of just one or none element.
       (values nil (first list))))
 
-(defsetf mref set-mref)
 
 (defun make-vector% (dimensions fill-function)
   "create a new array with given dimensions and use fill-function to
