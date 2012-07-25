@@ -115,9 +115,12 @@ indices."
     (when (eq index-vars t)
       (setf index-vars '(&rest indices)))
     (unless (or (member '&rest index-vars)
+                (member :list  dimensions)
                 (= (length dimensions) (length index-vars)))
       (error "Mismatching dimensions and indices ~A!" index-vars))
-    `(make-vector% (list ,@dimensions)
+    `(make-vector% ,(if (eq (first dimensions) :list)
+                        (second dimensions)
+                        `(list ,@dimensions))
                    (lambda (this ,@index-vars)
                      (declare (ignorable this ,@(remove '&rest index-vars)))
                      ,@(when human (mapcar #`(incf ,a1) index-vars))
@@ -131,3 +134,25 @@ indices."
   "see make-vector/general for doc (with human = t)"
   (make-vector/general t dimensions index-vars fill-form))
 
+(defun dimensions-compatible-p (&rest vectors)
+  "test whether the given vectors have the same dimensions, so we can
+elementwise operations."
+  (case (length vectors)
+    ((0) (error "no vector given for dimensions test."))
+    ((1) (dimensions (first vectors)))
+    (t   (let ((dimensions-of-vectors
+                (mapcar #'dimensions vectors)))
+           (when (apply #'equal dimensions-of-vectors)
+             (first dimensions-of-vectors))))))
+
+(defmacro elementwise-operation (vectors &body fill-form)
+  "create a new vector with same dimensions as vectors (a list of
+  symbols referencing actual vectors), where every field is filled
+  with fill-form, where every vector symbol stands for the
+  corresponding field."
+  (let ((coeffs (list->gensyms :coefficients vectors)))
+    `(let ,(mapcar #2`(,a1 (coefficients ,a2)) coeffs vectors)
+       (make-vector (:list (dimensions-compatible-p ,@vectors)) t
+           (symbol-macrolet
+               ,(mapcar #2`(,a2 (apply #'aref ,a1 indices)) coeffs vectors)
+             ,@fill-form)))))
