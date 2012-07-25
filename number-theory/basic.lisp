@@ -1,10 +1,10 @@
-(defpackage :number-theory-basic
+(defpackage :number-theory/basic
   (:nicknames :nt)
   (:use :cl :ol)
   (:export
    :xgcd))
 
-(in-package :number-theory-basic)
+(in-package :number-theory/basic)
 
 ;;; gcd
 

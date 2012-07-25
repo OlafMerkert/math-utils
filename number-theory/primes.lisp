@@ -1,5 +1,5 @@
-(defpackage :number-theory-primes
-  (:nicknames :ntp)
+(defpackage :number-theory/primes
+  (:nicknames :nt-p)
   (:import-from :cl-utilities :expt-mod)
   (:use :cl :ol)
   (:export
@@ -12,7 +12,7 @@
    :fermat
    :divisible-p))
 
-(in-package :number-theory-primes)
+(in-package :number-theory/primes)
 
 ;;; some primality tests
 
