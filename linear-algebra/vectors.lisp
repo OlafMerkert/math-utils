@@ -156,3 +156,21 @@ elementwise operations."
            (symbol-macrolet
                ,(mapcar #2`(,a2 (apply #'aref ,a1 indices)) coeffs vectors)
              ,@fill-form)))))
+
+;;; generic operations for vectors
+
+(defmethod gm:generic-+ ((vector-a vector) (vector-b vector))
+  (elementwise-operation (vector-a vector-b)
+    (gm:+ vector-a vector-b)))
+
+(defmethod gm:generic-- ((vector-a vector) (vector-b vector))
+  (elementwise-operation (vector-a vector-b)
+    (gm:- vector-a vector-b)))
+
+(defmethod gm:generic-* ((vector-a vector) (vector-b vector))
+  (elementwise-operation (vector-a vector-b)
+    (gm:* vector-a vector-b)))
+
+(defmethod gm:generic-/ ((vector-a vector) (vector-b vector))
+  (elementwise-operation (vector-a vector-b)
+    (gm:/ vector-a vector-b)))
