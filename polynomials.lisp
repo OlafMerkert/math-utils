@@ -1,6 +1,7 @@
 (defpackage :polynomials
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
-  (:use :cl :ol :generic-math)
+  (:use :cl :ol :generic-math
+        :iterate)
   (:export
    :degree
    :nth-coefficient%
@@ -153,22 +154,19 @@ Keep this in mind when using."
   simplified."
   (let ((d (degree poly-a)))
     (and (= d (degree poly-b))
-         (let ((coeff-a (coefficients poly-a))
-               (coeff-b (coefficients poly-b)))
-          (loop for i from 0 to d
-             always (gm:= (aref coeff-a i)
-                          (aref coeff-b i)))))))
+         (iter (for a in-vector (coefficients poly-a))
+               (for b in-vector (coefficients poly-b) )
+               (always (gm:= a b))))))
 
 ;;; output of polynomials
 (defmethod print-object ((polynomial polynomial) stream)
   (princ #\[ stream)
-  (loop
-     for i from 0 upto  (degree polynomial)
-     unless (zerop i)
-     do (format stream " + ")
-     do (format stream "~A X^~A"
-                (nth-coefficient% polynomial i)
-                (- (degree polynomial) i)))
+  (iter (for i from 0 upto  (degree polynomial))
+        (unless (zerop i)
+          (format stream " + ")
+          (format stream "~A X^~A"
+                  (nth-coefficient% polynomial i)
+                  (- (degree polynomial) i))))
   (princ #\] stream)
   #|(terpri)|#)
 
@@ -189,12 +187,11 @@ not be handled here, however."
           (t   (format stream " \\, X^{~A}" exponent))))))
 
 (defmethod print-object/tex ((polynomial polynomial) stream)
-  (loop
-     for i from 0 upto (degree polynomial)
-     for coefficient = (nth-coefficient% polynomial i)
-     for exponent    = (- (degree polynomial) i)
-     for zero-p      = (zero-p coefficient)
-     unless (or (zerop i) zero-p)
-     do (format stream " + ")
-     unless zero-p 
-     do (format-monomial/tex stream coefficient exponent)))
+  (iter (for i from 0 upto (degree polynomial))
+        (for coefficient = (nth-coefficient% polynomial i))
+        (for exponent    = (- (degree polynomial) i))
+        (for zero-p      = (zero-p coefficient))
+        (unless (or (zerop i) zero-p)
+          (format stream " + "))
+        (unless zero-p 
+          (format-monomial/tex stream coefficient exponent))))
