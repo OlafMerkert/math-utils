@@ -245,3 +245,25 @@ elementwise operations."
   (progn
     (setf (last1 indices) (swap (last1 indices) i j))
     indices))
+
+;;; Matrixmultiplikation
+(defclass matrix (vector)
+  ()
+  (:documentation "extend the vector class with matrix multiplication."))
+
+(defmethod gm:generic-+ ((matrix-a matrix) (matrix-b matrix))
+  (multiple-value-bind (dims-a m-a) (split-last (copy-list (dimensions matrix-a)) )
+    (destructuring-bind (m-b dims-b) (dimensions matrix-b)
+      (unless (= m-a m-b)
+        (error "Dimensions of ~A and ~A are not compatible for matrix multiplication." matrix-a matrix-b))
+      (let ((split (length dims-a))
+            (entries-a (entries matrix-a))
+            (entries-b (entries matrix-b)))
+        (make-vector%
+         (append dims-a dims-b)
+         (lambda (this &rest indices)
+           (let ((ind-a (subseq indices 0 split))
+                 (ind-b (subseq indices split)))
+             (summing (i 0 m-a t)
+                      (gm:+ (apply #'aref entries-a (append1 ind-a i))
+                            (apply #'aref entries-b i ind-b))))))))))
