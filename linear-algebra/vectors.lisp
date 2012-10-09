@@ -9,7 +9,18 @@
    :mref
    :mref/human
    :indices
-   :this))
+   :this
+   :define-index-transform
+   :with-indices
+   :transpose
+   :subrow
+   :subcol
+   :droprow
+   :dropcol
+   :droprowcol
+   :rotaterow
+   :rotatecol
+   :matrix))
 
 (in-package :linear-algebra/vectors)
 
@@ -173,7 +184,7 @@ elementwise operations."
   from the anaphoric INDICES in the new vector.  Use the helper macro WITH-INDICES to destructure INDICES."
   `(defun ,name (,g!vector ,@args)
      (macrolet ((with-indices (dest &body body)
-                  (destructuring-bind ,dest indices ,@body)))
+                  `(destructuring-bind ,dest indices ,@body)))
        (let ((dimensions (dimensions ,g!vector))
              (,g!coeffs (entries ,g!vector)))
          (make-vector% ,dim-form
@@ -195,6 +206,7 @@ elementwise operations."
 (define-index-transform subcol (j)
   (droplast dimensions)
   (append1 indices j))
+
 (defun skip (i j)
   "Entferne j aus der Folge der natuerlichen Zahlen."
   (if (< i j) i (1+ i)))
@@ -251,7 +263,7 @@ elementwise operations."
   ()
   (:documentation "extend the vector class with matrix multiplication."))
 
-(defmethod gm:generic-+ ((matrix-a matrix) (matrix-b matrix))
+(defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))
   (multiple-value-bind (dims-a m-a) (split-last (copy-list (dimensions matrix-a)) )
     (destructuring-bind (m-b dims-b) (dimensions matrix-b)
       (unless (= m-a m-b)
