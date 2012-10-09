@@ -165,3 +165,83 @@ elementwise operations."
 (defmethod gm:generic-/ ((vector-a vector) (vector-b vector))
   (elementwise-operation (vector-a vector-b)
     (gm:/ vector-a vector-b)))
+
+(defmacro! define-index-transform (name (&rest args) dim-form &rest index-forms)
+  "Define a transformation of a multidim vector V by supplying a
+  DIM-FORM to calculate the new dimensions, with the anaphoric
+  DIMENSIONS of V; and using INDEX-FORMS to calculate the indices in V
+  from the anaphoric INDICES in the new vector.  Use the helper macro WITH-INDICES to destructure INDICES."
+  `(defun ,name (,g!vector ,@args)
+     (macrolet ((with-indices (dest &body body)
+                  (destructuring-bind ,dest indices ,@body)))
+       (let ((dimensions (dimensions ,g!vector))
+             (,g!coeffs (entries ,g!vector)))
+         (make-vector% ,dim-form
+                       (lambda (,g!this indices)
+                         (declare (ignore ,g!this))
+                         (apply #'aref ,g!coeffs ,@index-forms)))))))
+
+;; Transposition der Matrix
+(define-index-transform transpose ()
+  (reverse dimensions)
+  (reverse indices))
+
+;; Extrahiere Zeile i
+(define-index-transform subrow (i)
+  (cdr dimensions)
+  i indices)
+
+;; Extrahiere Spalte j
+(define-index-transform subcol (j)
+  (droplast dimensions)
+  (append1 indices j))
+(defun skip (i j)
+  "Entferne j aus der Folge der natuerlichen Zahlen."
+  (if (< i j) i (1+ i)))
+
+;; Entferne Zeile i.
+(define-index-transform droprow (i)
+  (aprog1 (copy-list dimensions)
+    (decf (first it)))
+  (progn
+    (setf (first indices) (skip (first indices) i))
+    indices))
+
+;; Entferne Spalte j.
+(define-index-transform dropcol (j)
+  (aprog1 (copy-list dimensions)
+    (decf (last1 it))
+    dimensions)
+  (progn
+    (setf (last1 indices) (skip (last1 indices) j))
+    indices))
+
+;; Entferne Zeile i und Spalte j.
+(define-index-transform droprowcol (i j)
+  (aprog1 (copy-list dimensions)
+    (when (length=1 it)
+      (error "droprowcol only works with vectors that have at least two dimensions!"))
+    (decf (first it))
+    (incf (last1 it)))
+  (progn
+    (setf (first indices) (skip (first indices) i)
+          (last1 indices) (skip (last1 indices) j))
+    indices))
+
+(defun swap (x i j)
+  "Vertausche i und j in der Folge der natuerlichen Zahlen."
+  (cond ((= x i) j)
+        ((= x j) i)
+        (t x)))
+
+;; Tausche Zeilen i und j.
+(define-index-transform rotaterow (i j)
+  dimensions
+  (swap (first indices) i j) (cdr indices))
+
+;; Tausche Spalten i und j.
+(define-index-transform rotatecol (i j)
+  dimensions
+  (progn
+    (setf (last1 indices) (swap (last1 indices) i j))
+    indices))
