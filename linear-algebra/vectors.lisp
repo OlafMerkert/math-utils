@@ -16,9 +16,11 @@
 (defclass vector ()
   ((entries :initarg :entries
                  :accessor entries))
-  (:documentation "doc"))
+  (:documentation "Model a vector representated by a multi-dimensional array."))
 
-(defun dimensions (vector)
+(defgeneric dimensions (vector))
+
+(defmethod dimensions ((vector vector))
   (array-dimensions (entries vector)))
 
 (defun mref (vector-or-matrix &rest indices)
@@ -55,7 +57,8 @@
   calculate the entries."
   (declare (inline fill-array))
   (let ((coeff (make-array dimensions :initial-element +unfilled+)))
-    (fill-array coeff fill-function dimensions)))
+    (fill-array coeff fill-function dimensions)
+    (make-instance 'vector :entries coeff)))
 
 (defun fill-array (array fill-function &optional (positions nil positions?))
   "fill the ARRAY with the FILL-FUNCTION in the places given by
