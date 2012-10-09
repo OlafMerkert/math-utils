@@ -3,7 +3,7 @@
   (:shadow :vector)
   (:use :cl :ol )
   (:export
-   :coefficients
+   :entries
    :vector
    :dimensions
    :mref
@@ -14,34 +14,34 @@
 (in-package :linear-algebra/vectors)
 
 (defclass vector ()
-  ((coefficients :initarg :coefficients
-                 :accessor coefficients))
+  ((entries :initarg :entries
+                 :accessor entries))
   (:documentation "doc"))
 
 (defun dimensions (vector)
-  (array-dimensions (coefficients vector)))
+  (array-dimensions (entries vector)))
 
 (defun mref (vector-or-matrix &rest indices)
   "access vector or matrix entreis, where indexing start with 0."
-  (apply #'aref (coefficients vector-or-matrix) indices))
+  (apply #'aref (entries vector-or-matrix) indices))
 
 (defun set-mref (vector-or-matrix &rest indices+value)
   "setf method for MREF."
   (multiple-value-bind (indices value) (split-last indices+value)
-    (setf (apply #'aref (coefficients vector-or-matrix) indices)
+    (setf (apply #'aref (entries vector-or-matrix) indices)
           value)))
 
 (defsetf mref set-mref)
 
 (defun mref/human (vector-or-matrix &rest indices)
   "access vector or matrix entries, where indexing starts with 1."
-  (apply #'aref (coefficients vector-or-matrix)
+  (apply #'aref (entries vector-or-matrix)
          (mapcar #'1- indices)))
 
 (defun set-mref/human (vector-or-matrix &rest indices+value)
   "setf method for MMREF."
   (multiple-value-bind (indices value) (split-last indices+value)
-    (setf (apply #'aref (coefficients vector-or-matrix)
+    (setf (apply #'aref (entries vector-or-matrix)
                  (mapcar #'1- indices))
           value)))
 
@@ -138,8 +138,8 @@ elementwise operations."
   symbols referencing actual vectors), where every field is filled
   with fill-form, where every vector symbol stands for the
   corresponding field."
-  (let ((coeffs (list->gensyms :coefficients vectors)))
-    `(let ,(mapcar #2`(,a1 (coefficients ,a2)) coeffs vectors)
+  (let ((coeffs (list->gensyms :entries vectors)))
+    `(let ,(mapcar #2`(,a1 (entries ,a2)) coeffs vectors)
        (make-vector (:list (dimensions-compatible-p ,@vectors)) t
            (symbol-macrolet
                ,(mapcar #2`(,a2 (apply #'aref ,a1 indices)) coeffs vectors)
