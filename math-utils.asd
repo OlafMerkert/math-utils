@@ -8,5 +8,6 @@
                                      (:file "primes")
                                      (:file "factorisation")))
                (:file "finite-fields")
+               (:file "localisations")
                (:file "polynomials")
                (:file "power-series")))
