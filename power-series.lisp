@@ -1,6 +1,7 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:use :cl :ol :generic-math
+        :iterate
         :polynomials)
   (:export
    :confidence
@@ -119,11 +120,9 @@ COEFFICIENTS."
   Additionally, when the series is marked finite, and
   NORMALISATION-DEPTH is reached, we will assume the SERIES is 0."
   (let* ((coeff (coefficients series))
-         (non-zero (loop
-                      for i from 0 below depth
-                      for zp = (zero-p (lazy-aref coeff i))
-                      while zp
-                      finally (return (if zp (+ i 1) i)))))
+         (non-zero (iter (for i from 0 below depth)
+                         (finding i such-that (not (zero-p (lazy-aref coeff i)))
+                                  on-failure depth))))
     (if (and (lazy-array-finite coeff)
              (= non-zero depth))
         ;; for finite series, treat reaching normalisation-depth as
@@ -290,9 +289,9 @@ match, consider the series equal."
     (let ((co-1 (coefficients series-1))
           (co-2 (coefficients series-2)))
       (when
-          (loop for i from 0 to confidence
-             always (gm:= (lazy-aref co-1 i)
-                          (lazy-aref co-2 i)))
+          (iter (for i from 0 to confidence)
+                (always (gm:= (lazy-aref co-1 i)
+                              (lazy-aref co-2 i))))
         confidence))))
 ;; TODO fix problems with possibly not yet simplified series (for
 ;; instance a series representing 0, but without "knowing" it)
@@ -335,29 +334,27 @@ match, consider the series equal."
 
 (defmethod print-object ((series power-series) stream)
     (princ #\[ stream)
-  (loop
-     for i from 0 upto (max (+ (degree series) print-additional-terms)
-                            print-additional-terms)
-     unless (zerop i)
-     do (format stream " + ")
-     do (format stream "~A X^~A"
-                (nth-coefficient% series i)
-                (- (degree series) i)))
+    (iter (for i from 0 to (+ print-additional-terms
+                              (max 0 (degree series))))
+          (unless (zerop i)
+            (format stream " + ")
+            (format stream "~A X^~A"
+                    (nth-coefficient% series i)
+                    (- (degree series) i))))
   (format stream " + ...")
   (princ #\] stream)
   #|(terpri stream)|#)
 
 (defmethod print-object/tex ((series power-series) stream)
-  (loop
-     for i from 0 upto (max (+ (degree series) print-additional-terms)
-                            print-additional-terms)
-     for coefficient = (nth-coefficient% series i)
-     for exponent    = (- (degree series) i)
-     for zero-p      = (zero-p coefficient)
-     unless (or (zerop i) zero-p)
-     do (format stream " + ")
-     unless zero-p
-     do (format-monomial/tex stream coefficient exponent))
+  (iter (for i from 0 to (+ print-additional-terms
+                            (max 0 (degree series))))
+        (for coefficient = (nth-coefficient% series i))
+        (for exponent    = (- (degree series) i))
+        (for zero-p      = (zero-p coefficient))
+        (unless (or (zerop i) zero-p)
+          (format stream " + "))
+        (unless zero-p
+          (format-monomial/tex stream coefficient exponent)))
   (format stream " + \\dots"))
 
 (defmethod print-object ((series constant-series) stream)

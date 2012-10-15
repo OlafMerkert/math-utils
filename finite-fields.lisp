@@ -111,12 +111,10 @@
   (with-slots ((r remainder) (p modulus)) a
     ;; for now, just do brute force.  if a root exists, its square can
     ;; be assumed to be less than p^2
-    (iter (for i from 0 to p)
-          (for b first (mod r p) then (+ b p))
-          (multiple-value-bind (root nice) (gm:sqrt b)
-            (when nice
-              (return (int% root p))))
-          (finally (error "~A has no square root mod ~A" r p)))))
+    (or (int% (iter (for i from 0 below p)
+                    (finding i such-that (zerop (mod (- (* i i) r) p))))
+              p)
+        (error "~A has no square root mod ~A" r p))))
 
 (create-binary->-wrappers integer-mod integer
     (:mod (modulus integer-mod)) (:left :right)
