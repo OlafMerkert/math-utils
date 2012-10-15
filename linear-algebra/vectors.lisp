@@ -273,9 +273,47 @@ elementwise operations."
             (entries-b (entries matrix-b)))
         (make-vector%
          (append dims-a dims-b)
-         (lambda (this &rest indices)
+         (ilambda (this &rest indices)
            (let ((ind-a (subseq indices 0 split))
                  (ind-b (subseq indices split)))
-             (summing (i 0 m-a t)
-                      (gm:+ (apply #'aref entries-a (append1 ind-a i))
-                            (apply #'aref entries-b i ind-b))))))))))
+             (gm:summing (i 0 m-a t)
+                         (gm:+ (apply #'aref entries-a (append1 ind-a i))
+                               (apply #'aref entries-b i ind-b))))))))))
+
+;;; TODO sparse matrices
+;;; TODO matrix construction utilities
+;;; TODO vector -> matrix casting
+
+(defun eye (&rest dimensions)
+  (make-vector (:list dimensions) t
+    (if (apply #'= indices) 1 0)))
+
+(defun ones (&rest dimensions)
+  (make-vector (:list dimensions) t 1))
+
+(defun zeroes (&rest dimensions)
+  (make-vector (:list dimensions) t 0))
+
+(defmethod gm:-> ((target (eql 'vector)) (matrix matrix) &key)
+  (make-instance 'vector
+                 :entries (entries vector)))
+
+(defmethod gm:-> ((target (eql 'vector)) (vector vector) &key)
+  vector)
+
+(defmethod gm:-> ((target (eql 'matrix)) (vector vector) &key)
+  (make-instance 'matrix
+                 :entries (entries vector)))
+
+(defmethod gm:-> ((target (eql 'matrix)) (matrix matrix) &key)
+  matrix)
+
+(defmacro as-matrices  (matrices &body body)
+  "ensure that everything in the vars MATRICES are actually matrices and not vectors."
+  `(let ,@(mapcar #`(,a1 (gm:-> 'matrix ,a1)) matrices)
+     ,@body))
+
+(defmacro as-vectors  (vectors &body body)
+  "ensure that everything in the vars VECTORS are actually vectors and not matrices."
+  `(let ,@(mapcar #`(,a1 (gm:-> 'vector ,a1)) vectors)
+     ,@body))
