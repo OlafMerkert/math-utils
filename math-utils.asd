@@ -1,6 +1,6 @@
 (defsystem math-utils
   :serial t
-  :depends-on (ol-utils cl-utilities)
+  :depends-on (ol-utils cl-utilities iterate)
   :components ((:file "generic-math")
                (:module "number-theory"
                         :serial t

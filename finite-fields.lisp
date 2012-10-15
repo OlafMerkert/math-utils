@@ -1,6 +1,8 @@
 (defpackage :finite-fields
   (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
-  (:use :cl :ol :generic-math)
+  (:shadowing-import-from :generic-math :summing)
+  (:use :cl :ol :generic-math
+        :iterate)
   (:export
    :with-modulus
    :int%
@@ -13,9 +15,9 @@
 ;;; calculate mod p in the integer numbers
 (defclass integer-mod ()
   ((remainder :initarg :rem
-              :reader  remainder)
+              :reader   remainder)
    (modulus   :initarg :mod
-              :reader  modulus))
+              :reader   modulus))
   (:documentation "A number"))
 
 (defmethod print-object ((object integer-mod) stream)
@@ -33,7 +35,7 @@
 (defmacro with-modulus ((p) &body body)
   "Consider all verbatim integers appearing in body as being mod p."
   ;; TODO test whether p is actually prime
-  `(progn ,@ (map-tree-if #'integerp #`(int% ,a1 ,p) body)))
+  `(progn ,@(map-tree-if #'integerp #`(int% ,a1 ,p) body)))
 
 (defmacro assert-same-modulus (modulus numbers &body body)
   `(let ((,modulus (modulus ,(first numbers))))
@@ -105,14 +107,12 @@
   (with-slots ((r remainder) (p modulus)) a
     ;; for now, just do brute force.  if a root exists, its square can
     ;; be assumed to be less than p^2
-    (loop
-         for i from 0 to p
-         for b = (mod r p) then (+ b p)
-         do
-         (multiple-value-bind (root nice) (gm:sqrt b)
-           (when nice
-             (return (int% root p))))
-         finally (error "~A has no square root mod ~A" r p))))
+    (iter (for i from 0 to p)
+          (for b first (mod r p) then (+ b p))
+          (multiple-value-bind (root nice) (gm:sqrt b)
+            (when nice
+              (return (int% root p))))
+          (finally (error "~A has no square root mod ~A" r p)))))
 
 (create-binary->-wrappers integer-mod integer
     (:mod (modulus integer-mod)) (:left :right)
