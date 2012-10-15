@@ -20,6 +20,10 @@
               :reader   modulus))
   (:documentation "A number"))
 
+(defmethod initialize-instance :after ((object integer-mod) &key)
+  (with-slots (remainder modulus) object
+    (setf remainder (mod remainder modulus))))
+
 (defmethod print-object ((object integer-mod) stream)
   (with-slots (remainder modulus) object
     (format stream "[~A mod ~A]" remainder modulus)))
@@ -45,9 +49,8 @@
 
 ;; choose a unique representation
 (defmethod simplify ((a integer-mod) &key)
-  (with-slots (remainder modulus) a
-    (setf remainder (mod remainder modulus))
-    a))
+  ;; simplification happens at init time
+  a)
 
 (defmethod generic-= ((a integer-mod) (b integer-mod))
   (and (= (modulus a) (modulus b))
