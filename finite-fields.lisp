@@ -8,7 +8,8 @@
    :int%
    :integer-mod
    :remainder
-   :modulus))
+   :modulus
+   :assert-same-modulus))
 
 (in-package :finite-fields)
 
