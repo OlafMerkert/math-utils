@@ -116,3 +116,12 @@
 
 (defmethod -> ((target-type integer-loc) (number rational) &key)
   (-> 'integer-loc number :mod (modulus target-type)))
+
+(defmethod -> ((target-type (eql 'integer-mod)) (number integer-loc) &key)
+  (generic-/
+   (make-instance 'integer-mod :rem (numerator number)   :mod (modulus number))
+   (make-instance 'integer-mod :rem (denominator number) :mod (modulus number))))
+
+(defmethod -> ((target-type integer-mod) (number integer-loc) &key)
+  (assert-same-modulus p (target-type number)
+    (-> 'integer-mod number)))
