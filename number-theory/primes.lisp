@@ -2,14 +2,12 @@
   (:nicknames :nt-p)
   (:import-from :cl-utilities :expt-mod)
   (:use :cl :ol
-        :iterate)
+        :iterate
+        :number-theory)
   (:export
    :prime-p
    :fermat-test-iterations
    :divides-p
-   :table
-   :factor-search
-   :fermat
    :divisible-p
    :erastothenes-sieve))
 

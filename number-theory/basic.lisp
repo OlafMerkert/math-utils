@@ -1,6 +1,7 @@
 (defpackage :number-theory/basic
-  (:nicknames :nt)
-  (:use :cl :ol)
+  (:nicknames :nt-b)
+  (:use :cl :ol
+        :number-theory)
   (:export
    :xgcd))
 

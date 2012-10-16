@@ -1,6 +1,8 @@
 (defpackage :number-theory/factorisation
   (:nicknames :nt-f)
-  (:use :cl :ol )
+  (:use :cl :ol
+        :iterate
+        :number-theory)
   (:export
    :factorise))
 
