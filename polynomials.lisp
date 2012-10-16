@@ -1,5 +1,6 @@
 (defpackage :polynomials
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
         :iterate)
   (:export
@@ -161,7 +162,7 @@ Keep this in mind when using."
 ;;; output of polynomials
 (defmethod print-object ((polynomial polynomial) stream)
   (princ #\[ stream)
-  (iter (for i from 0 upto  (degree polynomial))
+  (iter (for i from 0 to  (degree polynomial))
         (unless (zerop i)
           (format stream " + ")
           (format stream "~A X^~A"
@@ -187,7 +188,7 @@ not be handled here, however."
           (t   (format stream " \\, X^{~A}" exponent))))))
 
 (defmethod print-object/tex ((polynomial polynomial) stream)
-  (iter (for i from 0 upto (degree polynomial))
+  (iter (for i from 0 to (degree polynomial))
         (for coefficient = (nth-coefficient% polynomial i))
         (for exponent    = (- (degree polynomial) i))
         (for zero-p      = (zero-p coefficient))
