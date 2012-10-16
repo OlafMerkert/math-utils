@@ -9,5 +9,3 @@
    :factorise))
 
 (in-package :number-theory)
-
-
