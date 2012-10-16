@@ -1,36 +1,25 @@
 (defpackage :number-theory/primes
   (:nicknames :nt-p)
   (:import-from :cl-utilities :expt-mod)
-  (:use :cl :ol)
+  (:use :cl :ol
+        :iterate)
   (:export
    :prime-p
-   :prime-p%
    :fermat-test-iterations
    :divides-p
    :table
    :factor-search
    :fermat
-   :divisible-p))
+   :divisible-p
+   :erastothenes-sieve))
 
 (in-package :number-theory/primes)
 
 ;;; some primality tests
-
-(defgeneric prime-p% (method number)
-  (:documentation "The common interface for primality testing
-  functions. prime-p will select different implementations based on
-  availability and number size. Return value is either (values
-  number), if number is prime, or (values nil divisor) or (values nil)
-  if it is not."))
-
-(defmethod prime-p% (method (number integer))
-  "by default, all numbers are assumed to be non-prime."
-  nil)
-
-(defmethod prime-p% ((method (eql 'table)) (number integer))
-  "check for a few common small primes, up to twenty"
+(defmethod prime-p/table (number)
+  "check for a few common small primes, up to ten."
   (case number
-    ((2 3 5 7 11 13 17 19 23) number)
+    ((2 3 5 7) number)
     (t nil)))
 
 (defun divides-p (d n)
@@ -47,7 +36,7 @@
     (when (divides-p i n)
       (return i))))
 
-(defmethod prime-p%  ((method (eql 'factor-search)) (n integer))
+(defun prime-p/factor-search  (n)
   "check for all possible factors. If this is not a prime, there must
 be a factor lower than (sqrt n)."
   (declare (inline divisible-p))
@@ -57,7 +46,7 @@ be a factor lower than (sqrt n)."
 
 (defparameter fermat-test-iterations 10)
 
-(defmethod prime-p%  ((method (eql 'fermat)) (n integer))
+(defun prime-p/fermat  (n)
   "perform a fermat test to determine with decent probability, whether
 n is a prime or not."
   (let ((k   fermat-test-iterations)
@@ -69,14 +58,28 @@ n is a prime or not."
         (unless (= 1 p)
           (return nil))))))
 
+(declaim (inline prime-p/table prime-p/factor-search prime-p/fermat))
+
 (defun prime-p (number)
-  "Test whether the given integer is a prime number."
+  "Test whether the given integer is a prime number. prime-p will
+  select different implementations based on availability and number
+  size. Return value is either (values number), if number is prime,
+  or (values nil divisor) or (values nil) if it is not."
   (cond ((minusp number) (prime-p (- number))) ; deal with negatives first
-        ((<= number 25)
-         (prime-p% 'table number))
-        ((<= number 10000)
-         (prime-p% 'factor-search number))
+        ((< number 11)
+         (prime-p/table number))
+        ((< number 10000)
+         (prime-p/factor-search number))
         (t
-         (prime-p% 'fermat number))))
+         (prime-p/fermat number))))
 
-
+(defun erastothenes-sieve (s)
+  "Sieb des Erastothenes. Berechne einen Vektor aller Primzahlen <= S."
+  (iter (with candidates = (make-array (+ s 1)
+                                       :element-type 'boolean
+                                       :initial-element t) )
+        (for i initially 2 then (position t candidates :start (+ i 1)))
+        (while i)
+        (iter (for j from (* 2 i) by i to s)
+              (setf (aref candidates j) nil))
+        (collect i result-type vector)))
