@@ -168,6 +168,9 @@ to override this if a better algorithm is available."
       (= 1 b)
       (one-p b)))
 
+;; TODO leverage iterate for this sort of stuff. perhaps even use a
+;; macro to simplify things even more. (we probably want a multiplying
+;; thingy too)
 (defmacro! summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
      (do ((,var ,g!start (cl:+ 1 ,var)))
