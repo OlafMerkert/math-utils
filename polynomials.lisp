@@ -11,7 +11,10 @@
    :coefficients
    :make-polynomial
    :constant-coefficient
-   :format-monomial/tex))
+   :format-monomial/tex
+   :format-monomial
+   :spacer
+   :monomial-form))
 
 (in-package :polynomials)
 
@@ -160,34 +163,35 @@ Keep this in mind when using."
                (always (gm:= a b))))))
 
 ;;; output of polynomials
-(defmethod print-object ((polynomial polynomial) stream)
-  (princ #\[ stream)
-  (iter (for i from 0 to  (degree polynomial))
-        (unless (zerop i)
-          (format stream " + ")
-          (format stream "~A X^~A"
-                  (nth-coefficient% polynomial i)
-                  (- (degree polynomial) i))))
-  (princ #\] stream)
-  #|(terpri)|#)
+(defun monomial-form (stream exponent &optional (base "X"))
+  (if *tex-output-mode*
+      (format stream "~A^{~A}" base exponent)
+      (format stream "~A^~A"   base exponent)))
 
-(defun format-monomial/tex (stream coefficient exponent)
+(defun spacer (stream)
+  (if *tex-output-mode*
+      (princ " \\, " stream)
+      (princ " " stream)))
+
+(defun format-monomial (stream coefficient exponent)
   "Format a monomial expression nicely, such that nothing like X^0 =
 1, X^1 = X or 1 \, X^n = X^n appears.  Something like 0 \, X^n will
 not be handled here, however."
   (if (one-p coefficient)
       (case exponent
-        ((0) (print-object/tex coefficient stream))
+        ((0) (print-object/helper coefficient stream))
         ((1) (princ "X" stream))
-        (t   (format stream "X^{~A}" exponent)))
+        (t   (monomial-form stream exponent)))
       (progn
-        (print-object/tex coefficient stream)
+        (print-object/helper coefficient stream)
         (case exponent
           ((0))
-          ((1) (princ " \\, X" stream))
-          (t   (format stream " \\, X^{~A}" exponent))))))
+          ((1) (spacer stream)
+               (princ "X" stream))
+          (t   (spacer stream)
+               (monomial-form stream exponent))))))
 
-(defmethod print-object/tex ((polynomial polynomial) stream)
+(defun print-polynomial (polynomial stream)
   (iter (for i from 0 to (degree polynomial))
         (for coefficient = (nth-coefficient% polynomial i))
         (for exponent    = (- (degree polynomial) i))
@@ -195,4 +199,14 @@ not be handled here, however."
         (unless (or (zerop i) zero-p)
           (format stream " + "))
         (unless zero-p 
-          (format-monomial/tex stream coefficient exponent))))
+          (format-monomial stream coefficient exponent))))
+
+(defmethod print-object/tex ((polynomial polynomial) stream)
+  (let ((*tex-output-mode* t))
+    (print-polynomial polynomial stream)))
+
+(defmethod print-object ((polynomial polynomial) stream)
+  (let ((*tex-output-mode* nil))
+    (princ #\[ stream)
+    (print-polynomial polynomial stream)  
+    (princ #\] stream)))

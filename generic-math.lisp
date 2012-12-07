@@ -22,7 +22,9 @@
    :one-p
    :summing
    :create-binary->-wrappers
-   :print-object/tex))
+   :print-object/tex
+   :print-object/helper
+   :*tex-output-mode*))
 
 (in-package :generic-math)
 
@@ -203,10 +205,21 @@ to override this if a better algorithm is available."
   ;; by default fall back to standard format call
   (format stream "~A" object))
 
-
+;; normal numbers
 (defmethod print-object/tex ((number integer) stream)
   (format stream "~A" number))
 
 (defmethod print-object/tex ((number rational) stream)
   (format stream "~:[~;-~]\\frac{~A}{~A}" (minusp number)
           (abs (numerator number)) (denominator number)))
+
+;; helper functions to share code for tex / non-tex output
+(defparameter *tex-output-mode* t)
+
+(defun print-object/helper (obj stream)
+  (if *tex-output-mode*
+      (print-object/tex obj stream)
+      (typecase obj
+        ;; TODO add other types if necessary
+        (number (princ obj stream))
+        (t (print-object obj stream)))))

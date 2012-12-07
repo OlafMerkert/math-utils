@@ -333,20 +333,7 @@ match, consider the series equal."
 ;;; output of the power series
 (defparameter print-additional-terms 5)
 
-(defmethod print-object ((series power-series) stream)
-    (princ #\[ stream)
-    (iter (for i from 0 to (+ print-additional-terms
-                              (max 0 (degree series))))
-          (unless (zerop i)
-            (format stream " + ")
-            (format stream "~A X^~A"
-                    (nth-coefficient% series i)
-                    (- (degree series) i))))
-  (format stream " + ...")
-  (princ #\] stream)
-  #|(terpri stream)|#)
-
-(defmethod print-object/tex ((series power-series) stream)
+(defun print-power-series (series stream)
   (iter (for i from 0 to (+ print-additional-terms
                             (max 0 (degree series))))
         (for coefficient = (nth-coefficient% series i))
@@ -355,7 +342,19 @@ match, consider the series equal."
         (unless (or (zerop i) zero-p)
           (format stream " + "))
         (unless zero-p
-          (format-monomial/tex stream coefficient exponent)))
+          (format-monomial stream coefficient exponent))))
+
+(defmethod print-object ((series power-series) stream)
+  (let ((*tex-output-mode* nil))
+    (princ #\[ stream)
+    (print-power-series series stream)
+    (format stream " + ...")
+    (princ #\] stream)
+    #|(terpri stream)|#))
+
+(defmethod print-object/tex ((series power-series) stream)
+  (let ((*tex-output-mode* t))
+    (print-power-series series stream))
   (format stream " + \\dots"))
 
 (defmethod print-object ((series constant-series) stream)
