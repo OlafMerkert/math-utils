@@ -1,5 +1,7 @@
 (defpackage :elliptic-curve-weierstrass
   (:nicknames :ec-ws)
+  (:shadowing-import-from :generic-math
+                          :+ :* :/ :expt :- :=)
   (:use :cl :ol )
   (:export))
 
