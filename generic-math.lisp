@@ -223,3 +223,6 @@ to override this if a better algorithm is available."
         ;; TODO add other types if necessary
         (number (princ obj stream))
         (t (print-object obj stream)))))
+
+;;; TODO compiler macros to replace gm:op with cl:op if all arguments
+;;; are standard cl types

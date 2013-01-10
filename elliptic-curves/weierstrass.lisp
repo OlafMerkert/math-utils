@@ -107,5 +107,42 @@
             (/ (- y2 y1) (- x2 x1))
             (/ (- (* y1 x2) (* y2 x1))
                (- x2 x1))
-            x1 x2)
-  )
+            x1 x2))
+
+;; inverse of points
+(defmethod gm:zero ((point ec-point-ws))
+  (infinite-point (curve point)))
+
+(defmethod gm:zero ((point ec-point-infinity))
+  point)
+
+(defmethod gm:generic-- ((p1 ec-point-infinity) (p2 ec-point-infinity))
+  p1)
+
+(defmethod gm:generic-- ((p1 ec-point-ws) (p2 ec-point-infinity))
+  p1)
+
+(progn
+  (defmethod gm:generic-- ((p1 ec-point-infinity) (p2 ec-point-ws))
+   #1=(make-instance 'ec-point-ws
+                     :curve (curve p2)
+                     :x (x p2)
+                     :y (- (y p2))))
+
+ (defmethod gm:generic-- ((p1 ec-point-ws) (p2 ec-point-ws))
+   (gm:generic-+ p1 #1#)))
+
+
+;; scalar multiplication
+
+(defmethod gm:generic-* ((n integer) (point ec-point-infinity))
+  point)
+
+(defmethod gm:generic-* ((n integer) (point ec-point-ws))
+  (if (minusp n)
+      (gm:generic-* (cl:- n) (gm:- point))
+      (square-multiply point n #'gm:generic-+
+                       ;; custom squaring
+                       (lambda (point)
+                         (ec-ws-2times (curve point) (x point) (y point))))))
+
