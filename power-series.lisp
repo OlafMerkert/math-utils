@@ -17,7 +17,8 @@
    :constant-coefficient
    :degree
    :coefficients
-   :make-power-series))
+   :make-power-series
+   :leading-coefficient))
 
 (in-package :power-series)
 
@@ -50,6 +51,14 @@
 
 (defmethod simplified-p ((series constant-series))
   t)
+
+(defmethod leading-coefficient ((power-series power-series))
+  (if (simplified-p power-series)
+      (nth-coefficient% power-series 0)
+      (error "Trying to take leading-coefficient of non-simplified power series.")))
+
+(defmethod leading-coefficient ((series constant-series))
+    (nth-coefficient% series 0))
 
 (defmethod nth-coefficient% ((series power-series) n)
   "Return the nth element of the coefficients pipe--or zero, if the

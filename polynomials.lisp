@@ -14,7 +14,8 @@
    :format-monomial/tex
    :format-monomial
    :spacer
-   :monomial-form))
+   :monomial-form
+   :leading-coefficient))
 
 (in-package :polynomials)
 
@@ -30,6 +31,11 @@
 ;; TODO unify polynomial interface with power series interface
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
+
+(defmethod leading-coefficient ((polynomial polynomial))
+  (if (simplified-p polynomial)
+      (nth-coefficient% polynomial 0)
+      (error "Trying to take leading-coefficient of non-simplified polynomial.")))
 
 (defmethod nth-coefficient% ((polynomial polynomial) n)
   (aref (coefficients polynomial) n))
