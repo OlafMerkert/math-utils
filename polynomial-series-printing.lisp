@@ -14,7 +14,9 @@
    #:print-ellipsis
    #:with-printer
    #:print-monomial
-   #:print-polynomial))
+   #:print-polynomial
+   #:print-additional-terms
+   #:print-power-series))
 
 (in-package :polynomial-series-printing)
 
@@ -55,7 +57,7 @@
             (t   (print-spacer)
                  (print-superscript 'X exponent)))))))
 
-(defun print-polynomial (polynomial printer)
+(defun print-polynomial (printer polynomial)
   (iter (for i from 0 to (degree polynomial))
         (for coefficient = (nth-coefficient% polynomial i))
         (for exponent    = (- (degree polynomial) i))
@@ -63,14 +65,36 @@
         (for minus-p     = (minus-p coefficient))
         (cond ((or (zerop i) zero-p))
               (minus-p
-               (print-operator stream '-))
+               (print-operator printer '-))
               (t
-               (print-operator stream '+)))
+               (print-operator printer '+)))
         (unless zero-p 
           (print-monomial printer (if (and (< 0 i) minus-p)
                                       (gm:- coefficient)
                                       coefficient)
                           exponent))))
+
+;;; output of power series
+(defparameter print-additional-terms 5)
+
+(defun print-power-series (printer series)
+  (with-printer (printer)
+    (iter (for i from 0 to (+ print-additional-terms
+                              (max 0 (degree series))))
+          (for coefficient = (nth-coefficient% series i))
+          (for exponent    = (- (degree series) i))
+          (for zero-p      = (zero-p coefficient))
+          (for minus-p     = (minus-p coefficient))
+          (cond ((or (zerop i) zero-p))
+                (minus-p
+                 (print-operator '-))
+                (t
+                 (print-operator '+)))
+          (unless zero-p
+            (print-monomial printer coefficient exponent)))
+    ;; now add the ellipsis
+    (print-operator '+)
+    (print-ellipsis)))
 
 ;; implementation for print-object
 (defclass repl-printer ()
@@ -100,8 +124,19 @@
 
 (defmethod print-object ((polynomial polynomial) stream)
   (princ #\[ stream)
-  (print-polynomial polynomial (make-instance 'repl-printer :stream stream))  
+  (print-polynomial (make-instance 'repl-printer :stream stream) polynomial)  
   (princ #\] stream))
+
+(defmethod print-object ((series power-series) stream)
+  (princ #\[ stream)
+  (print-power-series (make-instance 'repl-printer :stream stream) series)
+  (princ #\] stream))
+
+(defmethod print-object ((series constant-series) stream)
+  (let ((print-additional-terms 0))
+    (princ #\[ stream)
+    (print-power-series (make-instance 'repl-printer :stream stream) series)
+    (princ #\] stream)))
 
 ;; implementation for print-object/tex
 (defclass tex-printer ()
@@ -128,5 +163,11 @@
 
 
 (defmethod print-object/tex ((polynomial polynomial) stream)
-  (print-polynomial polynomial
-                    (make-instance 'tex-printer :stream stream)))
+  (print-polynomial (make-instance 'tex-printer :stream stream) polynomial))
+
+(defmethod print-object/tex ((series power-series) stream)
+  (print-power-series (make-instance 'tex-printer :stream stream) series))
+
+(defmethod print-object/tex ((series constant-series) stream)
+  (let ((print-additional-terms 0))
+    (print-power-series (make-instance 'tex-printer :stream stream) series)))

@@ -24,7 +24,8 @@
    :create-binary->-wrappers
    :print-object/tex
    :print-object/helper
-   :*tex-output-mode*))
+   :*tex-output-mode*
+   :minus-p))
 
 (in-package :generic-math)
 

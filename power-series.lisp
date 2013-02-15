@@ -339,35 +339,3 @@ match, consider the series equal."
 (defmethod series-remainder ((series constant-series))
   (zero series))
 
-;;; output of the power series
-(defparameter print-additional-terms 5)
-
-(defun print-power-series (series stream)
-  (iter (for i from 0 to (+ print-additional-terms
-                            (max 0 (degree series))))
-        (for coefficient = (nth-coefficient% series i))
-        (for exponent    = (- (degree series) i))
-        (for zero-p      = (zero-p coefficient))
-        (unless (or (zerop i) zero-p)
-          (format stream " + "))
-        (unless zero-p
-          (format-monomial stream coefficient exponent))))
-
-(defmethod print-object ((series power-series) stream)
-  (let ((*tex-output-mode* nil))
-    (princ #\[ stream)
-    (print-power-series series stream)
-    (format stream " + ...")
-    (princ #\] stream)
-    #|(terpri stream)|#))
-
-(defmethod print-object/tex ((series power-series) stream)
-  (let ((*tex-output-mode* t))
-    (print-power-series series stream))
-  (format stream " + \\dots"))
-
-(defmethod print-object ((series constant-series) stream)
-  (format stream "[~A X^0 + ..]" (constant-coefficient series)))
-
-(defmethod print-object/tex ((series constant-series) stream)
-  (print-object/tex (constant-coefficient series) stream))
