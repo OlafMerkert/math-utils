@@ -13,4 +13,7 @@
                                                    "finite-fields"))
                (:file "polynomials"   :depends-on ("generic-math"))
                (:file "power-series"  :depends-on ("generic-math"
-                                                   "polynomials"))))
+                                                   "polynomials"))
+               (:file "polynomial-series-printing" :depends-on ("generic-math"
+                                                                "polynomials"
+                                                                "power-series"))))
