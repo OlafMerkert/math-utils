@@ -150,6 +150,19 @@ to override this if a better algorithm is available."
 (defmethod one-p ((number number))
   (cl:= (one number) number))
 
+;; sign extraction is useful for nice representation of stuff
+(defgeneric minus-p (number)
+  (:documentation
+   "Return true if the number is negative, of course this only makes
+   sense in an ordered field/domain."))
+
+;; by default, nothing is negative
+(defmethod minus-p (number)
+  nil)
+
+(defmethod minus-p ((number real))
+  (minusp number))
+
 (defmethod generic-= ((a (eql 0)) b)
   (if (numberp b)
       (zerop b)
