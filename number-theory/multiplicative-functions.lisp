@@ -30,6 +30,9 @@
       0
       -1))
 
+(defmultfun euler-phi2 ()
+  (* (- (expt p 2) 1) (expt p (* 2 (- e 1)))))
+
 ;; sophisticated examples, Chinese Remainder theorem
 (defun crt-map-to-product (n)
   (apply-multiplicative
