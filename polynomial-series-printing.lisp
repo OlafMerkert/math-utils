@@ -91,7 +91,10 @@
                 (t
                  (print-operator '+)))
           (unless zero-p
-            (print-monomial printer coefficient exponent)))
+            (print-monomial printer (if (and (< 0 i) minus-p)
+                                        (gm:- coefficient)
+                                        coefficient)
+                            exponent)))
     ;; now add the ellipsis
     (print-operator '+)
     (print-ellipsis)))
