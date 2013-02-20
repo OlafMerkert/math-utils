@@ -25,13 +25,27 @@
 (defmultfun euler-phi ()
   (* (- p 1) (expt p (- e 1))))
 
-(defmultfun square-free ()
+(defmultfun moebius ()
   (if (< 1 e)
       0
       -1))
 
 (defmultfun euler-phi2 ()
   (* (- (expt p 2) 1) (expt p (* 2 (- e 1)))))
+
+(defmultfun liouville ()
+  (if (oddp e)
+      -1
+      1))
+
+(defmultfun divisor-sum (k)
+  (iter (for i from 0 to e)
+        (summing (expt p (* i k)))))
+
+(defmultfun convolution (f g)
+  (iter (for i from 0 to e)
+        (summing (* (funcall f (expt p i))
+                    (funcall g (expt p (- e i)))))))
 
 ;; sophisticated examples, Chinese Remainder theorem
 (defun crt-map-to-product (n)
