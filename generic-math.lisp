@@ -119,6 +119,9 @@ to override this if a better algorithm is available."
 (defmethod generic-= ((a number) (b number))
   (cl:= a b))
 
+(defmethod generic-= ((a integer) (b integer))
+  (cl:= a b))
+
 (defgeneric sqrt (number)
   (:documentation
    "Find a square root of NUMBER and try to preserve the type of
@@ -164,6 +167,8 @@ to override this if a better algorithm is available."
 (defmethod minus-p ((number real))
   (minusp number))
 
+
+;; treat 0 and 1 special for comparison
 (defmethod generic-= ((a (eql 0)) b)
   (if (numberp b)
       (zerop b)
@@ -176,12 +181,12 @@ to override this if a better algorithm is available."
 
 (defmethod generic-= ((a (eql 1)) b)
   (if (numberp b)
-      (= 1 b)
+      (cl:= 1 b)
       (one-p b)))
 
 (defmethod generic-= (b (a (eql 1)))
   (if (numberp b)
-      (= 1 b)
+      (cl:= 1 b)
       (one-p b)))
 
 ;; TODO leverage iterate for this sort of stuff. perhaps even use a

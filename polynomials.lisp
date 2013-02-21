@@ -159,7 +159,7 @@ Keep this in mind when using."
   "Compare two polynomials for equality, assuming both are already
   simplified."
   (let ((d (degree poly-a)))
-    (and (= d (degree poly-b))
+    (and (cl:= d (degree poly-b))
          (iter (for a in-vector (coefficients poly-a))
                (for b in-vector (coefficients poly-b) )
                (always (gm:= a b))))))
