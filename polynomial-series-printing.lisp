@@ -58,46 +58,51 @@
                  (print-superscript 'X exponent)))))))
 
 (defun print-polynomial (printer polynomial)
-  (iter (for i from 0 to (degree polynomial))
-        (for coefficient = (nth-coefficient% polynomial i))
-        (for exponent    = (- (degree polynomial) i))
-        (for zero-p      = (zero-p coefficient))
-        (for minus-p     = (minus-p coefficient))
-        (cond ((or (zerop i) zero-p))
-              (minus-p
-               (print-operator printer '-))
-              (t
-               (print-operator printer '+)))
-        (unless zero-p 
-          (print-monomial printer (if (and (< 0 i) minus-p)
-                                      (gm:- coefficient)
-                                      coefficient)
-                          exponent))))
+  (if (zero-p polynomial)
+      (print-number printer 0)
+      (iter (for i from 0 to (degree polynomial))
+            (for coefficient = (nth-coefficient% polynomial i))
+            (for exponent    = (- (degree polynomial) i))
+            (for zero-p      = (zero-p coefficient))
+            (for minus-p     = (minus-p coefficient))
+            (cond ((or (zerop i) zero-p))
+                  (minus-p
+                   (print-operator printer '-))
+                  (t
+                   (print-operator printer '+)))
+            (unless zero-p 
+              (print-monomial printer (if (and (< 0 i) minus-p)
+                                          (gm:- coefficient)
+                                          coefficient)
+                              exponent)))))
 
 ;;; output of power series
 (defparameter print-additional-terms 5)
 
 (defun print-power-series (printer series)
   (with-printer (printer)
-    (iter (for i from 0 to (+ print-additional-terms
-                              (max 0 (degree series))))
-          (for coefficient = (nth-coefficient% series i))
-          (for exponent    = (- (degree series) i))
-          (for zero-p      = (zero-p coefficient))
-          (for minus-p     = (minus-p coefficient))
-          (cond ((or (zerop i) zero-p))
-                (minus-p
-                 (print-operator '-))
-                (t
-                 (print-operator '+)))
-          (unless zero-p
-            (print-monomial printer (if (and (< 0 i) minus-p)
-                                        (gm:- coefficient)
-                                        coefficient)
-                            exponent)))
-    ;; now add the ellipsis
-    (print-operator '+)
-    (print-ellipsis)))
+    (if (zero-p series)
+        (print-number 0)
+        (progn
+          (iter (for i from 0 to (+ print-additional-terms
+                                    (max 0 (degree series))))
+                (for coefficient = (nth-coefficient% series i))
+                (for exponent    = (- (degree series) i))
+                (for zero-p      = (zero-p coefficient))
+                (for minus-p     = (minus-p coefficient))
+                (cond ((or (zerop i) zero-p))
+                      (minus-p
+                       (print-operator '-))
+                      (t
+                       (print-operator '+)))
+                (unless zero-p
+                  (print-monomial printer (if (and (< 0 i) minus-p)
+                                              (gm:- coefficient)
+                                              coefficient)
+                                  exponent)))
+          ;; now add the ellipsis
+          (print-operator '+)
+          (print-ellipsis)))))
 
 ;; implementation for print-object
 (defclass repl-printer ()
