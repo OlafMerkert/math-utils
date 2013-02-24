@@ -107,6 +107,9 @@ to override this if a better algorithm is available."
   But never call this, call instead GM:=, which first simplifies
   everything!"))
 
+(defmethod generic-= (a b)
+  nil)
+
 (defun = (&rest arguments)
    (case (length arguments)
      ((0) (error "invalid number of arguments: 0"))
