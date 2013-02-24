@@ -11,7 +11,8 @@
    :coefficients
    :make-polynomial
    :constant-coefficient
-   :leading-coefficient))
+   :leading-coefficient
+   :derivative))
 
 (in-package :polynomials)
 
@@ -171,3 +172,12 @@ Keep this in mind when using."
                   :coefficients (map 'vector
                                      (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
                                      (coefficients polynomial)))))
+
+(defmethod derivative ((polynomial polynomial))
+  "Calculate the usual derivative of a polynomial."
+  (simplify
+   (make-instance 'polynomial
+                  :coefficients (map 'vector #'*
+                                     (subseq (coefficients polynomial)
+                                             0 (degree polynomial))
+                                     (mrange (degree polynomial) 1)))))

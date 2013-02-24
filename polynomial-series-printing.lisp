@@ -179,3 +179,5 @@
 (defmethod print-object/tex ((series constant-series) stream)
   (let ((print-additional-terms 0))
     (print-power-series (make-instance 'tex-printer :stream stream) series)))
+
+;; TODO very few coefficients in power-series with low degree
