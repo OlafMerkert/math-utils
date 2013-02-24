@@ -2,7 +2,7 @@
   (:nicknames :ec-ws)
   (:shadowing-import-from :generic-math
                           :+ :* :/ :expt :- :=)
-  (:use :cl :ol )
+  (:use :cl :ol :iterate)
   (:export))
 
 ;;; TODO use operations from generic math
@@ -67,6 +67,12 @@
 
 (defmethod infinite-point ((curve elliptic-curve-weierstrass))
   (make-instance 'ec-point-infinity :curve curve))
+
+(defmethod gm:zero-p ((point ec-point-infinity))
+  t)
+
+(defmethod gm:zero-p ((point ec-point-ws))
+  nil)
 
 (defmethod gm:generic-+ ((p1 ec-point-infinity) (p2 ec-point-infinity))
   p1)
@@ -148,3 +154,59 @@
                        (lambda (point)
                          (ec-ws-2times (curve point) (x point) (y point))))))
 
+;; reparametrise to integer parameters
+(defun ec-ws-iso (curve c)
+  (let ((new-curve (make-instance 'elliptic-curve-weierstrass
+                         :a (* (^ c 4) (ws-a curve))
+                         :b (* (^ c 6) (ws-b curve)))))
+   (values (lambda (point)
+             (unless (eq (curve point) curve)
+               (error "Point does not lie on the source curve."))
+             (typecase point
+               (ec-point-infinity (infinite-point new-curve))
+               (ec-point-ws (make-instance 'ec-point-ws
+                                           :curve new-curve
+                                           :x (* (^ c 2) (x point))
+                                           :y (* (^ c 3) (y point))))))
+           new-curve)))
+
+;; determine the desired c
+(defun eliminate-denominators (a b)
+  "find integer c s.t. c^4 a and c^6 b are both integers"
+  (let* ((factors-a (nt:factorise (denominator a) :singletons))
+         (factors-b (nt:factorise (denominator b) :singletons))
+         (primes (union (mapcar #'car factors-a)
+                        (mapcar #'car factors-b))))
+    (princ factors-a) (terpri) (princ factors-b) (terpri)
+    (princ primes) (terpri)
+    (reduce #'* primes :key
+            (lambda (p)
+              (^ p
+                 (ceiling
+                  (max 0
+                       (/ (or (assoc1 p factors-a) 0) 4)
+                       (/ (or (assoc1 p factors-b) 0) 6))))))))
+
+(defun lutz-nagell-test (curve point)
+  (or (typep point 'ec-point-infinity)
+      (multiple-value-bind (iso curve)
+          (ec-ws-iso curve
+                     (eliminate-denominators (ws-a curve) (ws-b curve)))
+        (let ((point (funcall iso point)))
+          (cond ((not (and (integerp (x point)) (integerp (y point))))
+                 nil)
+                ((not (nt:divides-p (^ (y point) 2)
+                                    (discriminant curve)))
+                 nil)
+                (t t))))))
+
+(defun order-find (group-element multiplication identity-test &optional (order-bound))
+  (iter (for n from 1 to order-bound)
+        (for g initially group-element then (funcall multiplication g group-element))
+        (when (funcall identity-test g)
+          (return n))
+        (finally (return nil))))
+
+(defun ec-rational-torsion-p (point)
+  (when (lutz-nagell-test (curve point) point)
+    (order-find point #'gm:+ #'gm:zero-p 12)))
