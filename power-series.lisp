@@ -339,3 +339,18 @@ match, consider the series equal."
 (defmethod series-remainder ((series constant-series))
   (zero series))
 
+;;; reducing mod p
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (power-series power-series) &key (mod 2))
+  (simplify
+   (make-instance 'power-series
+                  :degree (degree power-series)
+                  :coefficients
+                  (lazy-array-map
+                   (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
+                   (coefficients power-series)))))
+
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (constant-series constant-series) &key (mod 2))
+  (make-constant-series (-> 'finite-fields:integer-mod
+                            (constant-coefficient constant-series) :mod mod)))
+
+
