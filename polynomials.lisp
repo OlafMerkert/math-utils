@@ -163,3 +163,11 @@ Keep this in mind when using."
          (iter (for a in-vector (coefficients poly-a))
                (for b in-vector (coefficients poly-b) )
                (always (gm:= a b))))))
+
+;;; reducing mod p
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (polynomial polynomial) &key (mod 2))
+  (simplify
+   (make-instance 'polynomial
+                  :coefficients (map 'vector
+                                     (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
+                                     (coefficients polynomial)))))
