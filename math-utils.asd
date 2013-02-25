@@ -1,6 +1,7 @@
 (defsystem math-utils
   :depends-on (ol-utils cl-utilities iterate)
   :components ((:file "generic-math")
+               (:file "elementary-combinatorics")
                (:module "number-theory"
                         :components ((:file "packages")
                                      (:file "basic"         :depends-on ("packages"))
