@@ -3,7 +3,25 @@
   (:shadowing-import-from :generic-math
                           :+ :* :/ :expt :- :=)
   (:use :cl :ol :iterate)
-  (:export))
+  (:export
+   #:elliptic-curve-weierstrass
+   #:elliptic-curve
+   #:ws-a
+   #:ws-b
+   #:discriminant
+   #:j-invariant
+   #:point-2
+   #:x
+   #:y
+   #:ec-point-ws
+   #:on-curve-p
+   #:curve
+   #:ec-point-infinity
+   #:infinite-point
+   #:ec-ws-iso
+   #:lutz-nagell-test
+   #:ec-rational-p
+   #:ec-rational-torsion-p))
 
 ;;; TODO use operations from generic math
 
@@ -200,6 +218,7 @@
                  nil)
                 (t t))))))
 
+;; TODO move to a more general place
 (defun order-find (group-element multiplication identity-test &optional (order-bound))
   (iter (for n from 1 to order-bound)
         (for g initially group-element then (funcall multiplication g group-element))
