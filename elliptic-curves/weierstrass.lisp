@@ -207,6 +207,12 @@
           (return n))
         (finally (return nil))))
 
+(defun ec-rational-p (point)
+  (and (rationalp (x point))
+       (rationalp (y point))
+       (rationalp (ws-a (curve point)))
+       (rationalp (ws-b (curve point)))))
+
 (defun ec-rational-torsion-p (point)
   (when (lutz-nagell-test (curve point) point)
     (order-find point #'gm:+ #'gm:zero-p 12)))
