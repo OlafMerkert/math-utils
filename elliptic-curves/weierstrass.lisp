@@ -115,25 +115,26 @@
 
 (declaim (inline  ec-ws-+%  ec-ws-2times  ec-ws-+))
 
-(defun ec-ws-+% (curve lambda nu x1 &optional (x2 x1))
-  (make-instance 'ec-point-ws
-                 :curve curve
-                 :x (- (^ lambda 2) x1 x2)
-                 :y (- (* lambda (+ x1 x2) ) (^ lambda 3) nu)))
+;; TODO check these algorithms // might have some mistake
+
+(defun ec-ws-+% (curve m y1 x1 &optional (x2 x1))
+  (let ((c (- y1 (* m x1))))
+   (make-instance 'ec-point-ws
+                  :curve curve
+                  :x (- (^ m 2) x1 x2)
+                  :y (- (* m (+ x1 x2)) (^ m 3) c))))
 
 (defun ec-ws-2times (curve x1 y1)
   (with-slots (a b) curve
     (ec-ws-+% curve
               (/ (+ (* 3 (^ x1 2)) a) 2 y1)
-              (/ (+ (- (^ x1 3) (* a x1) (* 2 b)))
-                 2 y1)
+              y1
               x1)))
 
 (defun ec-ws-+ (curve x1 y1 x2 y2)
   (ec-ws-+% curve
             (/ (- y2 y1) (- x2 x1))
-            (/ (- (* y1 x2) (* y2 x1))
-               (- x2 x1))
+            y1
             x1 x2))
 
 ;; inverse of points
