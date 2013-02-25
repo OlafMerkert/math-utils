@@ -21,7 +21,8 @@
    #:ec-ws-iso
    #:lutz-nagell-test
    #:ec-rational-p
-   #:ec-rational-torsion-p))
+   #:ec-rational-torsion-p
+   #:ec-torsion-p))
 
 ;;; TODO use operations from generic math
 
@@ -233,3 +234,6 @@
 (defun ec-rational-torsion-p (point)
   (when (lutz-nagell-test (curve point) point)
     (order-find point #'gm:+ #'gm:zero-p 12)))
+
+(defun ec-torsion-p (point &optional (order-bound 40))
+  (order-find point #'gm:+ #'gm:zero-p order-bound))
