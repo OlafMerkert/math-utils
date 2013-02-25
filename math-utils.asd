@@ -18,6 +18,5 @@
                (:file "polynomial-series-printing" :depends-on ("generic-math"
                                                                 "polynomials"
                                                                 "power-series"))
-               (:module "elliptic-curves"
-                        :components ((:file "weierstrass" :depends-on ("generic-math"
-                                                                       "number-theory"))))))
+               (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
+                        :components ((:file "weierstrass")))))

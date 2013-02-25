@@ -195,8 +195,6 @@
          (factors-b (nt:factorise (denominator b) :singletons))
          (primes (union (mapcar #'car factors-a)
                         (mapcar #'car factors-b))))
-    (princ factors-a) (terpri) (princ factors-b) (terpri)
-    (princ primes) (terpri)
     (reduce #'* primes :key
             (lambda (p)
               (^ p
