@@ -14,4 +14,4 @@
         (t 
          (iter (for i from 1 to k)
                (for j downfrom n)
-               (multiplying (/ i j))))))
+               (multiplying (/ j i))))))
