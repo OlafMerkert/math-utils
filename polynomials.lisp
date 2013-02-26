@@ -177,7 +177,7 @@ Keep this in mind when using."
   "Calculate the usual derivative of a polynomial."
   (simplify
    (make-instance 'polynomial
-                  :coefficients (map 'vector #'*
+                  :coefficients (map 'vector #'gm:*
                                      (subseq (coefficients polynomial)
                                              0 (degree polynomial))
                                      (mrange (degree polynomial) 1)))))
