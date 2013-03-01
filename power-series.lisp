@@ -354,3 +354,4 @@ match, consider the series equal."
                             (constant-coefficient constant-series) :mod mod)))
 
 
+;;; in case of finite power series, the precision should be explicit
