@@ -3,6 +3,7 @@
   :components ((:file "generic-math")
                (:file "elementary-combinatorics")
                (:module "number-theory"
+                        :depends-on ("generic-math")
                         :components ((:file "packages")
                                      (:file "basic"         :depends-on ("packages"))
                                      (:file "primes"        :depends-on ("packages"))

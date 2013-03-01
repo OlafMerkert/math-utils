@@ -9,7 +9,8 @@
    :fermat-test-iterations
    :divides-p
    :divisible-p
-   :erastothenes-sieve))
+   :erastothenes-sieve
+   :ord-p))
 
 (in-package :number-theory/primes)
 
@@ -24,6 +25,28 @@
   "determine whether the integer d divides the integer n."
   (declare (inline))
   (zerop (mod n d)))
+
+(defun ord-p/integer (p n)
+  "determine the largest power P^K dividing the integer N."
+  (do ((m n)
+       (k 0))
+      (nil)
+    (multiple-value-bind (q r) (floor m p)
+      (cond ((zerop r)
+             (incf k)
+             (setf m q))
+            (t (return (values k m)))))))
+
+(defun ord-p (p n)
+  "determine the largest power P^K dividing the rational N."
+  (if (integerp n)
+      (ord-p/integer p n)
+      (multiple-value-bind (k-n f-n)
+          (ord-p/integer p (numerator n))
+        (multiple-value-bind (k-d f-d)
+            (ord-p/integer p (denominator n))
+          (values (- k-n k-d)
+                  (/ f-n f-d))))))
 
 (defun divisible-p (n)
   "search for a true divisor (not 1 or the number itself) of the
