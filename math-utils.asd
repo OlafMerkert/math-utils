@@ -22,5 +22,8 @@
                                                                 "power-series"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
-               (:file "valuations" :depends-on ("number-theory" "polynomials" "power-series"))
-               (:file "valuations-coeff" :depends-on ("valuations" "polynomials" "power-series"))))
+               (:file "valuations" :depends-on ("generic-math"
+                                                "number-theory"
+                                                "polynomials" "power-series"))
+               (:file "valuations-coeff" :depends-on ("valuations"
+                                                      "polynomials" "power-series"))))

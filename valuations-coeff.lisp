@@ -16,7 +16,6 @@
 (defun val (valuation)
   (lambda (x) (valuate-exp valuation x)))
 
-
 ;;; fall back to ordinary valuation in case of elementary expressions
 ;;; like rationals
 (defmethod valuate-exp (valuation (rational rational))

@@ -3,33 +3,19 @@
   (:use :cl :ol :iterate )
   (:import-from :polynomials  #:polynomial #:coefficients #:degree)
   (:import-from :power-series #:power-series #:constant-series #:constant-coefficient)
+  (:import-from :generic-math #:infinity-p #:i< #:infinity+)
   (:export
    #:valuate-exp
    #:bounded-search-limit
    #:bounded-count
-   #:v-minimise
-   #:v<
-   #:infinity-p
-   #:+infinity+))
+   #:v-minimise))
 
 (in-package :valuations)
 
-;;; todo figure out how to treat infinity and zero objects
-
 ;;; start off with exponential valuations for simplicity
-(defconstant +infinity+ :infinity)
-
-(declaim (inline infinity-p))
-(defun infinity-p (x)
-  (eq x +infinity+))
-
-(defun v< (a b)
-  (cond ((infinity-p a) nil)
-        ((infinity-p b) t)
-        ((cl:< a b))))
 
 (defun v-minimise (values &optional key)
-  (reduce (lambda (a b) (if (v< b a) b a))
+  (reduce (lambda (a b) (if (i< b a) b a))
           values :key key))
 
 (declaim (inline val))
@@ -80,7 +66,7 @@
             (> index bounded-search-limit))
         
         (values bound (if #1# bound-index :unbounded)))
-    (when (v< val bound)
+    (when (i< val bound)
       (setf bound val
             bound-index index))))
 
@@ -88,6 +74,6 @@
 (defmethod valuate-exp ((p integer) (rational rational))
   ;; todo check that p is prime
   (if (zerop rational)
-      +infinity+
+      infinity+
       (nt:ord-p p rational)))
 
