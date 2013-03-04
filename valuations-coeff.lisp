@@ -2,6 +2,7 @@
   (:nicknames :vc)
   (:shadow #:valuate-exp #:val)
   (:use :cl :ol :iterate
+        :infinite-math
         :valuations)
   (:import-from :polynomials  #:polynomial #:coefficients #:degree)
   (:import-from :power-series #:power-series #:constant-series #:constant-coefficient)
@@ -33,6 +34,6 @@
                  :degree (degree power-series)
                  :coefficients (make-lazy-array
                                    (:finite (lazy-array-finite (coefficients power-series))
-                                            :default-value +infinity+
+                                            :default-value infinity+
                                             :index-var i)
                                  (valuate-exp valuation (lazy-aref (coefficients power-series) i)))))

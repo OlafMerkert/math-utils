@@ -26,5 +26,6 @@
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"))
-               (:file "valuations-coeff" :depends-on ("valuations"
+               (:file "valuations-coeff" :depends-on ("infinite-math"
+                                                      "valuations"
                                                       "polynomials" "power-series"))))
