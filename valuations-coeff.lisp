@@ -53,3 +53,12 @@
   (princ "V[" stream)
   (pspr:print-power-series-simple (make-instance 'pspr:repl-printer) power-series-values)
   (princ "]" stream))
+
+(defmethod gm:simplify ((polynomial-values polynomial-values) &key)
+  (with-slots (coefficients) polynomial-values
+    (when (length=0 coefficients)
+      (setf coefficients (vector infinity+))))
+  polynomial-values)
+
+(defmethod gm:simplify ((power-series-values power-series-values) &key)
+  power-series-values)
