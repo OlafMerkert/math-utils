@@ -25,11 +25,7 @@
    :print-object/tex
    :print-object/helper
    :*tex-output-mode*
-   :minus-p
-   :infinity+
-   :infinity-
-   :infinity-p
-   :i<))
+   :minus-p))
 
 (in-package :generic-math)
 
@@ -252,20 +248,3 @@ to override this if a better algorithm is available."
 
 ;;; TODO compiler macros to replace gm:op with cl:op if all arguments
 ;;; are standard cl types
-
-;; infinite (real) numbers
-(defconstant infinity+ :infinity+)
-(defconstant infinity- :infinity-)
-
-(declaim (inline infinity-p))
-(defun infinity-p (x)
-  (or (eq x infinity+)
-      (eq x infinity-)))
-
-(defun i< (a b)
-  "comparing numbers and infinite numbers."
-  (cond ((eq a infinity+) nil)
-        ((eq b infinity-) nil)
-        ((eq a infinity-) t)
-        ((eq b infinity+) t)
-        (t (cl:< a b))))

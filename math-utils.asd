@@ -1,6 +1,7 @@
 (defsystem math-utils
   :depends-on (ol-utils cl-utilities iterate)
   :components ((:file "generic-math")
+               (:file "infinite-math" :depends-on ("generic-math"))
                (:file "elementary-combinatorics")
                (:module "number-theory"
                         :depends-on ("generic-math")
@@ -22,7 +23,7 @@
                                                                 "power-series"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
-               (:file "valuations" :depends-on ("generic-math"
+               (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"))
                (:file "valuations-coeff" :depends-on ("valuations"
