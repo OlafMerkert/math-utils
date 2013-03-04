@@ -117,7 +117,8 @@
       ((0))
       ((1) (print-spacer)
        (print-variable 'X))
-      (t (print-superscript 'X exponent)))))
+      (t (print-spacer)
+       (print-superscript 'X exponent)))))
 
 (defun print-polynomial-simple (printer polynomial)
   (if (zero-p polynomial)
@@ -125,9 +126,9 @@
       (iter (for i from 0 to (degree polynomial))
             (for exponent = (- (degree polynomial) i))
             (for coeff in-vector (coefficients polynomial))
-            (print-monomial-simple printer coeff i)
             (unless (zerop i)
-              (print-spacer printer)))))
+              (print-operator printer '+))
+            (print-monomial-simple printer coeff exponent))))
 
 (defun print-power-series-simple (printer power-series)
   (if (zero-p power-series)
@@ -137,7 +138,8 @@
                                   (max 0 (degree power-series))))
               (for exponent = (- (degree power-series) i))
               (for coeff = (nth-coefficient% power-series i))
-              (print-monomial-simple printer coeff exponent))
+              (print-monomial-simple printer coeff exponent)
+              (print-operator printer '+))
         (print-ellipsis printer))))
 
 ;; implementation for print-object
@@ -150,6 +152,9 @@
 
 (defmethod print-number ((repl-printer repl-printer) (number number))
   (princ number (slot-value repl-printer 'stream)))
+
+(defmethod print-number ((repl-printer repl-printer) (symbol symbol))
+  (princ symbol (slot-value repl-printer 'stream)))
 
 (defmethod print-superscript ((repl-printer repl-printer) base exponent)
   (format (slot-value repl-printer 'stream) "~A^~A" base exponent))
