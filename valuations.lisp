@@ -90,3 +90,4 @@
   (if (zerop rational)
       +infinity+
       (nt:ord-p p rational)))
+
