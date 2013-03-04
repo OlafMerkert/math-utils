@@ -1,4 +1,5 @@
 (defpackage :polynomial-series-printing
+  (:nicknames :pspr)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :iterate
@@ -16,7 +17,11 @@
    #:print-monomial
    #:print-polynomial
    #:print-additional-terms
-   #:print-power-series))
+   #:print-power-series
+   #:print-monomial-simple
+   #:print-polynomial-simple
+   #:print-power-series-simple
+   #:repl-printer))
 
 (in-package :polynomial-series-printing)
 
@@ -104,6 +109,37 @@
           (print-operator '+)
           (print-ellipsis)))))
 
+;;; a simplified version without dropping of stuff.
+(defun print-monomial-simple (printer coefficient exponent)
+  (with-printer (printer)
+    (print-number coefficient)
+    (case exponent
+      ((0))
+      ((1) (print-spacer)
+       (print-variable 'X))
+      (t (print-superscript 'X exponent)))))
+
+(defun print-polynomial-simple (printer polynomial)
+  (if (zero-p polynomial)
+      (print-number printer 0)
+      (iter (for i from 0 to (degree polynomial))
+            (for exponent = (- (degree polynomial) i))
+            (for coeff in-vector (coefficients polynomial))
+            (print-monomial-simple printer coeff i)
+            (unless (zerop i)
+              (print-spacer printer)))))
+
+(defun print-power-series-simple (printer power-series)
+  (if (zero-p power-series)
+      (print-number printer 0)
+      (progn
+        (iter (for i from 0 to (+ print-additional-terms
+                                  (max 0 (degree power-series))))
+              (for exponent = (- (degree power-series) i))
+              (for coeff = (nth-coefficient% power-series i))
+              (print-monomial-simple printer coeff exponent))
+        (print-ellipsis printer))))
+
 ;; implementation for print-object
 (defclass repl-printer ()
   ((stream :initarg :stream
@@ -182,3 +218,9 @@
 
 ;; TODO very few coefficients in power-series with low degree
 ;; TODO use the variable name of the polynomial
+
+;; TODO perhaps capture the hierarchy of math expr output better?
+;; would be useful for math-interactor.
+
+;;; TODO how about abstracting math formatting a bit more, and
+;;; providing a general library that takes care of that?
