@@ -63,8 +63,9 @@
   ;; first consider the case of finite series
   (let ((coeff (coefficients power-series)))
     (aif (lazy-array-finite coeff)
-         (v-minimise (lazy-array-take coeff it nil)
-                     (val valuation) ) 
+         (values (v-minimise (lazy-array-take coeff it nil)
+                             (val valuation))
+                 :finite) 
          ;; in the other case, we have to guess
          (valuate-exp/power-series-infinite valuation coeff (degree power-series)))))
 
@@ -74,11 +75,11 @@
         (bound val)
         (bound-index 0))
        ;; terminate if the last coeffs did not require increasing the bound
-       ((cond ((<= bounded-count (- index bound-index))
-               (values bound (- degree bound-index))) ; take degree into account
-              ;; or we reached the end of our curiosity
-              ((> index bounded-search-limit)
-               (values bound :unbounded))))
+       ((or #1=(<= bounded-count (- index bound-index))
+            ;; or we reached the end of our curiosity
+            (> index bounded-search-limit))
+        
+        (values bound (if #1# bound-index :unbounded)))
     (when (v< val bound)
       (setf bound val
             bound-index index))))
