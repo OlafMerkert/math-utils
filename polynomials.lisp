@@ -11,10 +11,8 @@
    :coefficients
    :make-polynomial
    :constant-coefficient
-   :format-monomial/tex
-   :format-monomial
-   :spacer
-   :monomial-form))
+   :leading-coefficient
+   :derivative))
 
 (in-package :polynomials)
 
@@ -30,6 +28,11 @@
 ;; TODO unify polynomial interface with power series interface
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
+
+(defmethod leading-coefficient ((polynomial polynomial))
+  (if (simplified-p polynomial)
+      (nth-coefficient% polynomial 0)
+      (error "Trying to take leading-coefficient of non-simplified polynomial.")))
 
 (defmethod nth-coefficient% ((polynomial polynomial) n)
   (aref (coefficients polynomial) n))
@@ -157,56 +160,24 @@ Keep this in mind when using."
   "Compare two polynomials for equality, assuming both are already
   simplified."
   (let ((d (degree poly-a)))
-    (and (= d (degree poly-b))
+    (and (cl:= d (degree poly-b))
          (iter (for a in-vector (coefficients poly-a))
                (for b in-vector (coefficients poly-b) )
                (always (gm:= a b))))))
 
-;;; output of polynomials
-(defun monomial-form (stream exponent &optional (base "X"))
-  (if *tex-output-mode*
-      (format stream "~A^{~A}" base exponent)
-      (format stream "~A^~A"   base exponent)))
+;;; reducing mod p
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (polynomial polynomial) &key (mod 2))
+  (simplify
+   (make-instance 'polynomial
+                  :coefficients (map 'vector
+                                     (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
+                                     (coefficients polynomial)))))
 
-(defun spacer (stream)
-  (if *tex-output-mode*
-      (princ " \\, " stream)
-      (princ " " stream)))
-
-(defun format-monomial (stream coefficient exponent)
-  "Format a monomial expression nicely, such that nothing like X^0 =
-1, X^1 = X or 1 \, X^n = X^n appears.  Something like 0 \, X^n will
-not be handled here, however."
-  (if (one-p coefficient)
-      (case exponent
-        ((0) (print-object/helper coefficient stream))
-        ((1) (princ "X" stream))
-        (t   (monomial-form stream exponent)))
-      (progn
-        (print-object/helper coefficient stream)
-        (case exponent
-          ((0))
-          ((1) (spacer stream)
-               (princ "X" stream))
-          (t   (spacer stream)
-               (monomial-form stream exponent))))))
-
-(defun print-polynomial (polynomial stream)
-  (iter (for i from 0 to (degree polynomial))
-        (for coefficient = (nth-coefficient% polynomial i))
-        (for exponent    = (- (degree polynomial) i))
-        (for zero-p      = (zero-p coefficient))
-        (unless (or (zerop i) zero-p)
-          (format stream " + "))
-        (unless zero-p 
-          (format-monomial stream coefficient exponent))))
-
-(defmethod print-object/tex ((polynomial polynomial) stream)
-  (let ((*tex-output-mode* t))
-    (print-polynomial polynomial stream)))
-
-(defmethod print-object ((polynomial polynomial) stream)
-  (let ((*tex-output-mode* nil))
-    (princ #\[ stream)
-    (print-polynomial polynomial stream)  
-    (princ #\] stream)))
+(defmethod derivative ((polynomial polynomial))
+  "Calculate the usual derivative of a polynomial."
+  (simplify
+   (make-instance 'polynomial
+                  :coefficients (map 'vector #'gm:*
+                                     (subseq (coefficients polynomial)
+                                             0 (degree polynomial))
+                                     (mrange (degree polynomial) 1)))))

@@ -24,7 +24,8 @@
    :create-binary->-wrappers
    :print-object/tex
    :print-object/helper
-   :*tex-output-mode*))
+   :*tex-output-mode*
+   :minus-p))
 
 (in-package :generic-math)
 
@@ -106,6 +107,9 @@ to override this if a better algorithm is available."
   But never call this, call instead GM:=, which first simplifies
   everything!"))
 
+(defmethod generic-= (a b)
+  nil)
+
 (defun = (&rest arguments)
    (case (length arguments)
      ((0) (error "invalid number of arguments: 0"))
@@ -116,6 +120,9 @@ to override this if a better algorithm is available."
           (every #'generic-= simple-arguments (rest simple-arguments))))))
 
 (defmethod generic-= ((a number) (b number))
+  (cl:= a b))
+
+(defmethod generic-= ((a integer) (b integer))
   (cl:= a b))
 
 (defgeneric sqrt (number)
@@ -150,6 +157,21 @@ to override this if a better algorithm is available."
 (defmethod one-p ((number number))
   (cl:= (one number) number))
 
+;; sign extraction is useful for nice representation of stuff
+(defgeneric minus-p (number)
+  (:documentation
+   "Return true if the number is negative, of course this only makes
+   sense in an ordered field/domain."))
+
+;; by default, nothing is negative
+(defmethod minus-p (number)
+  nil)
+
+(defmethod minus-p ((number real))
+  (minusp number))
+
+
+;; treat 0 and 1 special for comparison
 (defmethod generic-= ((a (eql 0)) b)
   (if (numberp b)
       (zerop b)
@@ -162,12 +184,12 @@ to override this if a better algorithm is available."
 
 (defmethod generic-= ((a (eql 1)) b)
   (if (numberp b)
-      (= 1 b)
+      (cl:= 1 b)
       (one-p b)))
 
 (defmethod generic-= (b (a (eql 1)))
   (if (numberp b)
-      (= 1 b)
+      (cl:= 1 b)
       (one-p b)))
 
 ;; TODO leverage iterate for this sort of stuff. perhaps even use a
@@ -223,3 +245,6 @@ to override this if a better algorithm is available."
         ;; TODO add other types if necessary
         (number (princ obj stream))
         (t (print-object obj stream)))))
+
+;;; TODO compiler macros to replace gm:op with cl:op if all arguments
+;;; are standard cl types

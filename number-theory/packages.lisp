@@ -6,6 +6,7 @@
    :divides-p
    :divisible-p
    :prime-p
-   :factorise))
+   :factorise
+   :ord-p))
 
 (in-package :number-theory)

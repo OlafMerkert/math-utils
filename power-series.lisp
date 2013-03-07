@@ -5,20 +5,21 @@
         :iterate
         :polynomials)
   (:export
-   :confidence
-   :nth-coefficient%
-   :nth-coefficient
-   :default-series-simplification-depth
-   :series-truncate
-   :series-remainder
-   :power-series
-   :constant-series
-   :make-constant-series
-   :constant-coefficient
-   :degree
-   :coefficients
-   :make-power-series
-   :make-power-series/inf))
+   #:confidence
+   #:nth-coefficient%
+   #:nth-coefficient
+   #:default-series-simplification-depth
+   #:series-truncate
+   #:series-remainder
+   #:power-series
+   #:constant-series
+   #:make-constant-series
+   #:constant-coefficient
+   #:degree
+   #:coefficients
+   #:make-power-series
+   #:make-power-series/inf
+   #:leading-coefficient))
 
 (in-package :power-series)
 
@@ -51,6 +52,14 @@
 
 (defmethod simplified-p ((series constant-series))
   t)
+
+(defmethod leading-coefficient ((power-series power-series))
+  (if (simplified-p power-series)
+      (nth-coefficient% power-series 0)
+      (error "Trying to take leading-coefficient of non-simplified power series.")))
+
+(defmethod leading-coefficient ((series constant-series))
+    (nth-coefficient% series 0))
 
 (defmethod nth-coefficient% ((series power-series) n)
   "Return the nth element of the coefficients pipe--or zero, if the
@@ -338,35 +347,19 @@ match, consider the series equal."
 (defmethod series-remainder ((series constant-series))
   (zero series))
 
-;;; output of the power series
-(defparameter print-additional-terms 5)
+;;; reducing mod p
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (power-series power-series) &key (mod 2))
+  (simplify
+   (make-instance 'power-series
+                  :degree (degree power-series)
+                  :coefficients
+                  (lazy-array-map
+                   (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
+                   (coefficients power-series)))))
 
-(defun print-power-series (series stream)
-  (iter (for i from 0 to (+ print-additional-terms
-                            (max 0 (degree series))))
-        (for coefficient = (nth-coefficient% series i))
-        (for exponent    = (- (degree series) i))
-        (for zero-p      = (zero-p coefficient))
-        (unless (or (zerop i) zero-p)
-          (format stream " + "))
-        (unless zero-p
-          (format-monomial stream coefficient exponent))))
+(defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (constant-series constant-series) &key (mod 2))
+  (make-constant-series (-> 'finite-fields:integer-mod
+                            (constant-coefficient constant-series) :mod mod)))
 
-(defmethod print-object ((series power-series) stream)
-  (let ((*tex-output-mode* nil))
-    (princ #\[ stream)
-    (print-power-series series stream)
-    (format stream " + ...")
-    (princ #\] stream)
-    #|(terpri stream)|#))
 
-(defmethod print-object/tex ((series power-series) stream)
-  (let ((*tex-output-mode* t))
-    (print-power-series series stream))
-  (format stream " + \\dots"))
-
-(defmethod print-object ((series constant-series) stream)
-  (format stream "[~A X^0 + ..]" (constant-coefficient series)))
-
-(defmethod print-object/tex ((series constant-series) stream)
-  (print-object/tex (constant-coefficient series) stream))
+;;; in case of finite power series, the precision should be explicit
