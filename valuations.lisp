@@ -3,7 +3,7 @@
   (:use :cl :ol :iterate )
   (:import-from :polynomials  #:polynomial #:coefficients #:degree)
   (:import-from :power-series #:power-series #:constant-series #:constant-coefficient)
-  (:import-from :infinite-math #:infinity-p #:i< #:infinity+)
+  (:import-from :infinite-math #:infinite-p #:i< #:infinity+)
   (:export
    #:valuate-exp
    #:bounded-search-limit

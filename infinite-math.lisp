@@ -3,10 +3,11 @@
   (:shadowing-import-from :cl :+ :- :* :/ :expt :sqrt)
   (:shadowing-import-from :gm := :summing)
   (:use :cl :ol :iterate :generic-math)
-  (:export :infinity+
-   :infinity-
-   :infinite-p
-   :i<))
+  (:export
+   #:infinity+
+   #:infinity-
+   #:infinite-p
+   #:i<))
 
 (in-package :infinite-math)
 

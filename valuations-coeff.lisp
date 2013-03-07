@@ -62,3 +62,5 @@
 
 (defmethod gm:simplify ((power-series-values power-series-values) &key)
   power-series-values)
+
+;;; todo improve display of this stuff
