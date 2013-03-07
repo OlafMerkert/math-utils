@@ -17,7 +17,8 @@
    :constant-coefficient
    :degree
    :coefficients
-   :make-power-series))
+   :make-power-series
+   :make-power-series/inf))
 
 (in-package :power-series)
 
@@ -107,6 +108,13 @@ COEFFICIENTS."
                  :degree (or degree (length coefficients))
                  :coefficients (apply #'la% 0 leading-coefficient coefficients)))
 
+(defmacro make-power-series/inf (degree formula)
+  "Create a new power-series with given DEGREE and coefficients given
+by FORMULA where INDEX is anaphorically bound."
+  `(make-instance 'power-series
+                  :degree ,degree
+                  :coefficients (make-lazy-array (:index-var index :default-value 0)
+                                  ,formula)))
 
 ;; TODO visualising polynomials and power series
 
