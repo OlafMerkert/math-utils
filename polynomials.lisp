@@ -132,28 +132,25 @@ Keep this in mind when using."
     normalised, i.e. the first coefficient is non-zero." poly-denom))
   (when (zero-p poly-denom)
     (error "Cannot divide by ZERO."))
-  (let ((a0 (nth-coefficient% poly-denom 0))
-        (an (coefficients poly-denom))
-        (cn (coefficients poly-numer))
-        (deg-a (degree poly-denom)) 
-        (deg (- (degree poly-numer)
-                (degree poly-denom))))
-    (if (minusp deg)
+  (let* ((b0 (gm:/ (nth-coefficient% poly-denom 0)))
+         (bn (coefficients poly-denom))
+         (an (copy 'vector (coefficients poly-numer)))
+         (m (degree poly-numer))
+         (n (degree poly-denom))
+         (m-n (- m n)))
+    (if (minusp m-n)
         (values (zero 'polynomial) poly-numer)
-        (let ((result
-               (make-instance 'polynomial
-                              :coefficients
-                              (make-nlazy-array (:start ((gm:/ (aref cn 0) a0))
-                                                        :index-var n
-                                                        :finite (+ deg 1)
-                                                        :default-value 0)
-                                (gm:/ (gm:- (aref cn n)
-                                            (summing (i 1 (min n deg-a))
-                                                     (gm:* (aref an i)
-                                                           (aref this (- n i)))))
-                                      a0)))))
-          (values result ;(gm:- poly-numer (gm:* poly-denom result))
-                  )))))
+        (let ((qn (make-array (+ m-n 1) :initial-element 0)))
+          (iter (for k from 0 to m-n)
+                (setf (aref qn k) (gm:* (aref an k) b0))
+                (iter (for j from 0 to n)
+                      (for jj from k to (+ k n))
+                      (setf (aref an jj) (gm:- (aref an jj)
+                                              (gm:* (aref qn k) (aref bn j))))))
+          (values (simplify (make-instance 'polynomial :coefficients qn))
+                  (simplify (make-instance 'polynomial :coefficients (subseq an m-n))))))))
+
+;; TODO provide condition when division has remainder
 
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
