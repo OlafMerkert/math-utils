@@ -14,7 +14,10 @@
                (:file "localisations" :depends-on ("generic-math"
                                                    "number-theory"
                                                    "finite-fields"))
-               (:file "polynomials"   :depends-on ("generic-math" "finite-fields"))
+               (:file "variables")
+               (:file "polynomials"   :depends-on ("generic-math"
+                                                   "variables"
+                                                   "finite-fields"))
                (:file "power-series"  :depends-on ("generic-math"
                                                    "polynomials"
                                                    "finite-fields"))
