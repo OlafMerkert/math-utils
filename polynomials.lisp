@@ -20,12 +20,12 @@
   ((coefficients :initform (vector 0)
                  :initarg :coefficients
                  :reader coefficients)
-   #|(var :initform 'x
-   :accessor var)|#)
-  (:documentation "Model a polynomial in VAR, with the leading
+   (variable :initform 'X
+             :accessor variable))
+  (:documentation "Model a polynomial in VARIABLE, with the leading
   coefficient the first entry of COEFFICIENTS."))
 
-;; TODO unify polynomial interface with power series interface
+;; unify polynomial interface with power series interface
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
 

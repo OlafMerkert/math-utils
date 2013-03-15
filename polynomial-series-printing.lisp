@@ -46,21 +46,21 @@
      ,@body))
 
 ;;; output of polynomials
-(defun print-monomial (printer coefficient exponent)
+(defun print-monomial (printer coefficient exponent &optional (variable 'X))
   (with-printer (printer)
     (if (one-p coefficient)
         (case exponent
           ((0) (print-number coefficient))
-          ((1) (print-variable 'X))
-          (t   (print-superscript 'X exponent)))
+          ((1) (print-variable variable))
+          (t   (print-superscript variable exponent)))
         (progn
           (print-number coefficient)
           (case exponent
             ((0))
             ((1) (print-spacer)
-             (print-variable 'X))
+             (print-variable variable))
             (t   (print-spacer)
-                 (print-superscript 'X exponent)))))))
+                 (print-superscript variable exponent)))))))
 
 (defun print-polynomial (printer polynomial)
   (if (zero-p polynomial)
@@ -79,7 +79,8 @@
               (print-monomial printer (if (and (< 0 i) minus-p)
                                           (gm:- coefficient)
                                           coefficient)
-                              exponent)))))
+                              exponent
+                              (variable polynomial))))))
 
 ;;; output of power series
 (defparameter print-additional-terms 5)
