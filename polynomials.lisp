@@ -12,7 +12,10 @@
    :make-polynomial
    :constant-coefficient
    :leading-coefficient
-   :derivative))
+   :derivative
+   :var
+   :simplify-poly
+   :poly+poly))
 
 (in-package :polynomials)
 
@@ -20,9 +23,10 @@
   ((coefficients :initform (vector 0)
                  :initarg :coefficients
                  :reader coefficients)
-   (variable :initform 'X
-             :accessor variable))
-  (:documentation "Model a polynomial in VARIABLE, with the leading
+   (var :initform 'X
+        :initarg :var
+        :accessor var))
+  (:documentation "Model a polynomial in VAR, with the leading
   coefficient the first entry of COEFFICIENTS."))
 
 ;; unify polynomial interface with power series interface
@@ -65,9 +69,7 @@
 (defmethod one ((number (eql 'polynomial)))
   (make-polynomial 1))
 
-(defmethod simplify ((polynomial polynomial) &key)
-  "Remove all leading zeros from the coefficients.  If all
-  coefficients are zero, keep the last zero."
+(defun simplify-poly (polynomial)
   (with-slots (coefficients) polynomial
     (let* ((deg (- (length coefficients) 1))
            (nz (or (position-if-not #'zero-p coefficients
@@ -76,6 +78,11 @@
       (setf coefficients
             (subseq coefficients nz))
       (values polynomial nz))))
+
+(defmethod simplify ((polynomial polynomial) &key)
+  "Remove all leading zeros from the coefficients.  If all
+  coefficients are zero, keep the last zero."
+  (simplify-poly polynomial))
 
 ;;; arithmetic of polynomials
 (defmethod generic-* ((poly-a polynomial) (poly-b polynomial))
@@ -103,23 +110,26 @@
                  :coefficients
                  (map 'vector (lambda (x) (gm:* int x)) (coefficients poly-b))))
 
-(defmethod generic-+ ((poly-a polynomial) (poly-b polynomial))
-  "Add two polynomials together.  Implicitly simplify."
+(defun poly+poly (poly-a poly-b &optional (type 'polynomial))
   (if (> (degree poly-a) (degree poly-b))
-      (generic-+ poly-b poly-a)
+      (poly+poly poly-b poly-a type)
       ;; now poly-b has the higher degree
       (let ((coeff-a (coefficients poly-a))
             (coeff-b (coefficients poly-b))
             (d (- (degree poly-b) (degree poly-a))))
-        (simplify
-         (make-instance 'polynomial
+        (simplify-poly
+         (make-instance type
                         :coefficients
                         (make-nlazy-array (:index-var n :default-value 0
                                                       :finite (+ (degree poly-b) 1))
                           (if (< n d)
                               (aref coeff-b n)
                               (gm:+ (aref coeff-b n)
-                                    (aref coeff-a (- n d))))))))))
+                                    (aref coeff-a (- n d)))))))))
+  )
+(defmethod generic-+ ((poly-a polynomial) (poly-b polynomial))
+  "Add two polynomials together.  Implicitly simplify."
+  (poly+poly poly-a poly-b))
 
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (generic-* -1 poly-b)))
