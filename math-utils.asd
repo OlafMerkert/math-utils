@@ -15,9 +15,12 @@
                                                    "number-theory"
                                                    "finite-fields"))
                (:file "variables")
-               (:file "polynomials"   :depends-on ("generic-math"
+               (:file "polynomials" :depends-on ("generic-math"
                                                    "variables"
                                                    "finite-fields"))
+               (:file "multivariate-polynomials" :depends-on ("generic-math"
+                                                              "variables"
+                                                              "polynomials"))
                (:file "power-series"  :depends-on ("generic-math"
                                                    "polynomials"
                                                    "finite-fields"))

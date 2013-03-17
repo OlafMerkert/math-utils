@@ -15,7 +15,10 @@
    :derivative
    :var
    :simplify-poly
-   :poly+poly))
+   :poly+poly
+   :poly*poly
+   :poly*constant
+   :poly+constant))
 
 (in-package :polynomials)
 
@@ -85,13 +88,12 @@
   (simplify-poly polynomial))
 
 ;;; arithmetic of polynomials
-(defmethod generic-* ((poly-a polynomial) (poly-b polynomial))
-  "Multiply two polynomials."
+(defun poly*poly (poly-a poly-b &optional (type 'polynomial))
   (let ((array-a (coefficients poly-a))
         (array-b (coefficients poly-b))
         (deg-a   (degree poly-a))
         (deg-b   (degree poly-b)))
-    (make-instance 'polynomial
+    (make-instance type
                    :coefficients
                    (make-nlazy-array
                        (:index-var n
@@ -102,13 +104,25 @@
                               (gm:* (aref array-a i)
                                     (aref array-b (- n i))))))))
 
+(defun poly*constant (poly constant &optional (type 'mpolynomial))
+  (make-instance type :var (var poly)
+                 :coefficients (map 'vector (lambda (x) (gm:* constant x))
+                                    (coefficients poly))))
+
+(defmethod generic-* ((poly-a polynomial) (poly-b polynomial))
+  "Multiply two polynomials."
+  (poly*poly poly-a poly-b))
+
 (defmethod generic-* ((poly-b polynomial) (int integer))
-  (generic-* int poly-b))
+  (poly*constant poly-b int))
 
 (defmethod generic-* ((int integer) (poly-b polynomial))
-  (make-instance 'polynomial
-                 :coefficients
-                 (map 'vector (lambda (x) (gm:* int x)) (coefficients poly-b))))
+  (poly*constant poly-b int))
+
+(defun poly+constant (poly constant &optional (type 'polynomial))
+  (make-instance type :var (var poly)
+                 :coefficients (aprog1 (copy-seq (coefficients poly))
+                                 (setf (alast it) (gm:+ (alast it) constant)))))
 
 (defun poly+poly (poly-a poly-b &optional (type 'polynomial))
   (if (> (degree poly-a) (degree poly-b))

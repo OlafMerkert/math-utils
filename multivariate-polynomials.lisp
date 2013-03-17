@@ -6,7 +6,11 @@
         :generic-math
         :math-variables
         :polynomials)
-  (:export))
+  (:export
+   #:mpolynomial
+   #:mpoly-p
+   #:mpoly-cases
+   #:mdegree))
 
 (in-package :multivariate-polynomials)
 
@@ -41,14 +45,24 @@ polynomial."
                (1- (length (coefficients mp)))
                (maximise (coefficients mp) :key (lambda (x) (mdegree x var)))))
 
-(defun poly+constant (poly constant)
-  (make-instance 'mpolynomial :var (var poly)
-                 :coefficients (aprog1 (copy-seq (coefficients poly))
-                                 (setf (alast it) (gm:+ (alast it) constant)))))
+
 
 (defmethod generic-+ ((a mpolynomial) (b mpolynomial))
   (mpoly-cases (a (var b))
-               (poly+constant a b)
+               (poly+constant a b 'mpolynomial)
                (poly+poly a b 'mpolynomial)
-               (poly+constant b a)))
+               (poly+constant b a 'mpolynomial)))
 
+
+
+(defmethod generic-* ((a mpolynomial) (b mpolynomial))
+  (mpoly-cases (a (var b))
+               (poly*constant a b)
+               (poly*poly a b 'mpolynomial)
+               (poly*constant b a)))
+
+(defmethod generic-* ((poly-b mpolynomial) (int integer))
+  (poly*constant poly-b int 'mpolynomial))
+
+(defmethod generic-* ((int integer) (poly-b mpolynomial))
+  (poly*constant poly-b int 'mpolynomial))
