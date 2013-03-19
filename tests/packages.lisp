@@ -6,3 +6,5 @@
 
 
 (def-suite math-utils)
+
+(in-suite math-utils)
