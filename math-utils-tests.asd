@@ -4,4 +4,5 @@
   :components ((:module "tests"
                         :serial t
                         :components ((:file "packages")
+                                     (:file "generic-math-tests")
                                      (:file "number-theory-tests")))))
