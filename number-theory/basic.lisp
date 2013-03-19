@@ -3,7 +3,8 @@
   (:use :cl :ol
         :number-theory)
   (:export
-   :xgcd))
+   :xgcd
+   :xgcd/rec))
 
 (in-package :number-theory/basic)
 
