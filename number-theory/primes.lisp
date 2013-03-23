@@ -48,11 +48,10 @@
           (values (- k-n k-d)
                   (/ f-n f-d))))))
 
-(defun divisible-p (n)
+(defun divisible-p (n &optional (s (floor (sqrt n))))
   "search for a true divisor (not 1 or the number itself) of the
-  number. If none exists, return nil,otherwise the divisor."
-  (do ((i 2 (1+ i))
-       (s (floor (sqrt n))))
+  number (below S). If none exists, return nil ,otherwise the divisor."
+  (do ((i 2 (1+ i)))
       ((> i s) nil)
     (when (divides-p i n)
       (return i))))
@@ -92,7 +91,10 @@ n is a prime or not."
         ((< number 10000)
          (prime-p/factor-search number))
         (t
-         (prime-p/fermat number))))
+         ;; first check for some small primes
+         (aif (divisible-p number 5)
+              (values nil it)
+              (prime-p/fermat number)))))
 
 (defun erastothenes-sieve (s)
   "Sieb des Erastothenes. Berechne einen Vektor aller Primzahlen <= S."
