@@ -118,6 +118,9 @@ to override this if a better algorithm is available."
 
 (defgeneric simplified-p (number))
 
+(defmethod simplified-p ((number number))
+  t)
+
 (defmethod simplify (number &key)
   number) ; by default no simplification is done.
 
@@ -129,13 +132,17 @@ to override this if a better algorithm is available."
 (defmethod generic-= (a b)
   nil)
 
+(defun simplify-if-necessary (x)
+  (if (simplified-p x) x
+      (simplify x)))
+
 (defun = (&rest arguments)
    (case (length arguments)
      ((0) (error "invalid number of arguments: 0"))
      ((1) t)
      ((2)
-      (apply #'generic-= (mapcar #'simplify arguments)))
-     (t (let ((simple-arguments (mapcar #'simplify arguments)))
+      (apply #'generic-= (mapcar #'simplify-if-necessary arguments)))
+     (t (let ((simple-arguments (mapcar #'simplify-if-necessary arguments)))
           (every #'generic-= simple-arguments (rest simple-arguments))))))
 
 (defmethod generic-= ((a number) (b number))
