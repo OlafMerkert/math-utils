@@ -47,7 +47,7 @@
         (summing (* (funcall f (expt p i))
                     (funcall g (expt p (- e i)))))))
 
-;; sophisticated examples, Chinese Remainder theorem
+;;; some experimental stuff
 (defun crt-map-to-product (n)
   (apply-multiplicative
    (lambda (p e)
