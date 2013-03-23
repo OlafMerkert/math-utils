@@ -8,3 +8,6 @@
 (def-suite math-utils)
 
 (in-suite math-utils)
+
+(eval-when nil
+  (run!))

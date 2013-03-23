@@ -36,3 +36,16 @@
   (is (one-p 1))
   (is (one-p (one 20)))
   (is (gm:= 1 (one 77))))
+
+;;; todo some more tests of the equality test
+(test equal
+  (is (gm:= 0 0))
+  (is (gm:= 1 1))
+  (is (gm:= 17 17))
+  (is (not (gm:= 13 17)))
+  (is (not (gm:= 1 0)))
+  (is (not (gm:= 7 0)))
+  (is (not (gm:= 1 7)))
+  (is (not (gm:= 1 -1)))
+  (is (not (gm:= 3 3 5)))
+  (is (gm:= 3 3 3)))
