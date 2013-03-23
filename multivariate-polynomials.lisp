@@ -84,10 +84,10 @@ polynomial."
 ;;; in theory, this construction should be completely generic.
 
 (defmethod degree ((fraction fraction))
-  (- (degree numer) (degree denom)))
+  (- (degree (numer fraction)) (degree (denom fraction))))
 
 (defmethod mdegree ((fraction fraction) var)
-   (- (mdegree numer var) (mdegree denom var)))
+   (- (mdegree (numer fraction) var) (mdegree (denom fraction) var)))
 
 (defmethod generic-= ((a fraction) (b fraction))
   (gm:= (gm:* (numer a) (denom b))
@@ -123,15 +123,34 @@ polynomial."
                   :numer (gm:* (numer a) (numer b))
                   :denom (gm:* (denom a) (denom b)))))
 
+;;; TODO move ggt into generic math / resp fractions package
+(defgeneric ggt (a b)
+  (:documentation "Compute the greatest common divisor for A, B in
+  some factorial (or better euclidean) ring."))
+
+(defmethod ggt (a (b (eql 1)))
+  1)
+
+(defmethod ggt ((b (eql 1)) a)
+  1)
+
+(defmethod ggt ((a integer) (b integer))
+  (gcd a b))
+
+(defmethod ggt ((a mpolynomial) (b mpolynomial))
+  ;; TODO implement ggt for polynomials properly
+  1)
+
 (defmethod simplify ((a fraction) &key)
   (with-slots ((n numer) (d denom)) a
     ;; first simplify both parts
-    (simplify (numer a))
-    (simplify (denom a))
+    (setf n (simplify n)
+          d (simplify d))
     ;; then divide by gcd
-    (let ((g (gcd n d)))                ; use a custom gcd function name
-      (setf n (gm:/ n g)
-            d (gm:/ d g))))
+    (let ((g (ggt n d)))
+      (unless (one-p g)
+        (setf n (gm:/ n g)
+              d (gm:/ d g)))))
   a)
 
 (defmethod generic-/ ((a fraction) (b fraction))
@@ -141,3 +160,15 @@ polynomial."
    (make-instance 'fraction
                   :numer (gm:* (numer a) (denom b))
                   :denom (gm:* (numer b) (denom a)))))
+
+(defmethod print-object ((fraction fraction) stream)
+  (format stream "[~A / ~A]" (numer fraction) (denom fraction)))
+
+;;; TODO some problem with loss of variable name when multiplying
+;;; mpolys
+
+;;; TODO perhaps allow moving units in fractions (how in canonical way?)
+
+;;; TODO why are the shortcuts with (gm:* x 1) not working??
+
+;;; TODO allow to mark certain datastructures as automatically simplified
