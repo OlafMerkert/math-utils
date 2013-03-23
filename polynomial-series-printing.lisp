@@ -80,7 +80,7 @@
                                           (gm:- coefficient)
                                           coefficient)
                               exponent
-                              (variable polynomial))))))
+                              (var polynomial))))))
 
 ;;; output of power series
 (defparameter print-additional-terms 5)

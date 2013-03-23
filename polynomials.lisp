@@ -94,6 +94,7 @@
         (deg-a   (degree poly-a))
         (deg-b   (degree poly-b)))
     (make-instance type
+                   :var (var poly-a)
                    :coefficients
                    (make-nlazy-array
                        (:index-var n
@@ -104,7 +105,7 @@
                               (gm:* (aref array-a i)
                                     (aref array-b (- n i))))))))
 
-(defun poly*constant (poly constant &optional (type 'mpolynomial))
+(defun poly*constant (poly constant &optional (type 'polynomial))
   (make-instance type :var (var poly)
                  :coefficients (map 'vector (lambda (x) (gm:* constant x))
                                     (coefficients poly))))
@@ -133,6 +134,7 @@
             (d (- (degree poly-b) (degree poly-a))))
         (simplify-poly
          (make-instance type
+                        :var (var poly-a)
                         :coefficients
                         (make-nlazy-array (:index-var n :default-value 0
                                                       :finite (+ (degree poly-b) 1))
