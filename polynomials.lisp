@@ -61,7 +61,7 @@
   (make-instance 'polynomial :coefficients (list->array (list* lk coefficients))))
 
 (defmethod zero ((number polynomial))
-  (make-polynomial 0))
+  (make-instance 'polynomial :coefficients (vector 0) :var (var number)))
 
 (defmethod zero ((number (eql 'polynomial)))
   (make-polynomial 0))
@@ -73,7 +73,7 @@
        (zero-p (constant-coefficient polynomial))))
 
 (defmethod one ((number polynomial))
-  (make-polynomial 1))
+  (make-instance 'polynomial :coefficients (vector 1) :var (var number)))
 
 (defmethod one ((number (eql 'polynomial)))
   (make-polynomial 1))
@@ -203,6 +203,7 @@ Keep this in mind when using."
 (defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (polynomial polynomial) &key (mod 2))
   (simplify
    (make-instance 'polynomial
+                  :var (var polynomial)
                   :coefficients (map 'vector
                                      (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
                                      (coefficients polynomial)))))
@@ -211,6 +212,7 @@ Keep this in mind when using."
   "Calculate the usual derivative of a polynomial."
   (simplify
    (make-instance 'polynomial
+                  :var (var polynomial)
                   :coefficients (map 'vector #'gm:*
                                      (subseq (coefficients polynomial)
                                              0 (degree polynomial))
