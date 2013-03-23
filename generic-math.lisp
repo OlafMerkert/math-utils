@@ -58,6 +58,13 @@ as :from-end parameter to reduce."
 (defmethod generic-+ ((a number) (b number))
   (cl:+ a b))
 
+;; special behaviour at units
+(defmethod generic-+ (a (b (eql 0)))
+  a)
+
+(defmethod generic-+ ((b (eql 0)) a)
+  a)
+
 (defgeneric zero (number))
 (defmethod zero ((number number))
   0)
@@ -66,9 +73,18 @@ as :from-end parameter to reduce."
 (defmethod generic-- ((a number) (b number))
   (cl:- a b))
 
+(defmethod generic-- (a (b (eql 0)))
+  a)
+
 (define-generic-binary-operation * 1)
 (defmethod generic-* ((a number) (b number))
   (cl:* a b))
+
+(defmethod generic-* (a (b (eql 1)))
+  a)
+
+(defmethod generic-* ((b (eql 1)) a)
+  a)
 
 (defgeneric one (number))
 (defmethod one ((number number))
@@ -77,6 +93,9 @@ as :from-end parameter to reduce."
 (define-generic-binary-operation / :none (generic-/ (one argument) argument))
 (defmethod generic-/ ((a number) (b number))
   (cl:/ a b))
+
+(defmethod generic-/ (a (b (eql 1)))
+  a)
 
 (defgeneric expt (base power))
 (defmethod expt ((base number) (power number))
