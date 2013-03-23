@@ -39,7 +39,7 @@ polynomial."
 
 
 ;; TODO what about degree of zero poly?
-(defun mdegree (mp var)
+(defmethod mdegree ((mp mpolynomial) var)
   (mpoly-cases (mp var)
                0
                (1- (length (coefficients mp)))
@@ -55,15 +55,18 @@ polynomial."
 
 (defmethod generic-* ((a mpolynomial) (b mpolynomial))
   (mpoly-cases (a (var b))
-               (poly*constant a b)
+               (poly*constant a b 'mpolynomial)
                (poly*poly a b 'mpolynomial)
-               (poly*constant b a)))
+               (poly*constant b a 'mpolynomial)))
 
-(defmethod generic-* ((poly-b mpolynomial) (int integer))
-  (poly*constant poly-b int 'mpolynomial))
+(defmethod generic-* ((poly-b mpolynomial) (number rational))
+  (generic-* number poly-b))
 
-(defmethod generic-* ((int integer) (poly-b mpolynomial))
-  (poly*constant poly-b int 'mpolynomial))
+(defmethod generic-* ((number rational) (poly-b mpolynomial))
+  (poly*constant poly-b number 'mpolynomial))
+
+(defmethod generic-/ ((poly mpolynomial) (number rational))
+  (generic-* (/ number) poly))
 
 ;;; rational functions built from polynomials
 (defclass fraction ()

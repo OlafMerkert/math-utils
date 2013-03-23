@@ -114,11 +114,11 @@
   "Multiply two polynomials."
   (poly*poly poly-a poly-b))
 
-(defmethod generic-* ((poly-b polynomial) (int integer))
-  (poly*constant poly-b int))
+(defmethod generic-* ((poly-b polynomial) (number rational))
+  (generic-* number poly-b))
 
-(defmethod generic-* ((int integer) (poly-b polynomial))
-  (poly*constant poly-b int))
+(defmethod generic-* ((number rational) (poly-b polynomial))
+  (poly*constant poly-b number))
 
 (defun poly+constant (poly constant &optional (type 'polynomial))
   (make-instance type :var (var poly)
