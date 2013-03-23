@@ -8,7 +8,8 @@
                         :components ((:file "packages")
                                      (:file "basic"         :depends-on ("packages"))
                                      (:file "primes"        :depends-on ("packages"))
-                                     (:file "factorisation" :depends-on ("packages"))))
+                                     (:file "factorisation" :depends-on ("packages"))
+                                     (:file "multiplicative-functions" :depends-on ("packages"))))
                (:file "finite-fields" :depends-on ("generic-math"
                                                    "number-theory"))
                (:file "localisations" :depends-on ("generic-math"
