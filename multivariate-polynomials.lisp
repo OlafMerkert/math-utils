@@ -45,8 +45,6 @@ polynomial."
                (1- (length (coefficients mp)))
                (maximise (coefficients mp) :key (lambda (x) (mdegree x var)))))
 
-
-
 (defmethod generic-+ ((a mpolynomial) (b mpolynomial))
   (mpoly-cases (a (var b))
                (poly+constant a b 'mpolynomial)
@@ -66,3 +64,77 @@ polynomial."
 
 (defmethod generic-* ((int integer) (poly-b mpolynomial))
   (poly*constant poly-b int 'mpolynomial))
+
+;;; rational functions built from polynomials
+(defclass fraction ()
+  ((numer :initarg :numer
+         :initform 0
+         :accessor numer)
+   (denom :initarg :denom
+         :initform 1
+         :accessor denom))
+  (:documentation "A fraction can hold any objects, and describes the
+  formal quotient. The domain, over which we consider fraction, should
+  not matter much, but it must provide some canonical canceling
+  strategry, like the euclidean algorithm."))
+
+;;; in theory, this construction should be completely generic.
+
+(defmethod degree ((fraction fraction))
+  (- (degree numer) (degree denom)))
+
+(defmethod mdegree ((fraction fraction) var)
+   (- (mdegree numer var) (mdegree denom var)))
+
+(defmethod generic-= ((a fraction) (b fraction))
+  (gm:= (gm:* (numer a) (denom b))
+        (gm:* (numer b) (denom a))))
+
+(defmethod zero-p ((a fraction))
+  (zero-p (numer a)))
+
+(defmethod one-p ((a fraction))
+  (gm:= (numer a) (denom a)))
+
+
+(defmethod generic-+ ((a fraction) (b fraction))
+  (simplify
+   (make-instance 'fraction
+                  :numer (gm:+ (gm:* (numer a) (denom b)) (gm:* (numer b) (denom a)))
+                  :denom (gm:* (denom a) (denom b)))))
+
+(defmethod generic-- ((a fraction) (b fraction))
+  (simplify
+   (if (zero-p a)
+       (make-instance 'fraction
+                      :numer (gm:- (numer b))
+                      :denom (denom b))
+       (make-instance 'fraction
+                      :numer (gm:- (gm:* (numer a) (denom b)) (gm:* (numer b) (denom a)))
+                      :denom (gm:* (denom a) (denom b))))))
+
+
+(defmethod generic-*  ((a fraction) (b fraction))
+  (simplify
+   (make-instance 'fraction
+                  :numer (gm:* (numer a) (numer b))
+                  :denom (gm:* (denom a) (denom b)))))
+
+(defmethod simplify ((a fraction) &key)
+  (with-slots ((n numer) (d denom)) a
+    ;; first simplify both parts
+    (simplify (numer a))
+    (simplify (denom a))
+    ;; then divide by gcd
+    (let ((g (gcd n d)))                ; use a custom gcd function name
+      (setf n (gm:/ n g)
+            d (gm:/ d g))))
+  a)
+
+(defmethod generic-/ ((a fraction) (b fraction))
+  (when (zero-p b)
+    (error "Cannot divide by 0."))
+  (simplify 
+   (make-instance 'fraction
+                  :numer (gm:* (numer a) (denom b))
+                  :denom (gm:* (numer b) (denom a)))))
