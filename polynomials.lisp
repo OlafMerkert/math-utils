@@ -66,11 +66,22 @@
 (defmethod zero ((number (eql 'polynomial)))
   (make-polynomial 0))
 
+(defmethod zero-p ((polynomial polynomial))
+  ;; assume poly is simplified for now
+  (assert (simplified-p polynomial))
+  (and (zerop (degree polynomial))
+       (zero-p (constant-coefficient polynomial))))
+
 (defmethod one ((number polynomial))
   (make-polynomial 1))
 
 (defmethod one ((number (eql 'polynomial)))
   (make-polynomial 1))
+
+(defmethod one-p ((polynomial polynomial))
+  (assert (simplified-p polynomial))
+  (and (zerop (degree polynomial))
+       (one-p (constant-coefficient polynomial))))
 
 (defun simplify-poly (polynomial)
   (with-slots (coefficients) polynomial
