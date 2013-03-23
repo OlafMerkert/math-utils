@@ -29,7 +29,7 @@
   (for-all ((a (gen-integer :min 0)))
     (is (= a (gm:sqrt (expt a 2))))))
 
-(test sqrt-int
+(test sqrt-rational
   (for-all ((a (gen-integer  :min 0))
             (b (gen-integer :min 1)))
     (is (= (gm:sqrt (expt (/ a b) 2))
