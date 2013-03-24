@@ -12,7 +12,8 @@
    :make-polynomial
    :constant-coefficient
    :leading-coefficient
-   :derivative))
+   :derivative
+   :make-monomial))
 
 (in-package :polynomials)
 
@@ -52,6 +53,12 @@
 
 (defun make-polynomial (lk &rest coefficients)
   (make-instance 'polynomial :coefficients (list->array (list* lk coefficients))))
+
+(defun make-monomial (degree coefficient)
+  (let ((coeff (make-array (+ 1 degree) :initial-element 0)))
+    (setf (aref coeff 0) coefficient)
+    (make-instance 'polynomial :coefficients coeff)))
+
 
 (defmethod zero ((number polynomial))
   (make-polynomial 0))
