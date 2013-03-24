@@ -3,7 +3,8 @@
   (:use :cl :ol
         :number-theory)
   (:export
-   :xgcd))
+   :xgcd
+   :xgcd/rec))
 
 (in-package :number-theory/basic)
 
@@ -34,11 +35,10 @@ Return (values D U V) with D = U * M + V * N. (recursive version)"
 
 ;;; square roots of rationals and integers
 (defmethod gm:sqrt ((number integer))
-  (let ((r1 (isqrt number))
-        (r2 (sqrt number)))
-    (if (= r1 r2)
+  (let ((r1 (isqrt number)))
+    (if (= (expt r1 2) number)
         (values r1 t)
-        (values r2 nil))))
+        (values (sqrt number) nil))))
 
 (defmethod gm:sqrt ((number rational))
   (let ((num (numerator number))
