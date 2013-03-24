@@ -176,7 +176,7 @@ Keep this in mind when using."
          (n (degree poly-denom))
          (m-n (- m n)))
     (if (minusp m-n)
-        (values (zero 'polynomial) poly-numer)
+        (values (zero poly-numer) poly-numer)
         (let ((qn (make-array (+ m-n 1) :initial-element 0)))
           (iter (for k from 0 to m-n)
                 (setf (aref qn k) (gm:* (aref an k) b0))
@@ -208,12 +208,17 @@ Keep this in mind when using."
                                      (lambda (x) (-> 'finite-fields:integer-mod x :mod mod))
                                      (coefficients polynomial)))))
 
-(defmethod derivative ((polynomial polynomial))
+(defmethod derivative (number &key (var 'X))
+  (zero number))
+
+(defmethod derivative ((polynomial polynomial) &key (var 'X))
   "Calculate the usual derivative of a polynomial."
-  (simplify
-   (make-instance 'polynomial
-                  :var (var polynomial)
-                  :coefficients (map 'vector #'gm:*
-                                     (subseq (coefficients polynomial)
-                                             0 (degree polynomial))
-                                     (mrange (degree polynomial) 1)))))
+  (if (eql var (var polynomial))
+      (simplify
+       (make-instance 'polynomial
+                      :var (var polynomial)
+                      :coefficients (map 'vector #'gm:*
+                                         (subseq (coefficients polynomial)
+                                                 0 (degree polynomial))
+                                         (mrange (degree polynomial) 1))))
+      (zero polynomial)))
