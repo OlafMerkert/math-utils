@@ -141,6 +141,11 @@ polynomial."
   ;; TODO implement ggt for polynomials properly
   1)
 
+(defmethod ggt ((a polynomial) (b polynomial))
+  (if (zero-p b) a
+      (ggt b (nth-value 1 (generic-/ a b)))))
+
+
 (defmethod simplify ((a fraction) &key)
   (with-slots ((n numer) (d denom)) a
     ;; first simplify both parts

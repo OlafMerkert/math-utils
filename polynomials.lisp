@@ -187,6 +187,11 @@ Keep this in mind when using."
           (values (simplify (make-instance 'polynomial :coefficients qn))
                   (simplify (make-instance 'polynomial :coefficients (subseq an m-n))))))))
 
+(defun poly-divisible-p (divisor polynomial)
+  (let ((remainder (nth-value 1 (generic-/ polynomial divisor))))
+    (or (zero-p remainder)
+        (values nil remainder))))
+
 ;; TODO provide condition when division has remainder
 
 ;;; comparison
