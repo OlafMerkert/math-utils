@@ -1,4 +1,5 @@
 (defpackage :polynomials
+  (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
@@ -37,7 +38,7 @@
   (1- (length (coefficients polynomial))))
 
 (defmethod degree ((fraction fraction))
-  (- (degree (numer fraction)) (degree (denom fraction))))
+  (- (degree (numerator fraction)) (degree (denominator fraction))))
 
 (defmethod leading-coefficient ((polynomial polynomial))
   (if (simplified-p polynomial)

@@ -1,9 +1,10 @@
 (defpackage :localisations
-  (:shadow :numerator :denominator)
+  (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
   (:use :cl :ol
         :generic-math
-        :finite-fields)
+        :finite-fields
+        :fractions)
   (:export
    :numerator
    :denominator
@@ -15,13 +16,8 @@
 
 (in-package :localisations)
 
-(defclass integer-loc ()
-  ((numerator   :initarg :numer
-                :reader   numerator)
-   (denominator :initarg :denom
-                :initform 1
-                :reader   denominator)
-   (modulus     :initarg :mod
+(defclass integer-loc (fraction)
+  ((modulus     :initarg :mod
                 :reader   modulus))
   (:documentation "An element of the localisation of the integers at a
   modulus p."))
@@ -53,7 +49,7 @@
         (format stream "\\frac{~A}{~A}" numerator denominator))))
 
 (defun loc% (n d m)
-  (make-instance 'integer-loc :numer n :denom d :mod m))
+  (make-instance 'integer-loc :numerator n :denominator d :mod m))
 
 (defmacro at-modulus ((p) &body body)
   "Consider all verbatim integers and rationals as being at p."
@@ -81,41 +77,41 @@
 (defmethod generic-+ ((a integer-loc) (b integer-loc))
   (assert-same-modulus p (a b)
     (make-instance 'integer-loc
-                   :numer (+ (* (numerator a) (denominator b))
+                   :numerator (+ (* (numerator a) (denominator b))
                              (* (numerator b) (denominator a)))
-                   :denom (* (denominator a) (denominator b))
+                   :denominator (* (denominator a) (denominator b))
                    :mod p)))
 
 (defmethod generic-- ((a integer-loc) (b integer-loc))
   (assert-same-modulus p (a b)
     (make-instance 'integer-loc
-                   :numer (- (* (numerator a) (denominator b))
+                   :numerator (- (* (numerator a) (denominator b))
                              (* (numerator b) (denominator a)))
-                   :denom (* (denominator a) (denominator b))
+                   :denominator (* (denominator a) (denominator b))
                    :mod p)))
 
-(defmethod generic-* ((a integer-loc) (b integer-loc))
+(Defmethod generic-* ((a integer-loc) (b integer-loc))
   (assert-same-modulus p (a b)
     (make-instance 'integer-loc
-                   :numer (* (numerator a)   (numerator b))
-                   :denom (* (denominator a) (denominator b))
+                   :numerator (* (numerator a)   (numerator b))
+                   :denominator (* (denominator a) (denominator b))
                    :mod p)))
 
 (defmethod generic-/ ((a integer-loc) (b integer-loc))
   (assert-same-modulus p (a b)
     (make-instance 'integer-loc
-                   :numer (* (numerator a) (denominator b))
-                   :denom (* (numerator b) (denominator a))
+                   :numerator (* (numerator a) (denominator b))
+                   :denominator (* (numerator b) (denominator a))
                    :mod p)))
 
 (defmethod zero ((a integer-loc))
-  (make-instance 'integer-loc :numer 0 :mod (modulus a)))
+  (make-instance 'integer-loc :numerator 0 :mod (modulus a)))
 
 (defmethod one ((a integer-loc))
-  (make-instance 'integer-loc :numer 1 :mod (modulus a)))
+  (make-instance 'integer-loc :numerator 1 :mod (modulus a)))
 
 (defmethod -> ((target-type (eql 'integer-loc)) (number rational) &key (mod 2))
-  (make-instance 'integer-loc :numer (cl:numerator number) :denom (cl:denominator number) :mod mod))
+  (make-instance 'integer-loc :numerator (cl:numerator number) :denominator (cl:denominator number) :mod mod))
 
 (defmethod -> ((target-type integer-loc) (number rational) &key)
   (-> 'integer-loc number :mod (modulus target-type)))

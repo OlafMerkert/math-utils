@@ -15,12 +15,13 @@
                (:file "fractions" :depends-on ("generic-math"))
                (:file "localisations" :depends-on ("generic-math"
                                                    "number-theory"
+                                                   "fractions"
                                                    "finite-fields"))
                (:file "variables")
                (:file "polynomials" :depends-on ("generic-math"
-                                                   "variables"
-                                                   "finite-fields"
-                                                   "fractions"))
+                                                 "variables"
+                                                 "finite-fields"
+                                                 "fractions"))
                (:file "multivariate-polynomials" :depends-on ("generic-math"
                                                               "variables"
                                                               "fractions"

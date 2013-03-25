@@ -1,69 +1,74 @@
 (defpackage :fractions
+  (:shadow :numerator :denominator)
   (:shadowing-import-from :generic-math :summing  :+ :- :* :/ := :expt :sqrt)
   (:use :cl :ol :iterate :generic-math)
   (:export
    #:ggt
    #:fraction
-   #:numer
-   #:denom))
+   #:numerator
+   #:denominator))
 
 (in-package :fractions)
 
 (defclass fraction ()
-  ((numer :initarg :numer
-         :initform 0
-         :accessor numer)
-   (denom :initarg :denom
-         :initform 1
-         :accessor denom))
+  ((numerator :initarg :numerator
+              :initform 0
+              :accessor numerator)
+   (denominator :initarg :denominator
+                :initform 1
+                :accessor denominator))
   (:documentation "A fraction can hold any objects, and describes the
   formal quotient. The domain, over which we consider fraction, should
   not matter much, but it must provide some canonical canceling
   strategry, like the euclidean algorithm."))
 
+(defun frac (numerator denominator)
+  "Constructor abbreviation for general fractions."
+  (make-instance 'fraction :numerator numerator :denominator denominator))
+
 (defmethod generic-= ((a fraction) (b fraction))
-  (gm:= (gm:* (numer a) (denom b))
-        (gm:* (numer b) (denom a))))
+  (gm:= (gm:* (numerator a) (denominator b))
+        (gm:* (numerator b) (denominator a))))
 
 (defmethod zero-p ((a fraction))
-  (zero-p (numer a)))
+  (zero-p (numerator a)))
 
 (defmethod one-p ((a fraction))
-  (gm:= (numer a) (denom a)))
+  (gm:= (numerator a) (denominator a)))
 
 (defmethod generic-+ ((a fraction) (b fraction))
   (simplify
    (make-instance 'fraction
-                  :numer (gm:+ (gm:* (numer a) (denom b)) (gm:* (numer b) (denom a)))
-                  :denom (gm:* (denom a) (denom b)))))
+                  :numerator (gm:+ (gm:* (numerator a) (denominator b)) (gm:* (numerator b) (denominator a)))
+                  :denominator (gm:* (denominator a) (denominator b)))))
 
 (defmethod generic-- ((a fraction) (b fraction))
   (simplify
    (if (zero-p a)
        (make-instance 'fraction
-                      :numer (gm:- (numer b))
-                      :denom (denom b))
+                      :numerator (gm:- (numerator b))
+                      :denominator (denominator b))
        (make-instance 'fraction
-                      :numer (gm:- (gm:* (numer a) (denom b)) (gm:* (numer b) (denom a)))
-                      :denom (gm:* (denom a) (denom b))))))
+                      :numerator (gm:- (gm:* (numerator a) (denominator b)) (gm:* (numerator b) (denominator a)))
+                      :denominator (gm:* (denominator a) (denominator b))))))
 
 
 (defmethod generic-*  ((a fraction) (b fraction))
   (simplify
    (make-instance 'fraction
-                  :numer (gm:* (numer a) (numer b))
-                  :denom (gm:* (denom a) (denom b)))))
+                  :numerator (gm:* (numerator a) (numerator b))
+                  :denominator (gm:* (denominator a) (denominator b)))))
 
 (defmethod generic-/ ((a fraction) (b fraction))
   (when (zero-p b)
     (error "Cannot divide by 0."))
   (simplify 
    (make-instance 'fraction
-                  :numer (gm:* (numer a) (denom b))
-                  :denom (gm:* (numer b) (denom a)))))
+                  :numerator (gm:* (numerator a) (denominator b))
+                  :denominator (gm:* (numerator b) (denominator a)))))
 
 (defmethod print-object ((fraction fraction) stream)
-  (format stream "[~A / ~A]" (numer fraction) (denom fraction)))
+  (format stream "[~A / ~A]" (numerator fraction) (denominator fraction)))
 
 ;;; use german abbrevation ggt for the greatest common divisor, so we
 ;;; don't have to bother with name collisions
@@ -82,7 +87,7 @@
 
 ;;; with ggt, we can simplify fractions
 (defmethod simplify ((a fraction) &key)
-  (with-slots ((n numer) (d denom)) a
+  (with-slots ((n numerator) (d denominator)) a
     ;; first simplify both parts
     (setf n (simplify n)
           d (simplify d))

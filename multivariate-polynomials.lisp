@@ -1,5 +1,6 @@
 (defpackage :multivariate-polynomials
   (:nicknames :mpoly)
+  (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :iterate
@@ -74,7 +75,7 @@ polynomial."
 ;;; in theory, this construction should be completely generic.
 
 (defmethod mdegree ((fraction fraction) var)
-   (- (mdegree (numer fraction) var) (mdegree (denom fraction) var)))
+   (- (mdegree (numerator fraction) var) (mdegree (denominator fraction) var)))
 
 (defmethod ggt ((a mpolynomial) (b mpolynomial))
   ;; TODO implement ggt for polynomials properly
