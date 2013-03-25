@@ -1,5 +1,6 @@
 (defpackage :elliptic-curve-weierstrass
   (:nicknames :ec-ws)
+  (:shadow :zero)
   (:shadowing-import-from :generic-math
                           :+ :* :/ :expt :- :=)
   (:use :cl :ol :iterate)
@@ -138,10 +139,10 @@
             x1 x2))
 
 ;; inverse of points
-(defmethod gm:zero ((point ec-point-ws))
+(defmethod zero ((point ec-point-ws))
   (infinite-point (curve point)))
 
-(defmethod gm:zero ((point ec-point-infinity))
+(defmethod zero ((point ec-point-infinity))
   point)
 
 (defmethod gm:generic-- ((p1 ec-point-infinity) (p2 ec-point-infinity))

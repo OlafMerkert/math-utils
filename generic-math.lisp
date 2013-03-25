@@ -80,6 +80,12 @@ as :from-end parameter to reduce."
 (defmethod generic-* ((a number) (b number))
   (cl:* a b))
 
+(defmethod generic-* (a (b (eql 0)))
+  0)
+
+(defmethod generic-* ((b (eql 0)) a)
+  0)
+
 (defmethod generic-* (a (b (eql 1)))
   a)
 
