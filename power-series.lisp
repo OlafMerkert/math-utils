@@ -293,8 +293,12 @@ by FORMULA where INDEX is anaphorically bound."
 (defmethod gm:sqrt ((polynomial polynomial))
   "With power-series available, we can also take the square roots of
 polynomials."
-  ;; TODO check whether the root is a polynomial.
-  (gm:sqrt (-> 'power-series polynomial)))
+  (let* ((root (gm:sqrt (-> 'power-series polynomial)))
+         (root-poly (series-truncate root)))
+    ;; check whether the root is a polynomial.
+    (if (gm:= (gm:expt root-poly 2) polynomial)
+        root-poly
+        root)))
 
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
