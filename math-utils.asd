@@ -12,15 +12,18 @@
                                      (:file "multiplicative-functions" :depends-on ("packages"))))
                (:file "finite-fields" :depends-on ("generic-math"
                                                    "number-theory"))
+               (:file "fractions" :depends-on ("generic-math"))
                (:file "localisations" :depends-on ("generic-math"
                                                    "number-theory"
                                                    "finite-fields"))
                (:file "variables")
                (:file "polynomials" :depends-on ("generic-math"
                                                    "variables"
-                                                   "finite-fields"))
+                                                   "finite-fields"
+                                                   "fractions"))
                (:file "multivariate-polynomials" :depends-on ("generic-math"
                                                               "variables"
+                                                              "fractions"
                                                               "polynomials"))
                (:file "power-series"  :depends-on ("generic-math"
                                                    "polynomials"

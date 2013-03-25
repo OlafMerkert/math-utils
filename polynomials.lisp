@@ -2,7 +2,7 @@
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
-        :iterate)
+        :iterate :fractions)
   (:export
    :degree
    :nth-coefficient%
@@ -35,6 +35,9 @@
 ;; unify polynomial interface with power series interface
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
+
+(defmethod degree ((fraction fraction))
+  (- (degree (numer fraction)) (degree (denom fraction))))
 
 (defmethod leading-coefficient ((polynomial polynomial))
   (if (simplified-p polynomial)
@@ -187,12 +190,16 @@ Keep this in mind when using."
           (values (simplify (make-instance 'polynomial :coefficients qn))
                   (simplify (make-instance 'polynomial :coefficients (subseq an m-n))))))))
 
+;; TODO provide condition when division has remainder
+
 (defun poly-divisible-p (divisor polynomial)
   (let ((remainder (nth-value 1 (generic-/ polynomial divisor))))
     (or (zero-p remainder)
         (values nil remainder))))
 
-;; TODO provide condition when division has remainder
+(defmethod ggt ((a polynomial) (b polynomial))
+  (if (zero-p b) a
+      (ggt b (nth-value 1 (generic-/ a b)))))
 
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
