@@ -6,7 +6,8 @@
    #:ggt
    #:fraction
    #:numerator
-   #:denominator))
+   #:denominator
+   #:frac))
 
 (in-package :fractions)
 
@@ -20,9 +21,9 @@
   (:documentation "A fraction can hold any objects, and describes the
   formal quotient. The domain, over which we consider fraction, should
   not matter much, but it must provide some canonical canceling
-  strategry, like the euclidean algorithm."))
+  strategy, like the euclidean algorithm."))
 
-(defun frac (numerator denominator)
+(defun frac (numerator &optional (denominator 1))
   "Constructor abbreviation for general fractions."
   (make-instance 'fraction :numerator numerator :denominator denominator))
 
@@ -74,7 +75,7 @@
 ;;; don't have to bother with name collisions
 (defgeneric ggt (a b)
   (:documentation "Compute the greatest common divisor for A, B in
-  some factorial (or better euclidean) ring."))
+  some unique factorisation domain (or better euclidean domain)."))
 
 (defmethod ggt (a (b (eql 1)))
   1)
@@ -98,4 +99,41 @@
               d (gm:/ d g)))))
   a)
 
+
+(defmethod simplified-p ((a fraction))
+  ;; TODO do we want to test something here?
+  t)
+
 ;;; TODO perhaps allow moving units in fractions (how in canonical way?)
+
+;;; more important functions from generic-math
+(defmethod gm:sqrt ((fraction fraction))
+  (multiple-value-bind (num-r num-nice) (sqrt (numerator fraction))
+    (multiple-value-bind (den-r den-nice) (sqrt (denominator fraction))
+      (values (frac num-r den-r)
+              (and num-nice den-nice)))))
+
+;;; coerce rationals into fractions
+(defmethod -> ((target-type (eql 'fraction)) (rational rational) &key)
+  (frac (cl:numerator rational) (cl:denominator rational)))
+
+(defmethod -> ((target-type fraction) (rational rational) &key)
+  (frac (cl:numerator rational) (cl:denominator rational)))
+
+;; TODO create a helper macro that automatically takes care of
+;; generating both -> methods (including parameters), and similar
+;; stuff for one and zero methods
+
+(create-binary->-wrappers fraction rational
+    () (:left :right)
+  generic-+
+  generic--
+  generic-*
+  generic-/)
+
+(defmethod one ((fraction fraction))
+  (frac 1))
+
+(defmethod zero ((fraction fraction))
+  (frac 0))
+
