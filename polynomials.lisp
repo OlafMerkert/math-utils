@@ -64,23 +64,11 @@
 (defun make-polynomial (lk &rest coefficients)
   (make-instance 'polynomial :coefficients (list->array (list* lk coefficients))))
 
-(defmethod zero ((number polynomial))
-  (make-instance 'polynomial :coefficients (vector 0) :var (var number)))
-
-(defmethod zero ((number (eql 'polynomial)))
-  (make-polynomial 0))
-
 (defmethod zero-p ((polynomial polynomial))
   ;; assume poly is simplified for now
   (assert (simplified-p polynomial))
   (and (zerop (degree polynomial))
        (zero-p (constant-coefficient polynomial))))
-
-(defmethod one ((number polynomial))
-  (make-instance 'polynomial :coefficients (vector 1) :var (var number)))
-
-(defmethod one ((number (eql 'polynomial)))
-  (make-polynomial 1))
 
 (defmethod one-p ((polynomial polynomial))
   (assert (simplified-p polynomial))

@@ -131,9 +131,3 @@
   generic-*
   generic-/)
 
-(defmethod one ((fraction fraction))
-  (frac 1))
-
-(defmethod zero ((fraction fraction))
-  (frac 0))
-

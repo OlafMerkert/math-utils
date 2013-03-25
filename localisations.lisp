@@ -104,12 +104,6 @@
                    :denominator (* (numerator b) (denominator a))
                    :mod p)))
 
-(defmethod zero ((a integer-loc))
-  (make-instance 'integer-loc :numerator 0 :mod (modulus a)))
-
-(defmethod one ((a integer-loc))
-  (make-instance 'integer-loc :numerator 1 :mod (modulus a)))
-
 (defmethod -> ((target-type (eql 'integer-loc)) (number rational) &key (mod 2))
   (make-instance 'integer-loc :numerator (cl:numerator number) :denominator (cl:denominator number) :mod mod))
 

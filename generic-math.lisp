@@ -65,8 +65,8 @@ as :from-end parameter to reduce."
 (defmethod generic-+ ((b (eql 0)) a)
   a)
 
-(defgeneric zero (number))
-(defmethod zero ((number number))
+(defun zero (number)
+  (declare (ignore number))
   0)
 
 (define-generic-binary-operation - :none (generic-- (zero argument) argument))
@@ -86,8 +86,8 @@ as :from-end parameter to reduce."
 (defmethod generic-* ((b (eql 1)) a)
   a)
 
-(defgeneric one (number))
-(defmethod one ((number number))
+(defun one (number)
+  (declare (ignore number))
   1)
 
 (define-generic-binary-operation / :none (generic-/ (one argument) argument))

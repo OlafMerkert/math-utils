@@ -94,12 +94,6 @@
                               p)
                     :mod p))))
 
-(defmethod zero ((a integer-mod))
-  (make-instance 'integer-mod :rem 0 :mod (modulus a)))
-
-(defmethod one ((a integer-mod))
-  (make-instance 'integer-mod :rem 1 :mod (modulus a)))
-
 (defmethod -> ((target-type (eql 'integer-mod)) (number integer) &key (mod 2))
   (make-instance 'integer-mod :rem number :mod mod))
 

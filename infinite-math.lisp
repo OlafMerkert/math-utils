@@ -65,15 +65,3 @@
   (unless (zero-p a)
     (error "substracting infinity from anything but 0 is not well defined."))
   infinity+)
-
-(defmethod zero ((a (eql infinity+)))
-  0)
-
-(defmethod zero ((a (eql infinity-)))
-  0)
-
-(defmethod one ((a (eql infinity+)))
-  1)
-
-(defmethod one ((a (eql infinity-)))
-  1)

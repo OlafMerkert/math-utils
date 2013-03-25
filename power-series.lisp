@@ -74,19 +74,6 @@ pipe ends before."
       (nth-coefficient% series (- (degree series) n))
       0))
 
-(defmethod zero ((number power-series))
-  (make-constant-series 0))
-
- (defmethod zero ((number (eql 'power-series)))
-  (make-constant-series 0))
-
-(defmethod one ((number power-series))
-  (make-constant-series 1))
-
-(defmethod one ((number (eql 'power-series)))
-  (make-constant-series 1))
-
-
 (defmethod -> ((target-type (eql 'power-series)) (polynomial polynomial) &key)
   (if (zerop (degree polynomial))
       (make-constant-series (constant-coefficient polynomial))
