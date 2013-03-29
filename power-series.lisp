@@ -281,6 +281,7 @@ by FORMULA where INDEX is anaphorically bound."
 polynomials."
   (let* ((root (gm:sqrt (-> 'power-series polynomial)))
          (root-poly (series-truncate root)))
+    (setf (var root-poly) (var polynomial))
     ;; check whether the root is a polynomial.
     (if (gm:= (gm:expt root-poly 2) polynomial)
         root-poly

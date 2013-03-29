@@ -176,8 +176,10 @@ Keep this in mind when using."
                       (for jj from k to (+ k n))
                       (setf (aref an jj) (gm:- (aref an jj)
                                               (gm:* (aref qn k) (aref bn j))))))
-          (values (simplify (make-instance 'polynomial :coefficients qn))
-                  (simplify (make-instance 'polynomial :coefficients (subseq an m-n))))))))
+          (values (simplify (make-instance 'polynomial :var (var poly-numer)
+                                           :coefficients qn))
+                  (simplify (make-instance 'polynomial :var (var poly-numer)
+                                           :coefficients (subseq an m-n))))))))
 
 ;; TODO provide condition when division has remainder
 
