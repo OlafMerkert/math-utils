@@ -172,6 +172,9 @@ to override this if a better algorithm is available."
   (:documentation "Transform a NUMBER, if possible to target type,
   which is either a symbol designating a type, or another object."))
 
+(defmethod -> (target-type number &key)
+  (error "Undefined math object conversion path."))
+
 (defgeneric zero-p (number)
   (:documentation "Test whether the given number is zero."))
 

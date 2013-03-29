@@ -353,3 +353,19 @@ match, consider the series equal."
 
 
 ;;; in case of finite power series, the precision should be explicit
+
+;;; compatibility with constant coefficients
+(defmethod -> ((target-type1589 (eql (quote power-series))) (rational rational) &key)
+  (make-constant-series rational))
+
+(defmethod -> ((target-type1589 (eql (quote constant-series))) (rational rational) &key)
+  (make-constant-series rational))
+
+(defmethod -> ((power-series power-series) (rational rational) &key)
+  (make-constant-series rational))
+
+(create-binary->-wrappers power-series rational (:left :right)
+  generic-+
+  generic--
+  generic-*
+  generic-/)
