@@ -223,3 +223,13 @@ Keep this in mind when using."
                                                  0 (degree polynomial))
                                          (mrange (degree polynomial) 1))))
       (zero polynomial)))
+
+;;; compatibility with constant coefficients
+(define->-method (polynomial rational (:var var 'X))
+    :coefficients (vector rational))
+
+(create-binary->-wrappers polynomial rational (:left :right)
+  generic-+
+  generic--
+  generic-*
+  generic-/)

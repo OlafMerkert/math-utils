@@ -94,12 +94,6 @@
                               p)
                     :mod p))))
 
-(defmethod -> ((target-type (eql 'integer-mod)) (number integer) &key (mod 2))
-  (make-instance 'integer-mod :rem number :mod mod))
-
-(defmethod -> ((target-type integer-mod) (number integer) &key)
-  (-> 'integer-mod number :mod (modulus target-type)))
-
 ;; TODO Quadratwurzeln in endlichen Körpern // besserer Algorithmus
 (defmethod gm:sqrt ((a integer-mod))
   (with-slots ((r remainder) (p modulus)) a
@@ -110,8 +104,10 @@
               p)
         (error "~A has no square root mod ~A" r p))))
 
-(create-binary->-wrappers integer-mod integer
-    (:mod (modulus integer-mod)) (:left :right)
+(define->-method (integer-mod integer (:mod modulus 2))
+    :rem integer)
+
+(create-binary->-wrappers integer-mod integer (:left :right)
   generic-+
   generic--
   generic-*

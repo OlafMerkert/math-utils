@@ -25,7 +25,8 @@
    :print-object/tex
    :print-object/helper
    :*tex-output-mode*
-   :minus-p))
+   :minus-p
+   :define->-method))
 
 (in-package :generic-math)
 
@@ -236,19 +237,32 @@ to override this if a better algorithm is available."
        (setf ,g!sum
              (+ ,g!sum ,expr)))))
 
-(defmacro create-binary->-wrappers (to from params sides &body generic-functions)
+(defmacro! define->-method ((to from &rest slots) &rest m-i-parameters)
+  (let ((slot-vars (mapcar (compose #'symb #'first) slots)))
+   `(progn
+      (defmethod -> ((,g!target-type (eql ',to)) (,from ,from)
+                     &key ,@(mapcar #2`(,a1 ,(third a2)) slot-vars slots))
+        (make-instance ',to ,@(mapcan #2`(,(first a2) ,a1) slot-vars slots)
+                       ,@m-i-parameters))
+      (defmethod -> ((,to ,to) (,from ,from) &key)
+        (make-instance ',to ,@(mapcan (lambda (slot)
+                                        `(,(first slot) (,(second slot) ,to)))
+                                      slots)
+                       ,@m-i-parameters)))))
+
+(defmacro create-binary->-wrappers (to from sides &body generic-functions)
   `(progn
      ,@(when (member :left sides)
         (mapcar
          #`(defmethod ,a1 ((,from ,from) (,to ,to))
-             (,a1 (-> ',to ,from ,@params)
+             (,a1 (-> ,to ,from)
                   ,to))
          generic-functions))
      ,@(when (member :right sides)
         (mapcar
          #`(defmethod ,a1 ((,to ,to) (,from ,from))
              (,a1 ,to
-                  (-> ',to ,from ,@params)))
+                  (-> ,to ,from)))
          generic-functions))))
 
 (defgeneric print-object/tex (object stream)

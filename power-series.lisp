@@ -84,8 +84,7 @@ pipe ends before."
 (defmethod -> ((target-type power-series) (polynomial polynomial) &key)
   (-> 'power-series polynomial))
 
-(create-binary->-wrappers power-series polynomial
-    () (:left :right)
+(create-binary->-wrappers power-series polynomial (:left :right)
   generic-+
   generic--
   generic-*

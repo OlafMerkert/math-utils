@@ -114,18 +114,11 @@
               (and num-nice den-nice)))))
 
 ;;; coerce rationals into fractions
-(defmethod -> ((target-type (eql 'fraction)) (rational rational) &key)
-  (frac (cl:numerator rational) (cl:denominator rational)))
+(define->-method (fraction rational)
+    :numerator   (cl:numerator rational)
+    :denominator (cl:denominator rational))
 
-(defmethod -> ((target-type fraction) (rational rational) &key)
-  (frac (cl:numerator rational) (cl:denominator rational)))
-
-;; TODO create a helper macro that automatically takes care of
-;; generating both -> methods (including parameters), and similar
-;; stuff for one and zero methods
-
-(create-binary->-wrappers fraction rational
-    () (:left :right)
+(create-binary->-wrappers fraction rational (:left :right)
   generic-+
   generic--
   generic-*
