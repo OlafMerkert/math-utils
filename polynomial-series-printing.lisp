@@ -7,22 +7,21 @@
         :polynomials
         :power-series)
   (:export
-   #:print-number
    #:print-superscript
-   #:print-variable
-   #:print-spacer
-   #:print-operator
-   #:print-ellipsis
-   #:with-printer
-   #:print-monomial
-   #:print-polynomial
+   #:format-monomial
+   #:format-polynomial
    #:print-additional-terms
-   #:print-power-series
-   #:print-monomial-simple
-   #:print-polynomial-simple
-   #:print-power-series-simple
-   #:repl-printer
-   #:printer))
+   #:format-power-series
+   #:string-printer
+   #:tex-printer
+   #:printer
+   #:implement-printer-method
+   #:define-printer-method
+   #:print-sum+ellipsis
+   #:*current-printer*
+   #:format-monomial/all
+   #:format-power-series/all
+   #:format-polynomial/all))
 
 (in-package :polynomial-series-printing)
 
@@ -36,7 +35,8 @@
 (defun clean-coeffs (coefficients degree)
   (iter (for i downfrom degree)
         (for c in-vector coefficients)
-        (for m = (minus-p c))
+        (for m = (and (not (first-iteration-p))
+                      (minus-p c)))
         (for cc = (if m (gm:- c) c))
         (unless (zero-p c)
           (collect (list cc i (one-p cc) m)))))
@@ -60,6 +60,11 @@
           (print-math-object coeff)
           (print-superscript var deg)))))
 
+(defun format-monomial/all (var coeff deg)
+  (print-product
+   (print-math-object coeff)
+   (print-superscript var deg)))
+
 (defun format-polynomial (polynomial)
   (apply #'print-sum
          (mapcar (lambda (x) (list (apply #'format-monomial
@@ -69,6 +74,16 @@
                                   '-
                                   '+)))
                  (clean-coeffs (coefficients polynomial) (degree polynomial)))))
+
+(defun format-polynomial/all (polynomial)
+  (apply #'print-sum
+         (mapcar (lambda (x) (list (apply #'format-monomial/all
+                                     (var polynomial)
+                                     x)
+                              (if (fourth x)
+                                  '-
+                                  '+)))
+                 (all-coeffs (coefficients polynomial) (degree polynomial)))))
 
 (defun format-power-series (power-series)
   (apply #'print-sum+ellipsis
@@ -82,6 +97,19 @@
                                                 (+ (degree power-series) print-additional-terms)
                                                 nil)
                                (degree power-series)))))
+
+(defun format-power-series/all (power-series)
+  (apply #'print-sum+ellipsis
+         (mapcar (lambda (x) (list (apply #'format-monomial/all
+                                     'X
+                                     x)
+                              (if (fourth x)
+                                  '-
+                                  '+)))
+                 (all-coeffs (lazy-array-take (coefficients power-series)
+                                              (+ (degree power-series) print-additional-terms)
+                                              nil)
+                             (degree power-series)))))
 
 (defparameter *current-printer* nil)
 
@@ -114,7 +142,7 @@
     (iter (for sws in summands-with-sign)
           (for sum = (first sws))
           (for sign = (second sws))
-          (if (first-time-p)
+          (if (first-iteration-p)
               (unless (eql '+ sign)
                 (princ sign stream))
               (format stream " ~A " sign))
@@ -160,7 +188,7 @@
     (iter (for sws in summands-with-sign)
           (for sum = (first sws))
           (for sign = (second sws))
-          (if (first-time-p)
+          (if (first-iteration-p)
               (unless (eql '+ sign)
                 (princ sign stream))
               (format stream " ~A " sign))
