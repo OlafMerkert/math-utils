@@ -25,6 +25,8 @@
 
 (in-package :polynomial-series-printing)
 
+(defparameter print-additional-terms 5)
+
 ;;; four entries in the list: coefficient, exponent, whether coeff is
 ;;; one, and whether it had sign swapped.
 (defun all-coeffs (coefficients degree)

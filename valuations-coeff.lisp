@@ -44,15 +44,18 @@
 (defclass power-series-values (power-series)
   ())
 
+
 (defmethod print-object ((polynomial-values polynomial-values) stream)
-  (princ "V[" stream)
-  (pspr:print-polynomial-simple (make-instance 'pspr:repl-printer) polynomial-values)
-  (princ "]" stream))
+  (let ((pspr:*current-printer* 'pspr:string-printer))
+    (princ "V[" stream)
+    (pspr:format-polynomial/all polynomial-values)
+    (princ "]" stream)))
 
 (defmethod print-object ((power-series-values power-series-values) stream)
-  (princ "V[" stream)
-  (pspr:print-power-series-simple (make-instance 'pspr:repl-printer) power-series-values)
-  (princ "]" stream))
+  (let ((pspr:*current-printer* 'pspr:string-printer))
+    (princ "V[" stream)
+    (pspr:format-power-series/all power-series-values)
+    (princ "]" stream)))
 
 (defmethod gm:simplify ((polynomial-values polynomial-values) &key)
   (with-slots (coefficients) polynomial-values
