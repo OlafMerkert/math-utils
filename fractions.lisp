@@ -77,11 +77,13 @@
   (:documentation "Compute the greatest common divisor for A, B in
   some unique factorisation domain (or better euclidean domain)."))
 
-(defmethod ggt (a (b (eql 1)))
-  1)
+;;; ggt of something and 1 is 1
+(defmethod ggt (a (b (eql 1))) 1)
+(defmethod ggt ((b (eql 1)) a) 1)
 
-(defmethod ggt ((b (eql 1)) a)
-  1)
+;;; ggt of something and 0 is something
+(defmethod ggt (a (b (eql 0))) a)
+(defmethod ggt ((b (eql 0)) a) a)
 
 (defmethod ggt ((a integer) (b integer))
   (gcd a b))
