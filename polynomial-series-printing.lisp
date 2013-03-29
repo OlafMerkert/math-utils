@@ -21,212 +21,182 @@
    #:print-monomial-simple
    #:print-polynomial-simple
    #:print-power-series-simple
-   #:repl-printer))
+   #:repl-printer
+   #:printer))
 
 (in-package :polynomial-series-printing)
 
-;; first establish a protocol, so we may use the output logic for
-;; different frontends (like repl, tex code or the math-interactor
-(progn
-  (defgeneric print-number      (printer number))
-  (defgeneric print-superscript (printer base exponent))
-  (defgeneric print-variable    (printer variable))
-  (defgeneric print-spacer      (printer))
-  (defgeneric print-operator    (printer operator))
-  (defgeneric print-ellipsis    (printer)))
+;;; four entries in the list: coefficient, exponent, whether coeff is
+;;; one, and whether it had sign swapped.
+(defun all-coeffs (coefficients degree)
+  (iter (for i downfrom degree)
+        (for c in-vector coefficients)
+        (collect (list c i nil nil))))
 
-(defmacro with-printer ((printer) &body body)
-  `(flet ,(mapcar #`(,a1 (&rest args) (apply #',a1 ,printer args))
-                  '(print-number
-                    print-superscript
-                    print-variable
-                    print-spacer
-                    print-operator
-                    print-ellipsis))
+(defun clean-coeffs (coefficients degree)
+  (iter (for i downfrom degree)
+        (for c in-vector coefficients)
+        (for m = (minus-p c))
+        (for cc = (if m (gm:- c) c))
+        (unless (zero-p c)
+          (collect (list cc i (one-p cc) m)))))
+
+(defun format-monomial (var coeff deg one neg)
+  (declare (ignorable neg))
+  (cond ((and one (zerop deg))
+         (print-math-object 1))
+        ((zerop deg)
+         (print-math-object coeff))
+        ((and one (= deg 1))
+         (print-math-object var))
+        ((= deg 1)
+         (print-product
+          (print-math-object coeff)
+          (print-math-object var)))
+        (one
+         (print-superscript var deg))
+        (t
+         (print-product
+          (print-math-object coeff)
+          (print-superscript var deg)))))
+
+(defun format-polynomial (polynomial)
+  (apply #'print-sum
+         (mapcar (lambda (x) (list (apply #'format-monomial
+                                     (var polynomial)
+                                     x)
+                              (if (fourth x)
+                                  '-
+                                  '+)))
+                 (clean-coeffs (coefficients polynomial) (degree polynomial)))))
+
+(defun format-power-series (power-series)
+  (apply #'print-sum+ellipsis
+         (mapcar (lambda (x) (list (apply #'format-monomial
+                                     'X
+                                     x)
+                              (if (fourth x)
+                                  '-
+                                  '+)))
+                 (clean-coeffs (lazy-array-take (coefficients power-series)
+                                                (+ (degree power-series) print-additional-terms)
+                                                nil)
+                               (degree power-series)))))
+
+(defparameter *current-printer* nil)
+
+(defmacro define-printer-method (name args)
+  (let ((impl-name (symb name '-implementation))
+        (args% (args->names args)))
+    `(progn
+       (defgeneric ,impl-name (printer ,@args%))
+       (defmethod ,impl-name ((printer (eql nil)) ,@args%))
+       (defun ,name ,args
+         (,impl-name *current-printer* ,@args%)))))
+
+(defmacro implement-printer-method (name printer-type args &body body)
+  ;; PRINTER is anaphoric
+  `(defmethod ,(symb+ :pspr name '-implementation) ((printer (eql ',printer-type)) ,@args)
      ,@body))
 
-;;; output of polynomials
-(defun print-monomial (printer coefficient exponent &optional (variable 'X))
-  (with-printer (printer)
-    (if (one-p coefficient)
-        (case exponent
-          ((0) (print-number coefficient))
-          ((1) (print-variable variable))
-          (t   (print-superscript variable exponent)))
-        (progn
-          (print-number coefficient)
-          (case exponent
-            ((0))
-            ((1) (print-spacer)
-             (print-variable variable))
-            (t   (print-spacer)
-                 (print-superscript variable exponent)))))))
+(define-printer-method print-math-object  (object))
+(define-printer-method print-sum          (&rest summands-with-sign))
+(define-printer-method print-sum+ellipsis (&rest summands-with-sign))
+(define-printer-method print-product      (&rest factors))
+(define-printer-method print-superscript  (base exponent))
 
-(defun print-polynomial (printer polynomial)
-  (if (zero-p polynomial)
-      (print-number printer 0)
-      (iter (for i from 0 to (degree polynomial))
-            (for coefficient = (nth-coefficient% polynomial i))
-            (for exponent    = (- (degree polynomial) i))
-            (for zero-p      = (zero-p coefficient))
-            (for minus-p     = (minus-p coefficient))
-            (cond ((or (zerop i) zero-p))
-                  (minus-p
-                   (print-operator printer '-))
-                  (t
-                   (print-operator printer '+)))
-            (unless zero-p 
-              (print-monomial printer (if (and (< 0 i) minus-p)
-                                          (gm:- coefficient)
-                                          coefficient)
-                              exponent
-                              (var polynomial))))))
+;;; implementation of printer interface for the repl
+(implement-printer-method print-math-object string-printer (object)
+  (format nil "~A" object))
 
-;;; output of power series
-(defparameter print-additional-terms 5)
+(implement-printer-method print-sum string-printer (summands-with-sign)
+  (with-output-to-string (stream)
+    (iter (for sws in summands-with-sign)
+          (for sum = (first sws))
+          (for sign = (second sws))
+          (if (first-time-p)
+              (unless (eql '+ sign)
+                (princ sign stream))
+              (format stream " ~A " sign))
+          (princ sum stream))))
 
-(defun print-power-series (printer series)
-  (with-printer (printer)
-    (if (zero-p series)
-        (print-number 0)
-        (progn
-          (iter (for i from 0 to (+ print-additional-terms
-                                    (max 0 (degree series))))
-                (for coefficient = (nth-coefficient% series i))
-                (for exponent    = (- (degree series) i))
-                (for zero-p      = (zero-p coefficient))
-                (for minus-p     = (minus-p coefficient))
-                (cond ((or (zerop i) zero-p))
-                      (minus-p
-                       (print-operator '-))
-                      (t
-                       (print-operator '+)))
-                (unless zero-p
-                  (print-monomial printer (if (and (< 0 i) minus-p)
-                                              (gm:- coefficient)
-                                              coefficient)
-                                  exponent)))
-          ;; now add the ellipsis
-          (print-operator '+)
-          (print-ellipsis)))))
+(implement-printer-method print-sum+ellipsis string-printer (summands-with-sign)
+  (concatenate 'string (print-sum-implementation printer summands-with-sign)
+               " + ..."))
 
-;;; a simplified version without dropping of stuff.
-(defun print-monomial-simple (printer coefficient exponent)
-  (with-printer (printer)
-    (print-number coefficient)
-    (case exponent
-      ((0))
-      ((1) (print-spacer)
-       (print-variable 'X))
-      (t (print-spacer)
-       (print-superscript 'X exponent)))))
+(implement-printer-method print-product string-printer (factors)
+  (format nil "~{~A~^ ~}" factors))
 
-(defun print-polynomial-simple (printer polynomial)
-  (if (zero-p polynomial)
-      (print-number printer 0)
-      (iter (for i from 0 to (degree polynomial))
-            (for exponent = (- (degree polynomial) i))
-            (for coeff in-vector (coefficients polynomial))
-            (unless (zerop i)
-              (print-operator printer '+))
-            (print-monomial-simple printer coeff exponent))))
-
-(defun print-power-series-simple (printer power-series)
-  (if (zero-p power-series)
-      (print-number printer 0)
-      (progn
-        (iter (for i from 0 to (+ print-additional-terms
-                                  (max 0 (degree power-series))))
-              (for exponent = (- (degree power-series) i))
-              (for coeff = (nth-coefficient% power-series i))
-              (print-monomial-simple printer coeff exponent)
-              (print-operator printer '+))
-        (print-ellipsis printer))))
-
-;; implementation for print-object
-(defclass repl-printer ()
-  ((stream :initarg :stream
-           :initform *standard-output*)))
-
-(defmethod print-number ((repl-printer repl-printer) number)
-  (print-object number (slot-value repl-printer 'stream)))
-
-(defmethod print-number ((repl-printer repl-printer) (number number))
-  (princ number (slot-value repl-printer 'stream)))
-
-(defmethod print-number ((repl-printer repl-printer) (symbol symbol))
-  (princ symbol (slot-value repl-printer 'stream)))
-
-(defmethod print-superscript ((repl-printer repl-printer) base exponent)
-  (format (slot-value repl-printer 'stream) "~A^~A" base exponent))
-
-(defmethod print-variable ((repl-printer repl-printer) variable)
-  (format (slot-value repl-printer 'stream) "~A" variable))
-
-(defmethod print-spacer ((repl-printer repl-printer))
-  (princ " " (slot-value repl-printer 'stream)))
-
-(defmethod print-operator ((repl-printer repl-printer) operator)
-  (format (slot-value repl-printer 'stream) " ~A " operator))
-
-(defmethod print-ellipsis ((repl-printer repl-printer))
-  (princ "..." (slot-value repl-printer 'stream)))
+(implement-printer-method print-superscript string-printer (base exponent)
+  (format nil "~A^~A" base exponent))
 
 (defmethod print-object ((polynomial polynomial) stream)
-  (princ #\[ stream)
-  (print-polynomial (make-instance 'repl-printer :stream stream) polynomial)  
-  (princ #\] stream))
+  (let ((*current-printer* 'string-printer))
+    (princ #\[ stream)
+    (princ (format-polynomial polynomial) stream)
+    (princ #\] stream)))
 
 (defmethod print-object ((series power-series) stream)
-  (princ #\[ stream)
-  (print-power-series (make-instance 'repl-printer :stream stream) series)
-  (princ #\] stream))
+    (let ((*current-printer* 'string-printer))
+      (princ #\[ stream)
+      (princ (format-power-series series) stream)
+      (princ #\] stream)))
 
 (defmethod print-object ((series constant-series) stream)
-  (let ((print-additional-terms 0))
+  (let ((print-additional-terms 1)
+        (*current-printer* 'string-printer))
     (princ #\[ stream)
-    (print-power-series (make-instance 'repl-printer :stream stream) series)
+    (princ (format-power-series series) stream)
     (princ #\] stream)))
 
 ;; implementation for print-object/tex
-(defclass tex-printer ()
-  ((stream :initarg :stream
-           :initform *standard-output*)))
+(implement-printer-method print-math-object tex-printer (object)
+  (with-output-to-string (stream)
+    (print-object/tex object stream)))
 
-(defmethod print-number ((tex-printer tex-printer) number)
-  (print-object/tex number (slot-value tex-printer 'stream)))
+;; this one is identical to the string printer
+(implement-printer-method print-sum tex-printer (summands-with-sign)
+  (with-output-to-string (stream)
+    (iter (for sws in summands-with-sign)
+          (for sum = (first sws))
+          (for sign = (second sws))
+          (if (first-time-p)
+              (unless (eql '+ sign)
+                (princ sign stream))
+              (format stream " ~A " sign))
+          (princ sum stream))))
 
-(defmethod print-superscript ((tex-printer tex-printer) base exponent)
-  (format (slot-value tex-printer 'stream) "{~A}^{~A}" base exponent))
+(implement-printer-method print-sum+ellipsis tex-printer (summands-with-sign)
+  (concatenate 'string (print-sum-implementation printer summands-with-sign)
+               " + \\dots"))
 
-(defmethod print-variable ((tex-printer tex-printer) variable)
-  (format (slot-value tex-printer 'stream) "~A" variable))
+(implement-printer-method print-product tex-printer (factors)
+  (format nil "~{~A~^ \\, ~}" factors))
 
-(defmethod print-spacer ((tex-printer tex-printer))
-  (princ " \\, " (slot-value tex-printer 'stream)))
-
-(defmethod print-operator ((tex-printer tex-printer) operator)
-  (format (slot-value tex-printer 'stream) " ~A " operator))
-
-(defmethod print-ellipsis ((tex-printer tex-printer))
-  (princ "\\dots" (slot-value tex-printer 'stream)))
-
+(implement-printer-method print-superscript tex-printer (base exponent)
+  (format nil "{~A}^{~A}" base exponent))
 
 (defmethod print-object/tex ((polynomial polynomial) stream)
-  (print-polynomial (make-instance 'tex-printer :stream stream) polynomial))
+  (let ((*current-printer* 'tex-printer))
+    (princ #\[ stream)
+    (princ (format-polynomial polynomial) stream)
+    (princ #\] stream)))
 
 (defmethod print-object/tex ((series power-series) stream)
-  (print-power-series (make-instance 'tex-printer :stream stream) series))
+    (let ((*current-printer* 'tex-printer))
+      (princ #\[ stream)
+      (format-power-series series)
+      (princ #\] stream)))
 
 (defmethod print-object/tex ((series constant-series) stream)
-  (let ((print-additional-terms 0))
-    (print-power-series (make-instance 'tex-printer :stream stream) series)))
+  (let ((print-additional-terms 1)
+        (*current-printer* 'tex-printer))
+    (princ #\[ stream)
+    (format-power-series series)
+    (princ #\] stream)))
 
 ;; TODO very few coefficients in power-series with low degree
 ;; TODO use the variable name of the polynomial
-
-;; TODO perhaps capture the hierarchy of math expr output better?
-;; would be useful for math-interactor.
 
 ;;; TODO how about abstracting math formatting a bit more, and
 ;;; providing a general library that takes care of that?
