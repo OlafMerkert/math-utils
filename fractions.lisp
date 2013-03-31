@@ -24,8 +24,9 @@
   strategy, like the euclidean algorithm."))
 
 (defun frac (numerator &optional (denominator 1))
-  "Constructor abbreviation for general fractions."
-  (make-instance 'fraction :numerator numerator :denominator denominator))
+  "Constructor abbreviation for general fractions, with implicit
+simplification."
+  (simplify (make-instance 'fraction :numerator numerator :denominator denominator)))
 
 (defmethod generic-= ((a fraction) (b fraction))
   (gm:= (gm:* (numerator a) (denominator b))
@@ -94,13 +95,15 @@
     ;; first simplify both parts
     (setf n (simplify n)
           d (simplify d))
-    ;; then divide by gcd
-    (let ((g (ggt n d)))
-      (unless (one-p g)
-        (setf n (gm:/ n g)
-              d (gm:/ d g)))))
-  a)
-
+    (cond ((and (rationalp n) (rationalp d))
+           ;; if both are rational, downgrade
+           (/ n d))
+          (t ;; otherwise just divide by gcd
+           (let ((g (ggt n d)))
+             (unless (one-p g)
+               (setf n (gm:/ n g)
+                     d (gm:/ d g))))
+           a))))
 
 (defmethod simplified-p ((a fraction))
   ;; TODO do we want to test something here?

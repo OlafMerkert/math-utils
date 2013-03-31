@@ -88,13 +88,18 @@
            (nz (or (position-if-not #'zero-p coefficients
                                     :end deg)
                    deg)))
-      (setf coefficients
-            (subseq coefficients nz))
-      (values polynomial nz))))
+      (cond ((and (= nz deg) (rationalp (aref coefficients deg)))
+             ;; got a constant polynomial with rational coeff, just
+             ;; return that one.
+             (values (aref coefficients deg) nz))
+            ;; TODO also allow other types for constant downgrade?
+            ;; then need corresponding upgrade too.
+        (t (setf coefficients
+               (subseq coefficients nz))
+         (values polynomial nz))))))
 
 (defmethod simplify ((polynomial polynomial) &key)
-  "Remove all leading zeros from the coefficients.  If all
-  coefficients are zero, keep the last zero."
+  "Remove all leading zeros from the coefficients.  In case of a constant polynomial"
   (simplify-poly polynomial))
 
 ;;; arithmetic of polynomials
@@ -195,7 +200,9 @@ Keep this in mind when using."
     (or (zero-p remainder)
         (values nil remainder))))
 
+
 (defmethod ggt ((a polynomial) (b polynomial))
+  ;; TODO consider content (perhaps normalise coefficients in some way)
   (if (zero-p b) a
       (ggt b (nth-value 1 (generic-/ a b)))))
 
