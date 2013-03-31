@@ -70,14 +70,17 @@
    (print-superscript var deg)))
 
 (defun format-polynomial (polynomial)
-  (apply #'print-sum
-         (mapcar (lambda (x) (list (apply #'format-monomial
-                                     (var polynomial)
-                                     x)
-                              (if (fourth x)
-                                  '-
-                                  '+)))
-                 (clean-coeffs (coefficients polynomial) (degree polynomial)))))
+  (let ((cc (clean-coeffs (coefficients polynomial) (degree polynomial))))
+    (if cc
+        (apply #'print-sum
+            (mapcar (lambda (x) (list (apply #'format-monomial
+                                        (var polynomial)
+                                        x)
+                                 (if (fourth x)
+                                     '-
+                                     '+)))
+                    cc))
+        (print-math-object 0))))
 
 (defun format-polynomial/all (polynomial)
   (apply #'print-sum
@@ -98,7 +101,8 @@
                                   '-
                                   '+)))
                  (clean-coeffs (lazy-array-take (coefficients power-series)
-                                                (+ (degree power-series) print-additional-terms)
+                                                (+ (max (degree power-series) 0)
+                                                   print-additional-terms)
                                                 nil)
                                (degree power-series)))))
 
