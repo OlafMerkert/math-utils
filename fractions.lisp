@@ -38,6 +38,13 @@ simplification."
 (defmethod one-p ((a fraction))
   (gm:= (numerator a) (denominator a)))
 
+(defun xor (a b)
+  (if a (not b) b))
+
+(defmethod minus-p ((a fraction))
+  (xor (minus-p (numerator a))
+       (minus-p (denominator a))))
+
 (defmethod generic-+ ((a fraction) (b fraction))
   (simplify
    (make-instance 'fraction
@@ -54,8 +61,13 @@ simplification."
                       :numerator (gm:- (gm:* (numerator a) (denominator b)) (gm:* (numerator b) (denominator a)))
                       :denominator (gm:* (denominator a) (denominator b))))))
 
+;; todo really necessary?
+(defmethod generic-- ((a (eql 0)) (b fraction))
+  (make-instance 'fraction
+                 :numerator (gm:- (numerator b))
+                 :denominator (denominator b)))
 
-(defmethod generic-*  ((a fraction) (b fraction))
+(defmethod generic-* ((a fraction) (b fraction))
   (simplify
    (make-instance 'fraction
                   :numerator (gm:* (numerator a) (numerator b))

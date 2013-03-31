@@ -216,6 +216,11 @@ Keep this in mind when using."
                (for b in-vector (coefficients poly-b) )
                (always (gm:= a b))))))
 
+(defmethod minus-p ((polynomial polynomial))
+  ;; this is just for pretty printing
+  (and (not (zero-p polynomial))
+       (every (lambda (x) (or (zero-p x) (minus-p x))) (coefficients polynomial))))
+
 ;;; reducing mod p
 (defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (polynomial polynomial) &key (mod 2))
   (simplify
