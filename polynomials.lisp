@@ -20,7 +20,8 @@
    :poly*poly
    :poly*constant
    :poly+constant
-   :make-monomial))
+   :make-monomial
+   :ord-p/generic))
 
 (in-package :polynomials)
 
@@ -241,3 +242,16 @@ Keep this in mind when using."
   generic--
   generic-*
   generic-/)
+
+;;; find largest power dividing
+(defun ord-p/generic (p n)
+  "determine the largest power P^K dividing N."
+  (do ((m n)
+       (k 0))
+      (nil)
+    ;; TODO perhaps use a different symbol for division with remainder.
+    (multiple-value-bind (q r) (gm:/ m p)
+      (cond ((zero-p r)
+             (incf k)
+             (setf m q))
+            (t (return (values k m)))))))

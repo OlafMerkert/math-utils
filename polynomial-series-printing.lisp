@@ -43,6 +43,8 @@
         (unless (zero-p c)
           (collect (list cc i (one-p cc) m)))))
 
+;;; TODO some inconsistence with print-superscript, which does not get
+;;; called with results of print-math-object
 (defun format-monomial (var coeff deg one neg)
   (declare (ignorable neg))
   (cond ((and one (zerop deg))

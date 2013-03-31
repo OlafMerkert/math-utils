@@ -1,7 +1,7 @@
 (defpackage :valuations
   (:nicknames :vv)
   (:use :cl :ol :iterate )
-  (:import-from :polynomials  #:polynomial #:coefficients #:degree)
+  (:import-from :polynomials  #:polynomial #:coefficients #:degree #:ord-p/generic)
   (:import-from :power-series #:power-series #:constant-series #:constant-coefficient)
   (:import-from :infinite-math #:infinite-p #:i< #:infinity+)
   (:export
@@ -25,7 +25,7 @@
 (defgeneric valuate-exp (valuation object))
 
 ;;; for polynomials, we can just minimise the valuation on the
-;;; coefficients
+;;; coefficients (if the valuation is trivial on the variable!)
 (defmethod valuate-exp (valuation (polynomial polynomial))
   (v-minimise (coefficients polynomial)
               (val valuation)))
@@ -70,6 +70,11 @@
       (setf bound val
             bound-index index))))
 
+;;; on fractions, we just take the difference
+(defmethod valuate-exp (valuation (fraction fractions:fraction))
+  (- (valuate-exp valuation (fractions:numerator fraction))
+     (valuate-exp valuation (fractions:denominator fraction))))
+
 ;;; p-adic valuations on rationals
 (defmethod valuate-exp ((p integer) (rational rational))
   ;; todo check that p is prime
@@ -77,3 +82,10 @@
       infinity+
       (nt:ord-p p rational)))
 
+;;; valuations from irreducible polynomials
+(defmethod valuate-exp ((p polynomial) (polynomial polynomial))
+  ;; todo check that p is irreducible
+  ;; todo check that both polynomials have the same var
+  (if (gm:zero-p polynomial)
+      infinity+
+      (ord-p/generic p polynomial)))

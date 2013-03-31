@@ -36,7 +36,8 @@
                         :components ((:file "weierstrass")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
-                                                "polynomials" "power-series"))
+                                                "polynomials" "power-series"
+                                                "fractions"))
                (:file "valuations-coeff" :depends-on ("infinite-math"
                                                       "valuations"
                                                       "polynomials" "power-series"))))
