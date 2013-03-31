@@ -206,6 +206,14 @@ Keep this in mind when using."
   (if (zero-p b) a
       (ggt b (nth-value 1 (generic-/ a b)))))
 
+(declare-commutative rational polynomial ggt)
+
+(defmethod ggt ((a rational) (b polynomial))
+  (if (zerop a)
+      b
+      ;; TODO what about content?
+      1))
+
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
   "Compare two polynomials for equality, assuming both are already
