@@ -120,9 +120,4 @@
     :numerator   (cl:numerator rational)
     :denominator (cl:denominator rational))
 
-(create-binary->-wrappers fraction rational (:left :right)
-  generic-+
-  generic--
-  generic-*
-  generic-/)
-
+(default-simple-type-conversion rational fraction)

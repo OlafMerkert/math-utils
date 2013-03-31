@@ -26,7 +26,10 @@
    :print-object/helper
    :*tex-output-mode*
    :minus-p
-   :define->-method))
+   :define->-method
+   :declare-commutative
+   :declare-fold-operation
+   :default-simple-type-conversion))
 
 (in-package :generic-math)
 
@@ -267,6 +270,38 @@ to override this if a better algorithm is available."
              (,a1 ,to
                   (-> ,to ,from)))
          generic-functions))))
+
+(defmacro declare-commutative (to-left to-right &body generic-functions)
+  `(progn
+     ,@(mapcar #`(defmethod ,a1 ((,to-right ,to-right) (,to-left ,to-left))
+                   (,a1 ,to-left ,to-right))
+               generic-functions)))
+
+(defmacro declare-fold-operation (to-left to-right &body generic-functions+units)
+  "generic-functions+units has items of the format (generic-- generic-+ 0)"
+  `(progn
+     ,@(mapcar #`(defmethod ,(first a1) ((,to-right ,to-right) (,to-left ,to-left))
+                   (,(second a1) (,(first a1) ,(third a1) ,to-left)
+                     ,to-right))
+               generic-functions+units)))
+
+(defmacro default-simple-type-conversion (simple complex)
+  ;; this makes mostly sense when the simple type is really simple,
+  ;; like RATIONAL.
+  `(progn
+     (create-binary->-wrappers ,complex ,simple (:left)
+       generic-+
+       generic--
+       generic-*
+       generic-/)
+
+     (declare-commutative ,simple ,complex
+       generic-+
+       generic-*)
+
+     (declare-fold-operation ,simple ,complex
+       (generic-- generic-+ 0)
+       (generic-/ generic-* 1))))
 
 (defgeneric print-object/tex (object stream)
   (:documentation "Generate a string representation suitable for

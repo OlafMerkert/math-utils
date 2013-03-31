@@ -365,8 +365,4 @@ match, consider the series equal."
 (defmethod -> ((power-series power-series) (rational rational) &key)
   (make-constant-series rational))
 
-(create-binary->-wrappers power-series rational (:left :right)
-  generic-+
-  generic--
-  generic-*
-  generic-/)
+(default-simple-type-conversion rational power-series)

@@ -237,11 +237,7 @@ Keep this in mind when using."
 (define->-method (polynomial rational (:var var 'X))
     :coefficients (vector rational))
 
-(create-binary->-wrappers polynomial rational (:left :right)
-  generic-+
-  generic--
-  generic-*
-  generic-/)
+(default-simple-type-conversion rational polynomial)
 
 ;;; find largest power dividing
 (defun ord-p/generic (p n)
