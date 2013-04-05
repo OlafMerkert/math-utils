@@ -21,7 +21,8 @@
    :poly*constant
    :poly+constant
    :make-monomial
-   :ord-p/generic))
+   :ord-p/generic
+   :content))
 
 (in-package :polynomials)
 
@@ -201,18 +202,34 @@ Keep this in mind when using."
         (values nil remainder))))
 
 
+;;; TODO figure out contents for rationals vs integers
+
+(defmethod content ((a integer)) a)
+
+(defmethod content ((a rational)) 1)
+
+(defmethod content ((a polynomial))
+  (reduce #'ggt (coefficients a)))
+
 (defmethod ggt ((a polynomial) (b polynomial))
-  ;; TODO consider content (perhaps normalise coefficients in some way)
   (if (zero-p b) a
-      (ggt b (nth-value 1 (generic-/ a b)))))
+      (gm:* (ggt (content a) (content b))
+            (ggt b (nth-value 1 (generic-/ a b))))))
 
 (declare-commutative rational polynomial ggt)
 
 (defmethod ggt ((a rational) (b polynomial))
   (if (zerop a)
       b
-      ;; TODO what about content?
       1))
+
+;;; there still remains some trouble with signs, but this seems to
+;;; have got rid of
+
+(defmethod ggt ((a rational) (b rational))
+  ;; if we get rational numbers (not integers!!), just return 1
+  1)
+
 
 ;;; comparison
 (defmethod generic-= ((poly-a polynomial) (poly-b polynomial))
