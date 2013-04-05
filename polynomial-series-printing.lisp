@@ -64,7 +64,8 @@
           (print-math-object coeff)
           (print-superscript var deg)))))
 
-(defun format-monomial/all (var coeff deg)
+(defun format-monomial/all (var coeff deg one neg)
+  (declare (ignore one neg))
   (print-product
    (print-math-object coeff)
    (print-superscript var deg)))
