@@ -76,7 +76,7 @@ used to remove duplicates from factors-1."
 (defun factorise (polynomial)
   ;; TODO perhaps we move some normalisation here, and make result
   ;; prettier (sorting factors by degree might be useful)
-  (factorise-prepare polynomial))
+  (factorise-generic-poly polynomial))
 
 (defun constant-p  (polynomial)
   (or (not (typep polynomial 'polynomial))
@@ -88,7 +88,7 @@ used to remove duplicates from factors-1."
       polynomial))
 
 
-(defun factorise-prepare (polynomial)
+(defun factorise-generic-poly (polynomial)
   (let* ((polynomial (make-monic polynomial))
          (derivative (derivative polynomial)))
     (acond
@@ -97,15 +97,46 @@ used to remove duplicates from factors-1."
       ;; if the derivative vanishes, we only have coeffs at X^(np)
       ((zero-p derivative)
        (map-on-car #'poly-x->x^p
-                   (factorise-prepare (poly-x^p->x polynomial))))
+                   (factorise-generic-poly (poly-x^p->x polynomial))))
       ;; if the gcd of poly and derivative is non-constant, we split
       ;; polynomial in two factors already
       ((non-constant-p (ggt polynomial derivative))
-       (merge-factors (factorise-prepare it)
-                      (factorise-prepare (/ polynomial it))))
+       (merge-factors (factorise-generic-poly it)
+                      (factorise-generic-poly (/ polynomial it))))
       ;; otherwise, we know the polynomial is SQUAREFREE
-      (t (factorise-squarefree-poly polynomial)))))
+      (t (mapcar (lambda (x) (cons x 1))
+                 (factorise-squarefree-poly polynomial))))))
 
-(defun factorise-squarefree-poly (polynomial)
-  polynomial
-  )
+(defun factorise-squarefree-poly (u)
+  ;; use Berlekamp's algorithm
+  (let* ((p (get-prime u))
+         (n (degree u))
+         (q (apply #'make-matrix-from-rows
+                   ;; todo check index directions etc
+                   (iter (for k from 0 below n)
+                         (collect (coefficients (nth-value
+                                                 1
+                                                 (/ (make-monomial (* p k) (int% 1 p))
+                                                    u))))))))
+    (multiple-value-bind (v r) (nullspace (gm:- q 1))
+      (if (cl:= r 1)
+          ;; polynomial is irreducible
+          u
+          ;; otherwise find factors
+          (iter (for vcoeffs in v)
+                (for factors first (splitting-helper p vcoeffs u)
+                     then (union (mapcan (lambda (w) (splitting-helper p vcoeffs w)) factors)
+                                 factors :test #'gm:=))
+                (until (cl:= r (length factors)))
+                (finally (return factors)))))))
+
+(defun splitting-helper (p coeff-vector poly-to-split)
+  ;; todo check indexing of coefficients
+  (let ((poly (make-instance 'polynomial :coefficients coeff-vector))
+        (factors))
+    (dotimes (s p)
+      (aif (non-constant-p (ggt (gm:- poly (int% s p)) poly-to-split))
+           (push it factors)))
+    factors))
+
+;;; todo how to test whether a polynomial is irreducible?
