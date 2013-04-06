@@ -22,7 +22,8 @@
    :poly+constant
    :make-monomial
    :ord-p/generic
-   :content))
+   :content
+   :make-monic))
 
 (in-package :polynomials)
 
@@ -288,3 +289,10 @@ Keep this in mind when using."
              (incf k)
              (setf m q))
             (t (return (values k m)))))))
+
+(defun make-monic (polynomial)
+  "Normalise the POLYNOMIAL to be monic, i.e. the first coefficient
+  must be one. 0 as input is invalid."
+  (when (zero-p polynomial)
+    (error "Cannot make the zero polynomial monic."))
+  (poly*constant polynomial (gm:/ (leading-coefficient polynomial))))

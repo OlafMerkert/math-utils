@@ -34,6 +34,11 @@
                                                                 "power-series"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
+               (:module "factorisation" :depends-on ("generic-math"
+                                                     "finite-fields"
+                                                     "polynomials"
+                                                     "fractions")
+                        :components ((:file "polynomials-modp")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
