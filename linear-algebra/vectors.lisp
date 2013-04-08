@@ -1,6 +1,6 @@
 (defpackage :linear-algebra/vectors
   (:nicknames :vectors)
-  (:shadow :vector)
+  (:shadow :vector :fill-array)
   (:use :cl :ol )
   (:export
    :entries
@@ -63,13 +63,22 @@
 (defsymconstant +unfilled+
     "a symbolic constant to mark unfilled entries in vectors.")
 
+(defparameter *create-matrix* nil)
+
+(defmacro! define-matrix-variant (fn-vector fn-matrix)
+  "Define an alias for a function where MAKE-VECTOR produces a matrix
+instead of a vector."
+  `(defun ,fn-matrix (&rest ,g!args)
+     (let ((*create-matrix* 'matrix))
+       (apply #',fn-vector ,g!args))))
+
 (defun make-vector% (dimensions fill-function)
   "create a new array with given dimensions and use fill-function to
   calculate the entries."
   (declare (inline fill-array))
   (let ((coeff (make-array dimensions :initial-element +unfilled+)))
     (fill-array coeff fill-function dimensions)
-    (make-instance 'vector :entries coeff)))
+    (make-instance (or *create-matrix* 'vector) :entries coeff)))
 
 (defun fill-array (array fill-function &optional (positions nil positions?))
   "fill the ARRAY with the FILL-FUNCTION in the places given by
@@ -284,29 +293,49 @@ elementwise operations."
 ;;; TODO matrix construction utilities
 ;;; TODO vector -> matrix casting
 
-(defun eye (&rest dimensions)
+(defun make-diagonal-vector (number &rest dimensions)
   (make-vector (:list dimensions) t
-    (if (apply #'= indices) 1 0)))
+               (if (apply #'= indices) number 0)))
 
-(defun ones (&rest dimensions)
-  (make-vector (:list dimensions) t 1))
+(define-matrix-variant make-diagonal-vector make-diagonal-matrix)
 
-(defun zeroes (&rest dimensions)
-  (make-vector (:list dimensions) t 0))
+(defun make-full-vector (number &rest dimensions)
+  (make-vector (:list dimensions) t number))
 
-(defmethod gm:-> ((target (eql 'vector)) (matrix matrix) &key)
-  (make-instance 'vector
-                 :entries (entries vector)))
+(define-matrix-variant make-full-vector make-full-matrix)
 
-(defmethod gm:-> ((target (eql 'vector)) (vector vector) &key)
-  vector)
+(defun zero-vector (&rest dimensions)
+  "Create a vector with 0 entries."
+  (apply #'make-full-vector 0 dimensions))
 
-(defmethod gm:-> ((target (eql 'matrix)) (vector vector) &key)
-  (make-instance 'matrix
-                 :entries (entries vector)))
+(defun zero-matrix (dimension)
+  "Create a square matrix with 0 entries."
+  (make-full-matrix 0 dimension dimension))
 
-(defmethod gm:-> ((target (eql 'matrix)) (matrix matrix) &key)
-  matrix)
+(defun one-vector (&rest dimensions)
+  "Create a vector with 1 entries."
+  (apply #'make-full-vector 1 dimensions))
+
+(defun one-matrix (dimension)
+  "Create a square identity matrix"
+  (make-diagonal-matrix 1 dimension dimension))
+
+;; upgrade numbers to vectors or matrices
+(gm:define->-method/custom (vector number (dimensions))
+  (apply #'make-full-vector number dimensions))
+
+(gm:define->-method/custom (matrix number (dimensions))
+  (apply #'make-diagonal-matrix number dimensions))
+
+;; switch between matrices and vectors
+(gm:define->-method (matrix vector)
+    :entries (entries vector))
+
+(gm:define->-method (vector matrix)
+    :entries (entries matrix))
+
+(gm:define->-method/identity vector)
+(gm:define->-method/identity matrix)
 
 (defmacro as-matrices  (matrices &body body)
   "ensure that everything in the vars MATRICES are actually matrices and not vectors."
