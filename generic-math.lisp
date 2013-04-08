@@ -29,7 +29,9 @@
    :define->-method
    :declare-commutative
    :declare-fold-operation
-   :default-simple-type-conversion))
+   :default-simple-type-conversion
+   :define->-method/identity
+   :define->-method/custom))
 
 (in-package :generic-math)
 
@@ -243,18 +245,59 @@ to override this if a better algorithm is available."
        (setf ,g!sum
              (+ ,g!sum ,expr)))))
 
+(defmacro slots-dest-helper (&body body)
+  `(let* ((keywords (mapcar (lambda (x) (if (keywordp (first x))
+                                      (first x)
+                                      (keyw (first x))))
+                           slots))
+         (parameters (mapcar (lambda (x) (if (keywordp (first x))
+                                        (symb (first x))
+                                        (first x)))
+                             slots))
+         (accessors (mapcar (lambda (slot param) (if (second slot)
+                                                (second slot)
+                                                param))
+                            slots parameters))
+         (default-values (mapcar #'third slots)))
+     (declare (ignorable keywords))
+     ,@body))
+
 (defmacro! define->-method ((to from &rest slots) &rest m-i-parameters)
-  (let ((slot-vars (mapcar (compose #'symb #'first) slots)))
-   `(progn
-      (defmethod -> ((,g!target-type (eql ',to)) (,from ,from)
-                     &key ,@(mapcar #2`(,a1 ,(third a2)) slot-vars slots))
-        (make-instance ',to ,@(mapcan #2`(,(first a2) ,a1) slot-vars slots)
-                       ,@m-i-parameters))
-      (defmethod -> ((,to ,to) (,from ,from) &key)
-        (make-instance ',to ,@(mapcan (lambda (slot)
-                                        `(,(first slot) (,(second slot) ,to)))
-                                      slots)
-                       ,@m-i-parameters)))))
+  "Define -> for conversion FROM TO. The result may inherit SLOTS from
+TO, where every slot has the form (keyword-or-parameter &optional accessor
+default-value). The M-I-PARAMETERS are then the additional arguments
+for make-instance."
+  (slots-dest-helper
+    `(progn
+       (defmethod -> ((,g!target-type (eql ',to)) (,from ,from)
+                      &key ,@(mapcar #2`(,a1 ,a2) parameters default-values))
+         (make-instance ',to ,@(mapcan #2`(,a1 ,a2) keywords parameters)
+                        ,@m-i-parameters))
+       (defmethod -> ((,to ,to) (,from ,from) &key)
+         (make-instance ',to ,@(mapcan #2`(,a1 (,a2 ,to)) keywords accessors)
+                        ,@m-i-parameters)))))
+
+(defmacro! define->-method/custom ((to from &rest slots) &body body)
+  "Define -> for conversion FROM TO. We bind SLOTS from TO, where
+every slot has the form (keyword-or-parameter &optional accessor
+default-value). These can be accessed from the BODY."
+  (slots-dest-helper
+    `(progn
+       (defmethod -> ((,g!target-type (eql ',to)) (,from ,from)
+                      &key ,@(mapcar #2`(,a1 ,a2) parameters default-values))
+         ,@body)
+       (defmethod -> ((,g!target-type ,to) (,from ,from) &key)
+         (let ,(mapcar #2`(,a1 (,a2 ,g!target-type)) parameters accessors)
+           ,@body)))))
+
+(defmacro! define->-method/identity (to-and-from)
+  "Define -> which does nothing if target and source have given type
+  TO-AND-FROM."
+  `(progn
+     (defmethod -> ((,g!target-type (eql ',to-and-from)) (,to-and-from ,to-and-from) &key)
+       ,to-and-from)
+     (defmethod -> ((,g!target-type ,to-and-from) (,to-and-from ,to-and-from) &key)
+       ,to-and-from)))
 
 (defmacro create-binary->-wrappers (to from sides &body generic-functions)
   `(progn
