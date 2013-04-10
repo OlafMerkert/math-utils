@@ -14,13 +14,17 @@
    #:add-row/col-matrix
    #:make-transposition-matrix
    #:make-single-diagonal-matrix
-   #:make-add-row/col-matrix))
+   #:make-add-row/col-matrix
+   #:inverse))
 
 (in-package :linear-algebra/elementary-matrices)
 
 (defgeneric determinant (matrix)
   (:documentation "compute the determinant of the given matrix, to
   check whether it is regular."))
+
+(defgeneric inverse (matrix)
+  (:documentation "compute the inverse of the given matrix."))
 
 (defclass elementary-matrix ()
   ((dimension :initarg :dimension
@@ -57,10 +61,14 @@ generators of GL(2,k)."))
     (error "For a proper transposition matrix, you must use two
     different indices.")))
 
-(defun make-transposition-matrix (i j &key human)
-  (make-instance 'transposition-matrix :i i :j j :human human))
+(defun make-transposition-matrix (i j &optional (dimension :automatic) human)
+  (make-instance 'transposition-matrix :dimension dimension :i i :j j :human human))
 
 (defmethod determinant ((matrix transposition-matrix)) -1)
+
+(defmethod inverse ((matrix transposition-matrix))
+  "A transposition matrix has order 2."
+  matrix)
 
 ;;; render the transposition matrix
 (gm:define->-method/custom (matrix transposition-matrix)
@@ -97,11 +105,19 @@ generators of GL(2,k)."))
   (when human
     (decf (i matrix))))
 
-(defun make-single-diagonal-matrix (i factor &key human)
-  (make-instance 'single-diagonal-matrix :i i :factor factor :human human))
+(defun make-single-diagonal-matrix (i factor &optional (dimension :automatic) human)
+  (make-instance 'single-diagonal-matrix
+                 :dimension dimension :i i :factor factor :human human))
 
 (defmethod determinant ((matrix single-diagonal-matrix))
   (factor matrix))
+
+(defmethod inverse ((matrix single-diagonal-matrix))
+  (with-slots (dimension i factor) matrix
+    (if (gm:zero-p factor)
+        (error "Cannot invert diagonal matrix with 0 on diagonal ")
+        (make-single-diagonal-matrix i (gm:/ factor) dimension))))
+
 
 (gm:define->-method/custom (matrix single-diagonal-matrix)
   (with-slots (i factor) single-diagonal-matrix
@@ -153,10 +169,14 @@ generators of GL(2,k)."))
     (error "The factor of an add-row/col-matrix must not lie on the
     diagonal. Use the single-diagonal-matrix instead.")))
 
-(defun make-add-row/col-matrix (i j factor &key human)
-  (make-instance 'add-row/col-matrix :i i :j j :factor factor :human human))
+(defun make-add-row/col-matrix (i j factor &optional (dimension :automatic) human)
+  (make-instance 'add-row/col-matrix :dimension dimension :i i :j j :factor factor :human human))
 
 (defmethod determinant ((matrix add-row/col-matrix)) 1)
+
+(defmethod inverse ((matrix add-row/col-matrix))
+  (with-slots (dimension i j factor) matrix
+    (make-add-row/col-matrix i j (gm:- factor) dimension)))
 
 (gm:define->-method/custom (matrix add-row/col-matrix)
   (with-slots (i j factor) add-row/col-matrix
@@ -192,3 +212,5 @@ generators of GL(2,k)."))
 ;;; TODO think about a sophisticated conversion system for matrices
 ;;; (could be very useful)
 ;;; TODO checks whether row/col operations can work out
+
+;;; TODO what about mref -- should share code with ->matrix
