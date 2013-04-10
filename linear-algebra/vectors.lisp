@@ -384,3 +384,35 @@ elementwise operations."
   "ensure that everything in the vars VECTORS are actually vectors and not matrices."
   `(let ,@(mapcar #`(,a1 (gm:-> 'vector ,a1)) vectors)
      ,@body))
+
+;;; more matrix creation functions
+(defun same-dimensions-p/array (arrays)
+  "Check that all given arrays have same dimensions."
+  (apply #'equal
+         (mapcar #'array-dimensions arrays)))
+
+(defun same-dimensions-p (vectors)
+  "Check that all given vectors have same dimensions."
+  (apply #'equal
+         (mapcar (compose #'array-dimensions #'entries) vectors)))
+
+(defun make-matrix-from-rows (&rest rows)
+  "Create a matrix from the given rows, which may be lists, arrays or
+  vectors."
+  (labels ((make-array-from-rows (rows)
+             (let ((arrays (mapcar #'make-array-from-row rows)))
+               (if (same-dimensions-p/array arrays)
+                   (let ((array (make-array (cons (length arrays)
+                                                  (array-dimensions (first arrays)))
+                                            :initial-element +unfilled+)))
+                     (fill-array array
+                                 (ilambda (this i &rest indices)
+                                   (apply #'aref (nth i arrays) indices)))
+                     array)
+                   (error "Incompatible dimensions in given rows."))))
+           (make-array-from-row (row)
+             (typecase row
+               (array row)
+               (list (make-array-from-rows row))
+               (t row))))
+    (make-array-from-rows rows)))
