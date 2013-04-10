@@ -11,7 +11,10 @@
    #:j
    #:single-diagonal-matrix
    #:factor
-   #:add-row/col-matrix))
+   #:add-row/col-matrix
+   #:make-transposition-matrix
+   #:make-single-diagonal-matrix
+   #:make-add-row/col-matrix))
 
 (in-package :linear-algebra/elementary-matrices)
 
@@ -54,6 +57,9 @@ generators of GL(2,k)."))
     (error "For a proper transposition matrix, you must use two
     different indices.")))
 
+(defun make-transposition-matrix (i j &key human)
+  (make-instance 'transposition-matrix :i i :j j :human human))
+
 (defmethod determinant ((matrix transposition-matrix)) -1)
 
 ;;; render the transposition matrix
@@ -90,6 +96,9 @@ generators of GL(2,k)."))
 (defmethod initialize-instance :after ((matrix single-diagonal-matrix) &key human)
   (when human
     (decf (i matrix))))
+
+(defun make-single-diagonal-matrix (i factor &key human)
+  (make-instance 'single-diagonal-matrix :i i :factor factor :human human))
 
 (defmethod determinant ((matrix single-diagonal-matrix))
   (factor matrix))
@@ -143,6 +152,9 @@ generators of GL(2,k)."))
   (when (= (i matrix) (j matrix))
     (error "The factor of an add-row/col-matrix must not lie on the
     diagonal. Use the single-diagonal-matrix instead.")))
+
+(defun make-add-row/col-matrix (i j factor &key human)
+  (make-instance 'add-row/col-matrix :i i :j j :factor factor :human human))
 
 (defmethod determinant ((matrix add-row/col-matrix)) 1)
 
