@@ -2,7 +2,16 @@
   (:shadowing-import-from :linear-algebra/vectors #:vector #:fill-array)
   (:import-from :generic-math :->)
   (:use :cl :ol :iterate :linear-algebra/vectors)
-  (:export))
+  (:export
+   #:elementary-matrix
+   #:determinant
+   #:dimension
+   #:transposition-matrix
+   #:i
+   #:j
+   #:single-diagonal-matrix
+   #:factor
+   #:add-row/col-matrix))
 
 (in-package :linear-algebra/elementary-matrices)
 

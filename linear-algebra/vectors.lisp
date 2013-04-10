@@ -3,30 +3,30 @@
   (:shadow :vector :fill-array)
   (:use :cl :ol :iterate)
   (:export
-   :entries
-   :vector
-   :dimensions
-   :mref
-   :mref/human
-   :indices
-   :this
-   :define-index-transform
-   :with-indices
-   :transpose
-   :subrow
-   :subcol
-   :droprow
-   :dropcol
-   :droprowcol
-   :rotaterow
-   :rotatecol
-   :matrix
-   :*create-matrix*
-   :make-vector
-   :with-vector-type
-   :make-matrix
-   :make-matrix/human
-   :make-matrix%))
+   #:entries
+   #:vector
+   #:dimensions
+   #:mref
+   #:mref/human
+   #:indices
+   #:this
+   #:define-index-transform
+   #:with-indices
+   #:transpose
+   #:subrow
+   #:subcol
+   #:droprow
+   #:dropcol
+   #:droprowcol
+   #:rotaterow
+   #:rotatecol
+   #:matrix
+   #:*create-matrix*
+   #:make-vector
+   #:with-vector-type
+   #:make-matrix
+   #:make-matrix/human
+   #:make-matrix%))
 
 (in-package :linear-algebra/vectors)
 
