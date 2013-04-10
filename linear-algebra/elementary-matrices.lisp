@@ -102,5 +102,58 @@ generators of GL(2,k)."))
            (gm:* factor (apply #'aref entries indices))
            (apply #'aref entries indices))))))
 
+(defclass add-row/col-matrix (elementary-matrix)
+  ((factor :initarg :factor
+           :initform 0
+           :accessor factor)
+   (i :initarg :i
+      :initform 0
+      :accessor i)
+   (j :initarg :j
+      :initform 1
+      :accessor j))
+  (:documentation "A square matrix representing: Add FACTOR times
+  row/col J to row/col I. If I = J, an error is signalled."))
+
+(defmethod initialize-instance :after ((matrix add-row/col-matrix) &key human)
+  (when human
+    (decf (i matrix))
+    (decf (j matrix)))
+  (when (= (i matrix) (j matrix))
+    (error "The factor of an add-row/col-matrix must not lie on the
+    diagonal. Use the single-diagonal-matrix instead.")))
+
+(gm:define->-method/custom (matrix add-row/col-matrix)
+  (with-slots (i j factor) add-row/col-matrix
+    ;; TODO alert if dimension is automatic
+    (make-matrix (:list (dimensions add-row/col-matrix))
+        (r s)
+      (cond ((= r s) 1)
+            ((and (= r i) (= s j)) factor)
+            (t 0)))))
+
+(defmethod gm:generic-* ((add-row-matrix add-row/col-matrix) (matrix matrix))
+  (let ((entries (entries matrix)))
+    (with-slots (i j factor) add-row-matrix
+      (make-matrix (:list (dimensions matrix))
+          (r &rest indices)
+        (if (= r i)
+            (gm:+ (apply #'aref entries r indices)
+                  (gm:* factor (apply #'aref entries j indices)))
+            (apply #'aref entries r indices))))))
+
+(defmethod gm:generic-* ((matrix matrix) (add-col-matrix add-row/col-matrix))
+  (let ((entries (entries matrix)))
+    (with-slots (i j factor) add-col-matrix
+      (make-matrix (:list (dimensions matrix))
+          (&rest indices)
+        (multiple-value-bind (indices% s) (split-last indices)
+         (if (= s j)
+             (gm:+ (apply #'aref entries indices)
+                   (gm:* factor (apply #'aref entries (append1 indices% i))))
+             (apply #'aref entries indices)))))))
 
 ;;; TODO unimodular matrix
+;;; TODO think about a sophisticated conversion system for matrices
+;;; (could be very useful)
+;;; TODO checks whether row/col operations can work out
