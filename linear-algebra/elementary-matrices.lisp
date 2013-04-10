@@ -6,6 +6,10 @@
 
 (in-package :linear-algebra/elementary-matrices)
 
+(defgeneric determinant (matrix)
+  (:documentation "compute the determinant of the given matrix, to
+  check whether it is regular."))
+
 (defclass elementary-matrix ()
   ((dimension :initarg :dimension
               :initform :automatic
@@ -36,7 +40,12 @@ generators of GL(2,k)."))
 (defmethod initialize-instance :after ((matrix transposition-matrix) &key human)
   (when human
     (decf (i matrix))
-    (decf (j matrix))))
+    (decf (j matrix)))
+  (when (= (i matrix) (j matrix))
+    (error "For a proper transposition matrix, you must use two
+    different indices.")))
+
+(defmethod determinant ((matrix transposition-matrix)) -1)
 
 ;;; render the transposition matrix
 (gm:define->-method/custom (matrix transposition-matrix)
@@ -72,6 +81,9 @@ generators of GL(2,k)."))
 (defmethod initialize-instance :after ((matrix single-diagonal-matrix) &key human)
   (when human
     (decf (i matrix))))
+
+(defmethod determinant ((matrix single-diagonal-matrix))
+  (factor matrix))
 
 (gm:define->-method/custom (matrix single-diagonal-matrix)
   (with-slots (i factor) single-diagonal-matrix
@@ -122,6 +134,8 @@ generators of GL(2,k)."))
   (when (= (i matrix) (j matrix))
     (error "The factor of an add-row/col-matrix must not lie on the
     diagonal. Use the single-diagonal-matrix instead.")))
+
+(defmethod determinant ((matrix add-row/col-matrix)) 1)
 
 (gm:define->-method/custom (matrix add-row/col-matrix)
   (with-slots (i j factor) add-row/col-matrix

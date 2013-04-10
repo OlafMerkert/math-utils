@@ -324,6 +324,8 @@ elementwise operations."
                          (gm:+ (apply #'aref entries-a (append1 ind-a i))
                                (apply #'aref entries-b i ind-b))))))))))
 
+;;; TODO scalar multiplication and addition
+
 ;;; TODO sparse matrices
 ;;; TODO matrix construction utilities
 ;;; TODO vector -> matrix casting
