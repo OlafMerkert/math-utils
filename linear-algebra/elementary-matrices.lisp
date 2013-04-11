@@ -215,3 +215,8 @@ generators of GL(2,k)."))
 ;;; TODO checks whether row/col operations can work out
 
 ;;; TODO what about mref -- should share code with ->matrix
+
+;;; simple print output
+(defmethod print-object ((elementary-matrix elementary-matrix) stream)
+  (print-unreadable-object (elementary-matrix stream :type t)
+    (vectors::print-vector stream (entries (-> 'matrix elementary-matrix)))))

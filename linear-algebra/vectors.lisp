@@ -28,7 +28,9 @@
    #:make-matrix/human
    #:make-matrix%
    #:identity-matrix
-   #:make-vector-from-rows))
+   #:make-vector-from-rows
+   #:vect
+   #:matr))
 
 (in-package :linear-algebra/vectors)
 
@@ -465,6 +467,13 @@ elementwise operations."
 
 (define-matrix-variant make-vector-from-rows make-matrix-from-rows)
 
+;;; abbreviations for creating vectors and matrices
+(defmacro vect (&rest rows)
+  `(make-vector-from-rows ',rows))
+
+(defmacro matr (&rest rows)
+  `(make-matrix-from-rows ',rows))
+
 ;;; TODO destructive operations.
 
 ;;; printing of vector and matrix
@@ -474,10 +483,14 @@ elementwise operations."
           (collect (iter (for j from 0 below n)
                          (collect (aref vector2 i j)))))))
 
+(defun print-vector (stream array)
+  (case (length (array-dimensions array))
+    (1 (format stream "~{~A~^ ~}" (coerce array 'list)))
+    (2 (format stream "~&~{~{~,3T~A~}~%~}" (vector2->list  array)))
+    (t (format stream "~A" array))))
+
 
 (defmethod print-object ((vector vector) stream)
   (print-unreadable-object (vector stream :type t)
-    (case (length (dimensions vector))
-      (1 (format stream "~{~A~^ ~}" (coerce (entries vector) 'list)))
-      (2 (format stream "~&~{~{~T~A~}~%~}" (vector2->list (entries vector))))
-      (t (format stream "~A" (entries vector))))))
+    (print-vector stream (entries vector))))
+
