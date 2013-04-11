@@ -466,3 +466,18 @@ elementwise operations."
 (define-matrix-variant make-vector-from-rows make-matrix-from-rows)
 
 ;;; TODO destructive operations.
+
+;;; printing of vector and matrix
+(defun vector2->list (vector2)
+  (destructuring-bind (m n) (array-dimensions vector2)
+    (iter (for i from 0 below m)
+          (collect (iter (for j from 0 below n)
+                         (collect (aref vector2 i j)))))))
+
+
+(defmethod print-object ((vector vector) stream)
+  (print-unreadable-object (vector stream :type t)
+    (case (length (dimensions vector))
+      (1 (format stream "~{~A~^ ~}" (coerce (entries vector) 'list)))
+      (2 (format stream "~&~{~{~T~A~}~%~}" (vector2->list (entries vector))))
+      (t (format stream "~A" (entries vector))))))
