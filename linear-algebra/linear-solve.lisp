@@ -60,6 +60,7 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
     ;; TODO figure out whether to reverse any of the row-ops or
     ;; pivot-transpositions
     (values matrix row-ops pivot-transpositions)))
+;;; TODO mark the matrix as triangular.
 
 (defun compute-l (l-list)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
@@ -97,6 +98,8 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
                   :from-end t)))
 
 ;;; TODO apply-l and apply-l-inverse
+
+;;; TODO solving triangular systems, calculating nullspace
 
 ;;; TODO special matrix type for LU decomposition, with transparent
 ;;; access to lower and upper triangular parts
