@@ -17,14 +17,43 @@
   `(let ((it ,test))
      (when it ,@body)))
 
-(defun find-pivot (matrix row column)
+(defun find-pivot-helper (find-pivot matrix row column)
+  (aif (funcall find-pivot
+                (subseq (entries (subcol matrix column)) row))
+       (+ row it)))
+
+(defun find-pivot (seq)
   "find a row below ROW with non-zero entry in COLUMN"
-  (position-if-not #'gm:zero-p
-               (entries (subcol matrix column)) :start row))
+  (position-if-not #'gm:zero-p seq))
+
+(defun position-maximum (seq &key (key #'identity) (compare #'<))
+  (let* ((seq2 (map 'cl:vector key seq))
+         (max (elt seq2 0))
+         (max-index 0))
+    (iter (for i from 1 below (length seq2))
+          (for m = (svref seq2 i))
+          (when (funcall compare max m)
+            (setf max m
+                  max-index i)))
+    (values max-index max)))
+
+(defun find-pivot/reals (seq)
+  "Compare by absolute value."
+  (position-maximum seq :key #'abs))
+
+(defun find-pivot/rational (seq)
+  "Compare by height"
+  (position-maximum seq :key #'height :compare #'<))
+
+(defun height (rational)
+  (max (abs (numerator rational))
+       (abs (denominator rational))))
+
+
 ;;; TODO perhaps choose maximal entry
 ;;; for this there are probably different strategies
 
-(defun lu-decomposition (matrix)
+(defun lu-decomposition (matrix &optional (find-pivot #'find-pivot))
   "Decompose A = L U where U is upper triangular, and L is a product
 of elementary row operations. Returns (values U L P) where L and P are
 list of row-ops you may process with COMPUTE-L, COMPUTE-L-INVERSE and
@@ -36,7 +65,7 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
     (destructuring-bind (m n) (dimensions matrix)
       ;; clearout all columns below diagonal
       (dotimes (current-column n)
-        (awhen (find-pivot matrix current-row current-column )
+        (awhen (find-pivot-helper find-pivot matrix current-row current-column)
           ;; interchange rows
           (unless (= current-row it)
             (let ((trans (make-transposition-matrix current-row it m)))
