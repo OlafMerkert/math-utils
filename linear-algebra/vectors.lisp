@@ -219,6 +219,10 @@ elementwise operations."
   (elementwise-operation (vector-a vector-b)
     (gm:/ vector-a vector-b)))
 
+(defun scalar-multiplication (scalar vector)
+  (elementwise-operation (vector)
+    (gm:* scalar vector)))
+
 (defmacro! define-index-transform (name (&rest args) dim-form &rest index-forms)
   "Define a transformation of a multidim vector V by supplying a
   DIM-FORM to calculate the new dimensions, with the anaphoric
@@ -307,7 +311,7 @@ elementwise operations."
   ()
   (:documentation "extend the vector class with matrix multiplication."))
 
-(defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))
+(defun dot-product (matrix-a matrix-b &optional (return-type 'matrix))
   (multiple-value-bind (dims-a m-a) (split-last (copy-list (dimensions matrix-a)) )
     (destructuring-bind (m-b dims-b) (dimensions matrix-b)
       (unless (= m-a m-b)
@@ -315,14 +319,24 @@ elementwise operations."
       (let ((split (length dims-a))
             (entries-a (entries matrix-a))
             (entries-b (entries matrix-b)))
-        (make-matrix%
+        (make-vector%
          (append dims-a dims-b)
          (ilambda (this &rest indices)
            (let ((ind-a (subseq indices 0 split))
                  (ind-b (subseq indices split)))
              (gm:summing (i 0 m-a t)
                          (gm:+ (apply #'aref entries-a (append1 ind-a i))
-                               (apply #'aref entries-b i ind-b))))))))))
+                               (apply #'aref entries-b i ind-b)))))
+         return-type)))))
+
+(defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))
+  (dot-product matrix-a matrix-b 'matrix))
+
+(defmethod gm:generic-* ((vector-a vector) (matrix-b matrix))
+  (dot-product vector-a matrix-b 'vector))
+
+(defmethod gm:generic-* ((matrix-a matrix) (vector-b vector))
+  (dot-product matrix-a vector-b 'vector))
 
 ;;; TODO scalar multiplication and addition
 
