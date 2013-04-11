@@ -57,21 +57,17 @@
   (apply #'mref vector-or-matrix
          (mapcar #'1- indices)))
 
-(defun nreverse+last (lst last)
-  "like (append (nreverse lst) last)."
-  (if (null lst)
-      last
-      (nreverse+last (cdr lst)
-                     (progn (setf (cdr lst) last)
-                            lst))))
-
-(defun map-butlast (fn lst &optional acc)
-  "map fn over list, except for the last element, where we return"
-  (cond ((null lst) nil)
-        ((length=1 lst) (nreverse+last acc lst))
-        (t (map-butlast fn (cdr lst)
-                        (cons (funcall fn (car lst)) acc)))))
-
+(defun map-butlast (fn lst)
+  "map FN inplace over LST, except at the last element."
+  (if (length=1 lst) lst
+      (let ((result (list (funcall fn (car lst)))))
+        (labels ((rec (lst res)
+                   (if (cdr lst)
+                       (rec (cdr lst)
+                            (setf (cdr res) (list (funcall fn (car lst)))))
+                       (setf (cdr res) lst))))
+          (rec (cdr lst) result)
+          result))))
 
 (defun set-mref/human (vector-or-matrix &rest indices+value)
   "setf method for MMREF."
