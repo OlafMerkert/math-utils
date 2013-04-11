@@ -26,7 +26,8 @@
    #:with-vector-type
    #:make-matrix
    #:make-matrix/human
-   #:make-matrix%))
+   #:make-matrix%
+   #:identity-matrix))
 
 (in-package :linear-algebra/vectors)
 
@@ -378,7 +379,7 @@ elementwise operations."
   "Create a vector with 1 entries."
   (apply #'make-full-vector 1 dimensions))
 
-(defun one-matrix (dimension)
+(defun identity-matrix (dimension)
   "Create a square identity matrix"
   (make-diagonal-matrix 1 dimension dimension))
 

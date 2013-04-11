@@ -33,8 +33,9 @@
   (:documentation "Model a square matrix representing particular
 generators of GL(2,k)."))
 
-(defmethod generic-* ((a elementary-matrix) (b elementary-matrix))
-  (generic-* a (-> 'matrix b)))
+;; for now disable this
+#|(defmethod generic-* ((a elementary-matrix) (b elementary-matrix))
+  (generic-* a (-> 'matrix b)))|#
 
 ;;; it might be convenient not to specify the size of the matrix.
 (defmethod dimensions ((matrix elementary-matrix))

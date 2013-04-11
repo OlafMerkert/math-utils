@@ -62,22 +62,24 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
     (values matrix row-ops pivot-transpositions)))
 ;;; TODO mark the matrix as triangular.
 
-(defun compute-l (l-list)
+(defun compute-l (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
   ;; L-LIST in order, with L U = A we get L = L_k^-1 ... L_1^-1
   (reduce #'gm:generic-*
           (reverse l-list)
           :key #'inverse
           :from-end t ; want elementary on the left
-          ))
+          :initial-value (or vector
+                             (identity-matrix (dimension (first l-list))))))
 
-(defun compute-l-inverse (l-list)
+(defun compute-l-inverse (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
   ;; L-LIST in order, with L U = A we get L^1 = L_1 ... L_k
   (reduce #'gm:generic-*
           l-list
           :from-end t ; want elementary on the left
-          ))
+          :initial-value (or vector
+                             (identity-matrix (dimension (first l-list))))))
 
 (defun map-reverse (fn lst &optional acc)
   (if (consp lst)
@@ -92,10 +94,12 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
   (values (reduce #'gm:generic-*
                   (append p-list
                           (map-reverse #'inverse l-list))
-                  :from-end t)
+                  :from-end t
+                  :initial-value (identity-matrix (dimension (first l-list))))
           (reduce #'gm:generic-*
                   (reverse p-list)
-                  :from-end t)))
+                  :from-end t
+                  :initial-value (identity-matrix (dimension (first p-list))))))
 
 ;;; TODO apply-l and apply-l-inverse
 
