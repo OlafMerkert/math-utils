@@ -417,15 +417,22 @@ elementwise operations."
   (if (arrayp array-or-other)
       (array-dimensions array-or-other)))
 
+(defun all-equal (list &key key (test 'equal))
+  "For a given equivalence relation, ensure that all elements of list
+  are the same."
+  (if (or (null list) (null (cdr list)))
+      t
+      (let ((first (funcall key (first list))))
+        (every (lambda (other) (funcall test first other))
+               (mapcar key (rest list))))))
+
 (defun same-dimensions-p/array (arrays)
   "Check that all given arrays have same dimensions."
-  (apply #'equal
-         (mapcar #'array-dimensions+ arrays)))
+  (all-equal arrays :key #'array-dimensions+))
 
 (defun same-dimensions-p (vectors)
   "Check that all given vectors have same dimensions."
-  (apply #'equal
-         (mapcar (compose #'array-dimensions #'entries) vectors)))
+  (all-equal vectors :key (compose #'array-dimensions #'entries)))
 
 ;;; building matrices
 (defun make-array-from-rows (rows)
@@ -448,6 +455,7 @@ elementwise operations."
   (typecase row
     (array row)
     (list (make-array-from-rows row))
+    (vector (entries row))
     (t row)))
 
 (defun make-vector-from-rows (rows)
