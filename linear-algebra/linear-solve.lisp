@@ -4,7 +4,8 @@
   (:use :cl :ol :iterate
         :linear-algebra/vectors
         :linear-algebra/elementary-matrices)
-  (:export))
+  (:export
+   #:lu-decomposition))
 
 (in-package :linear-algebra/linear-solve)
 
@@ -18,7 +19,7 @@
 
 (defun find-pivot (matrix row column)
   "find a row below ROW with non-zero entry in COLUMN"
-  (find-if-not #'gm:zero-p
+  (position-if-not #'gm:zero-p
                (entries (subcol matrix column)) :start row))
 ;;; TODO perhaps choose maximal entry
 ;;; for this there are probably different strategies
@@ -43,7 +44,7 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
               (push trans pivot-transpositions)
               (setf matrix (gm:generic-* trans matrix))))
           ;; with settled pivot, kill every below current-row
-          (let ((pivot-entry (mref matrix current-row current-column)))
+          (let ((pivot-entry (gm:- (mref matrix current-row current-column))))
             (iter (for i from (+ 1 current-row) below m)
                   (for entry = (mref matrix i current-column))
                   (unless (gm:zero-p entry)

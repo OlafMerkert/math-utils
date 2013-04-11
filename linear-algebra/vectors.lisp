@@ -248,7 +248,7 @@ elementwise operations."
        (let ((dimensions (dimensions ,g!vector))
              (,g!coeffs (entries ,g!vector)))
          (make-vector% ,dim-form
-                       (lambda (,g!this indices)
+                       (lambda (,g!this &rest indices)
                          (declare (ignore ,g!this))
                          (apply #'aref ,g!coeffs ,@index-forms))
                        (if (matrix-p ,g!vector)
