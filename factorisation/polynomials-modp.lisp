@@ -111,13 +111,13 @@ used to remove duplicates from factors-1."
   ;; use Berlekamp's algorithm
   (let* ((p (get-prime u))
          (n (degree u))
-         (q (apply #'make-matrix-from-rows
-                   ;; todo check index directions etc
-                   (iter (for k from 0 below n)
-                         (collect (coefficients (nth-value
-                                                 1
-                                                 (/ (make-monomial (* p k) (int% 1 p))
-                                                    u))))))))
+         (q (make-matrix-from-rows
+             ;; todo check index directions etc
+             (iter (for k from 0 below n)
+                   (collect (coefficients (nth-value
+                                           1
+                                           (/ (make-monomial (* p k) (int% 1 p))
+                                              u))))))))
     (multiple-value-bind (v r) (nullspace (gm:- q 1))
       (if (cl:= r 1)
           ;; polynomial is irreducible

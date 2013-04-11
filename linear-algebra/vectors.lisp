@@ -27,7 +27,8 @@
    #:make-matrix
    #:make-matrix/human
    #:make-matrix%
-   #:identity-matrix))
+   #:identity-matrix
+   #:make-vector-from-rows))
 
 (in-package :linear-algebra/vectors)
 
@@ -411,35 +412,49 @@ elementwise operations."
      ,@body))
 
 ;;; more matrix creation functions
+(defun array-dimensions+ (array-or-other)
+  "If something is not an array, it has dimensions NIL."
+  (if (arrayp array-or-other)
+      (array-dimensions array-or-other)))
+
 (defun same-dimensions-p/array (arrays)
   "Check that all given arrays have same dimensions."
   (apply #'equal
-         (mapcar #'array-dimensions arrays)))
+         (mapcar #'array-dimensions+ arrays)))
 
 (defun same-dimensions-p (vectors)
   "Check that all given vectors have same dimensions."
   (apply #'equal
          (mapcar (compose #'array-dimensions #'entries) vectors)))
 
-(defun make-matrix-from-rows (&rest rows)
-  "Create a matrix from the given rows, which may be lists, arrays or
+;;; building matrices
+(defun make-array-from-rows (rows)
+  (let ((arrays (mapcar #'make-array-from-row rows)))
+    (if (same-dimensions-p/array arrays)
+        (let* ((dim (array-dimensions+ (first arrays)))
+              (array (make-array (cons (length arrays) dim)
+                                 :initial-element +unfilled+)))
+          (if dim
+              (fill-array array
+                       (ilambda (this i &rest indices)
+                         (apply #'aref (nth i arrays) indices)))
+              (fill-array array
+                          (ilambda (this i)
+                            (nth i arrays))))
+          array)
+        (error "Incompatible dimensions in given rows."))))
+
+(defun make-array-from-row (row)
+  (typecase row
+    (array row)
+    (list (make-array-from-rows row))
+    (t row)))
+
+(defun make-vector-from-rows (rows)
+  "Create a vector from the given rows, which may be lists, arrays or
   vectors."
-  (labels ((make-array-from-rows (rows)
-             (let ((arrays (mapcar #'make-array-from-row rows)))
-               (if (same-dimensions-p/array arrays)
-                   (let ((array (make-array (cons (length arrays)
-                                                  (array-dimensions (first arrays)))
-                                            :initial-element +unfilled+)))
-                     (fill-array array
-                                 (ilambda (this i &rest indices)
-                                   (apply #'aref (nth i arrays) indices)))
-                     array)
-                   (error "Incompatible dimensions in given rows."))))
-           (make-array-from-row (row)
-             (typecase row
-               (array row)
-               (list (make-array-from-rows row))
-               (t row))))
-    (make-array-from-rows rows)))
+  (make-instance (or *create-matrix* 'vector) :entries (make-array-from-rows rows)))
+
+(define-matrix-variant make-vector-from-rows make-matrix-from-rows)
 
 ;;; TODO destructive operations.
