@@ -53,7 +53,7 @@
 ;;; TODO perhaps choose maximal entry
 ;;; for this there are probably different strategies
 
-(defun lu-decomposition (matrix &optional (find-pivot #'find-pivot))
+(defun lu-decomposition (matrix &optional normalise-pivot (find-pivot #'find-pivot))
   "Decompose A = L U where U is upper triangular, and L is a product
 of elementary row operations. Returns (values U L P) where L and P are
 list of row-ops you may process with COMPUTE-L, COMPUTE-L-INVERSE and
@@ -73,7 +73,17 @@ COMPUTE-L-P, as well as APPLY-L and APPLY-L-INVERSE."
               (push trans pivot-transpositions)
               (setf matrix (gm:generic-* trans matrix))))
           ;; with settled pivot, kill every below current-row
-          (let ((pivot-entry (gm:- (mref matrix current-row current-column))))
+          (let ((pivot-entry (mref matrix current-row current-column)))
+            ;; if desired, normalise the pivot entry to 1
+            (if (and normalise-pivot (not (gm:one-p pivot-entry )))
+                (let ((normaliser (make-single-diagonal-matrix
+                                   current-row (gm:/ pivot-entry) m)))
+                  (push normaliser row-ops)
+                  (setf matrix (gm:generic-* normaliser matrix)
+                        pivot-entry -1))
+                ;; otherwise just swap the sign
+                (setf pivot-entry (gm:- pivot-entry)))  
+            ;; then go on clearing the column below the pivot
             (iter (for i from (+ 1 current-row) below m)
                   (for entry = (mref matrix i current-column))
                   (unless (gm:zero-p entry)
