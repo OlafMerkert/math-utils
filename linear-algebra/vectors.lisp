@@ -237,31 +237,28 @@ elementwise operations."
     (gm:/ vector-a vector-b)))|#
 
 ;;; operations with scalars
-(defun scalar-multiplication (scalar vector)
-  (elementwise-operation (vector)
-    (gm:* scalar vector)))
+(bind-multi ((scalar rational finite-fields:integer-mod))
+  (defmethod gm:generic-+ ((scalar scalar) (vector vector))
+    (elementwise-operation (vector)
+      (gm:+ scalar vector)))
 
-(defmethod gm:generic-+ ((rational rational) (vector vector))
-  (elementwise-operation (vector)
-    (gm:+ rational vector)))
+  (defmethod gm:generic-* ((scalar scalar) (vector vector))
+    (elementwise-operation (vector)
+      (gm:* scalar vector)))
 
-(defmethod gm:generic-* ((rational rational) (vector vector))
-  (elementwise-operation (vector)
-    (gm:* rational vector)))
+  (gm:declare-commutative scalar vector
+    gm:generic-+
+    gm:generic-*)
 
-(gm:declare-commutative rational vector
-  gm:generic-+
-  gm:generic-*)
+  (defmethod gm:generic-- ((scalar scalar) (vector vector))
+    (elementwise-operation (vector)
+      (gm:- scalar vector)))
 
-(defmethod gm:generic-- ((rational rational) (vector vector))
-  (elementwise-operation (vector)
-    (gm:- rational vector)))
+  (defmethod gm:generic-- ((vector vector) (scalar scalar))
+    (gm:generic-+ (gm:- scalar) vector))
 
-(defmethod gm:generic-- ((vector vector) (rational rational))
-  (gm:generic-+ (- rational) vector))
-
-(defmethod gm:generic-/ ((vector vector) (rational rational))
-  (gm:generic-* (/ rational) vector))
+  (defmethod gm:generic-/ ((vector vector) (scalar scalar))
+    (gm:generic-* (gm:/ scalar) vector)))
 
 (defmacro! define-index-transform (name (&rest args) dim-form &rest index-forms)
   "Define a transformation of a multidim vector V by supplying a

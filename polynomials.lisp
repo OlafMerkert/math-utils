@@ -131,12 +131,6 @@
   "Multiply two polynomials."
   (poly*poly poly-a poly-b))
 
-(defmethod generic-* ((poly-b polynomial) (number rational))
-  (generic-* number poly-b))
-
-(defmethod generic-* ((number rational) (poly-b polynomial))
-  (poly*constant poly-b number))
-
 (defun poly+constant (poly constant &optional (type 'polynomial))
   (make-instance type :var (var poly)
                  :coefficients (aprog1 (copy-seq (coefficients poly))
@@ -158,14 +152,14 @@
                           (if (< n d)
                               (aref coeff-b n)
                               (gm:+ (aref coeff-b n)
-                                    (aref coeff-a (- n d)))))))))
-  )
+                                    (aref coeff-a (- n d))))))))))
+
 (defmethod generic-+ ((poly-a polynomial) (poly-b polynomial))
   "Add two polynomials together.  Implicitly simplify."
   (poly+poly poly-a poly-b))
 
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
-  (generic-+ poly-a (generic-* -1 poly-b)))
+  (generic-+ poly-a (poly*constant poly-b -1)))
 
 (defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
   "This actually implements polynomial division with a remainder.
@@ -194,6 +188,28 @@ Keep this in mind when using."
                                            :coefficients qn))
                   (simplify (make-instance 'polynomial :var (var poly-numer)
                                            :coefficients (subseq an m-n))))))))
+
+;;; operations with constants
+(bind-multi ((constant rational finite-fields:integer-mod))
+  (declare-commutative constant polynomial
+    generic-+
+    generic-*)
+
+  (defmethod generic-+ ((number constant) (poly polynomial))
+    (poly+constant poly number))
+
+  (defmethod generic-- ((number constant) (poly polynomial))
+    (poly+constant (poly*constant poly -1) number))
+
+  (defmethod generic-- ((poly polynomial) (number constant))
+    (generic-+ (gm:- number) poly))
+
+  (defmethod generic-* ((number constant) (poly polynomial))
+    (poly*constant poly number))
+
+  (defmethod generic-/ ((poly polynomial) (number constant))
+    (generic-/ (gm:/ number) poly)))
+
 
 ;; TODO provide condition when division has remainder
 
