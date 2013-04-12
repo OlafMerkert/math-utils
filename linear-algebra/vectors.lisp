@@ -30,7 +30,8 @@
    #:identity-matrix
    #:make-vector-from-rows
    #:vect
-   #:matr))
+   #:matr
+   #:droprows-from))
 
 (in-package :linear-algebra/vectors)
 
@@ -301,6 +302,16 @@ elementwise operations."
     (setf (first indices) (skip (first indices) i)
           (last1 indices) (skip (last1 indices) j))
     indices))
+
+;;; entferne alle Zeilen ab i.
+(define-index-transform droprows-from% (i)
+  (cons i (cdr dimensions))
+  indices)
+
+(defun droprows-from (vector i)
+  (if (= i (first (dimensions vector)))
+      vector
+      (droprows-from% vector i)))
 
 (defun swap (x i j)
   "Vertausche i und j in der Folge der natuerlichen Zahlen."

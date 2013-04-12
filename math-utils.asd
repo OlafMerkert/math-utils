@@ -46,7 +46,8 @@
                (:file "valuations-coeff" :depends-on ("infinite-math"
                                                       "valuations"
                                                       "polynomials" "power-series"))
-               (:module "linear-algebra" :depends-on ("generic-math")
+               (:module "linear-algebra" :depends-on ("generic-math"
+                                                      "number-theory")
                         :components ((:file "vectors")
                                      (:file "elementary-matrices" :depends-on ("vectors"))
                                      (:file "linear-solve" :depends-on ("vectors" "elementary-matrices"))))))
