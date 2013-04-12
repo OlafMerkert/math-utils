@@ -49,6 +49,12 @@
   (max (abs (numerator rational))
        (abs (denominator rational))))
 
+(defun find-pivot/p^k (p)
+  "when solving linear systems mod P^k, we choose the pivot as the one
+with the smallest order in P."
+  (lambda (seq)
+    (position-maximum seq :key (lambda (x) (nt:ord-p p (finite-fields:remainder x)))
+                      :compare #'>)))
 
 ;;; TODO perhaps choose maximal entry
 ;;; for this there are probably different strategies
