@@ -84,15 +84,22 @@
 
 (defmethod generic-/ ((a integer-mod) (b integer-mod))
   (assert-same-modulus p (a b)
-    (multiple-value-bind (d u v) (nt:xgcd (remainder b) p)
-      (declare (ignore v))
-      (when (/= d 1)
-        (error "Cannot invert ~A." b))
-      (make-instance 'integer-mod
-                    :rem (mod (* (remainder a)
-                                 u)
-                              p)
-                    :mod p))))
+    ;; first remove the gcd from A and B, so this may work in case p
+    ;; is not prime
+    (let* ((a (remainder a))
+           (b (remainder b))
+           (d0 (gcd a b)))
+      (setf a (cl:/ a d0)
+            b (cl:/ b d0))
+      (if (cl:= b 1)
+          (make-instance 'integer-mod :rem a :mod p)
+          (multiple-value-bind (d u v) (nt:xgcd b p)
+            (declare (ignore v))
+            (when (/= d 1)
+              (error "Cannot invert ~A." b))
+            (make-instance 'integer-mod
+                           :rem (mod (* a u) p)
+                           :mod p))))))
 
 ;; TODO Quadratwurzeln in endlichen Körpern // besserer Algorithmus
 (defmethod gm:sqrt ((a integer-mod))
