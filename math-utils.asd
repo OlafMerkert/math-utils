@@ -37,7 +37,8 @@
                (:module "factorisation" :depends-on ("generic-math"
                                                      "finite-fields"
                                                      "polynomials"
-                                                     "fractions")
+                                                     "fractions"
+                                                     "linear-algebra")
                         :components ((:file "polynomials-modp")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"

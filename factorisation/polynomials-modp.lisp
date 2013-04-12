@@ -1,6 +1,6 @@
 (defpackage :factorisation-polynomials-modp
   (:nicknames :pfactp)
-   (:shadowing-import-from :fractions :numerator :denominator)
+  (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :summing)
   (:use :cl :ol :iterate
         :generic-math
@@ -107,18 +107,31 @@ used to remove duplicates from factors-1."
       (t (mapcar (lambda (x) (cons x 1))
                  (factorise-squarefree-poly polynomial))))))
 
+(defun pad-vector-front (vector required-length)
+  (let ((n (length vector))
+        (new-vector (make-array required-length :initial-element 0)))
+    (when (> n required-length)
+      (error "vector is already too long, has length ~A when ~A is required." n required-length))
+    (iter (for i from (- required-length n))
+          (for el in-vector vector)
+          (setf (aref new-vector i) el))
+    new-vector))
+
+
 (defun factorise-squarefree-poly (u)
   ;; use Berlekamp's algorithm
   (let* ((p (get-prime u))
          (n (degree u))
-         (q (make-matrix-from-rows
-             ;; todo check index directions etc
+         (q (vectors:make-matrix-from-rows
+             ;; TODO check index directions etc, maybe have to transpose
              (iter (for k from 0 below n)
-                   (collect (coefficients (nth-value
-                                           1
-                                           (/ (make-monomial (* p k) (int% 1 p))
-                                              u))))))))
-    (multiple-value-bind (v r) (nullspace (gm:- q 1))
+                   (collect (pad-vector-front
+                             (coefficients (nth-value
+                                            1
+                                            (/ (make-monomial (* p k) (int% 1 p))
+                                               u)))
+                             n))))))
+    (multiple-value-bind (v r) (linsolve:nullspace (- q (vectors:identity-matrix n)))
       (if (cl:= r 1)
           ;; polynomial is irreducible
           u
