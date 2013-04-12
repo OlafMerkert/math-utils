@@ -21,11 +21,14 @@
    #:*current-printer*
    #:format-monomial/all
    #:format-power-series/all
-   #:format-polynomial/all))
+   #:format-polynomial/all
+   #:*print-poly-pretty*))
 
 (in-package :polynomial-series-printing)
 
 (defparameter print-additional-terms 5)
+
+(defparameter *print-poly-pretty* nil)
 
 ;;; four entries in the list: coefficient, exponent, whether coeff is
 ;;; one, and whether it had sign swapped.
@@ -170,20 +173,26 @@
 (defmethod print-object ((polynomial polynomial) stream)
   (let ((*current-printer* 'string-printer))
     (princ #\[ stream)
-    (princ (format-polynomial polynomial) stream)
+    (princ (if *print-poly-pretty*
+               (format-polynomial polynomial)
+               (format-polynomial/all polynomial)) stream)
     (princ #\] stream)))
 
 (defmethod print-object ((series power-series) stream)
     (let ((*current-printer* 'string-printer))
       (princ #\[ stream)
-      (princ (format-power-series series) stream)
+      (princ (if *print-poly-pretty*
+                 (format-power-series series)
+                 (format-power-series/all series)) stream)
       (princ #\] stream)))
 
 (defmethod print-object ((series constant-series) stream)
   (let ((print-additional-terms 1)
         (*current-printer* 'string-printer))
     (princ #\[ stream)
-    (princ (format-power-series series) stream)
+    (princ (if *print-poly-pretty*
+               (format-power-series series)
+               (format-power-series/all series)) stream)
     (princ #\] stream)))
 
 ;; implementation for print-object/tex
