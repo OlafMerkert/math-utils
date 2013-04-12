@@ -168,22 +168,22 @@ the complement."
     ;; length of step-cols is exactly the rank, and the other cols
     ;; correspond to the generators of the kernel
     (iter (for j in other-cols)
-          (collect (nullspace-column triangular step-cols other-cols
+          (collect (nullspace-column triangular step-cols
                                      j (subcol triangular j))))))
 
-(defun nullspace-column (triangular step-cols other-cols col-index column2)
-  ;; column contains already the entries of indices given by
-  ;; other-cols, we get the rest using the solve-triangular function
-  (let ((column1 (solve-triangular triangular column2 step-cols))
+(defun nullspace-column (triangular step-cols col-index column2)
+  (let ((column1 (solve-upper-triangular triangular (gm:- column2) step-cols))
         (column-full (make-array (second (dimensions triangular)) :initial-element 0)))
     (iter (for i in step-cols)
           (for e in-vector (entries column1))
           (setf (aref column-full i) e))
-    (setf (aref column-full col-index) -1) ; TODO type adjust??
+    (setf (aref column-full col-index) 1)
     (make-instance 'vector :entries column-full)))
 
-(defun solve-triangular (triangular vector &optional (step-cols (range (second (dimensions triangular)))))
-  "Solve a matrix equation with only zeroes below the diagonal."
+(defun solve-upper-triangular (triangular vector &optional (step-cols (range (second (dimensions triangular)))))
+  "Solve a matrix equation with only zeroes below the diagonal. We
+assume triangular is an upper triangular matrix of full rank, where
+STEP-COLS gives for each row the first column with non-zero entry."
   (let* ((n (length step-cols))
          (step-cols (reverse step-cols))
          (result (make-array n :initial-element 0))
@@ -191,14 +191,13 @@ the complement."
     (iter (for i from (- n 1) downto 0)
           (for j in step-cols)
           (setf (aref result i)
-                0)
-          )))
-
-
-
-
-;;; TODO special matrix type for LU decomposition, with transparent
-;;; access to lower and upper triangular parts
+                (gm:/ (gm:- (mref vector i)
+                            (reduce #'gm:+ previous-columns
+                                    :key (lambda (c) (gm:* (aref entries i c)
+                                                      (aref result c)))))
+                      (aref entries i j)))
+          (collect j into previous-columns at beginning))
+    (make-instance 'vector :entries result)))
 
 ;;; TODO what about destructive operations (for efficiency?)
 ;;; can probably be implemented as additional type
