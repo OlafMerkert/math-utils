@@ -131,7 +131,7 @@ used to remove duplicates from factors-1."
                                             (/ (make-monomial (* p k) (int% 1 p))
                                                u)))
                              n))))))
-    (multiple-value-bind (v r) (linsolve:nullspace (- q (vectors:identity-matrix n)))
+    (multiple-value-bind (v r) (linsolve:nullspace (- (vectors:transpose q) (vectors:identity-matrix n)))
       (if (cl:= r 1)
           ;; polynomial is irreducible
           u
@@ -145,11 +145,23 @@ used to remove duplicates from factors-1."
 
 (defun splitting-helper (p coeff-vector poly-to-split)
   ;; todo check indexing of coefficients
-  (let ((poly (make-instance 'polynomial :coefficients coeff-vector))
+  (let ((poly (make-instance 'polynomial :coefficients (vectors:entries coeff-vector)))
         (factors))
     (dotimes (s p)
       (aif (non-constant-p (ggt (gm:- poly (int% s p)) poly-to-split))
            (push it factors)))
     factors))
 
-;;; todo how to test whether a polynomial is irreducible?
+(defun multiply-factors (factors)
+  (reduce #'generic-*
+          factors :key (lambda (x) (destructuring-bind (factor . exp) x
+                                (expt factor exp)))))
+
+
+;;; some tests
+#|(setf example (finite-fields:with-modulus (7) (polynomials:make-polynomial 1 0 0 0 -1)))|#
+
+#|(setf factors (factorise example))|#
+
+#|(multiply-factors factors)|#
+;;; TODO results are not right yet; check indices, transposed matrix etc
