@@ -53,10 +53,17 @@
   ;; simplification happens at init time
   a)
 
+(defmethod simplified-p ((integer-mod integer-mod)) t)
+
 (defmethod generic-= ((a integer-mod) (b integer-mod))
   (and (= (modulus a) (modulus b))
        (= (remainder a) (remainder b))))
 
+(defmethod zero-p ((a integer-mod))
+  (zerop (remainder a)))
+
+(defmethod one-p ((a integer-mod))
+  (cl:= 1 (remainder a)))
 
 (defmethod generic-+ ((a integer-mod) (b integer-mod))
   (assert-same-modulus p (a b)

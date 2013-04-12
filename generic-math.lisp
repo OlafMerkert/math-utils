@@ -183,8 +183,8 @@ to override this if a better algorithm is available."
 (defgeneric zero-p (number)
   (:documentation "Test whether the given number is zero."))
 
-(defmethod zero-p (number)
-  (= (zero number) number))
+#|(defmethod zero-p (number)
+  (= (zero number) number))|#
 
 (defmethod zero-p ((number number))
   (cl:zerop number))
@@ -192,11 +192,11 @@ to override this if a better algorithm is available."
 (defgeneric one-p (number)
   (:documentation "Test whether the given number is one."))
 
-(defmethod one-p (number)
-  (= (one number) number))
+#|(defmethod one-p (number)
+  (= (one number) number))|#
 
 (defmethod one-p ((number number))
-  (cl:= (one number) number))
+  (cl:= 1 number))
 
 ;; sign extraction is useful for nice representation of stuff
 (defgeneric minus-p (number)
