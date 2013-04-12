@@ -48,7 +48,8 @@
                                                       "valuations"
                                                       "polynomials" "power-series"))
                (:module "linear-algebra" :depends-on ("generic-math"
-                                                      "number-theory")
+                                                      "number-theory"
+                                                      "finite-fields")
                         :components ((:file "vectors")
                                      (:file "elementary-matrices" :depends-on ("vectors"))
                                      (:file "linear-solve" :depends-on ("vectors" "elementary-matrices"))))))

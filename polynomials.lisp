@@ -189,28 +189,6 @@ Keep this in mind when using."
                   (simplify (make-instance 'polynomial :var (var poly-numer)
                                            :coefficients (subseq an m-n))))))))
 
-;;; operations with constants
-(bind-multi ((constant rational finite-fields:integer-mod))
-  (declare-commutative constant polynomial
-    generic-+
-    generic-*)
-
-  (defmethod generic-+ ((number constant) (poly polynomial))
-    (poly+constant poly number))
-
-  (defmethod generic-- ((number constant) (poly polynomial))
-    (poly+constant (poly*constant poly -1) number))
-
-  (defmethod generic-- ((poly polynomial) (number constant))
-    (generic-+ (gm:- number) poly))
-
-  (defmethod generic-* ((number constant) (poly polynomial))
-    (poly*constant poly number))
-
-  (defmethod generic-/ ((poly polynomial) (number constant))
-    (generic-/ (gm:/ number) poly)))
-
-
 ;; TODO provide condition when division has remainder
 
 (defun poly-divisible-p (divisor polynomial)
@@ -288,10 +266,31 @@ Keep this in mind when using."
       (zero polynomial)))
 
 ;;; compatibility with constant coefficients
-(define->-method (polynomial rational (:var var 'X))
-    :coefficients (vector rational))
+(bind-multi ((constant rational finite-fields:integer-mod))
+  (define->-method (polynomial constant (:var var 'X))
+      :coefficients (vector constant))
 
-(default-simple-type-conversion rational polynomial)
+  (create-binary->-wrappers polynomial
+      constant
+      (:left)
+    generic-/)
+  (declare-commutative constant
+      polynomial
+    generic-+
+    generic-*)
+  (declare-fold-operation constant
+      polynomial
+    (generic-- generic-+ 0)
+    (generic-/ generic-* 1))
+  ;; don't use simple-conversion where we already have specialised code
+  (defmethod generic-+ ((number constant) (poly polynomial))
+    (poly+constant poly number))
+  (defmethod generic-- ((number constant) (poly polynomial))
+    (poly+constant (poly*constant poly -1) number))
+  (defmethod generic-* ((number constant) (poly polynomial))
+    (poly*constant poly number)))
+
+
 
 ;;; find largest power dividing
 (defun ord-p/generic (p n)
