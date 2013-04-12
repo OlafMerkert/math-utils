@@ -159,6 +159,43 @@ the complement."
 ;;; TODO apply-l and apply-l-inverse
 
 ;;; TODO solving triangular systems, calculating nullspace
+(defun nullspace (matrix)
+  "return vectors spanning the nullspace of the given MATRIX."
+  (multiple-value-bind (triangular l p rank step-cols other-cols) (lu-decomposition matrix t)
+    (declare (ignore l p))
+    ;; remove zero rows
+    (setf triangular (droprows-from triangular rank))
+    ;; length of step-cols is exactly the rank, and the other cols
+    ;; correspond to the generators of the kernel
+    (iter (for j in other-cols)
+          (collect (nullspace-column triangular step-cols other-cols
+                                     j (subcol triangular j))))))
+
+(defun nullspace-column (triangular step-cols other-cols col-index column2)
+  ;; column contains already the entries of indices given by
+  ;; other-cols, we get the rest using the solve-triangular function
+  (let ((column1 (solve-triangular triangular column2 step-cols))
+        (column-full (make-array (second (dimensions triangular)) :initial-element 0)))
+    (iter (for i in step-cols)
+          (for e in-vector (entries column1))
+          (setf (aref column-full i) e))
+    (setf (aref column-full col-index) -1) ; TODO type adjust??
+    (make-instance 'vector :entries column-full)))
+
+(defun solve-triangular (triangular vector &optional (step-cols (range (second (dimensions triangular)))))
+  "Solve a matrix equation with only zeroes below the diagonal."
+  (let* ((n (length step-cols))
+         (step-cols (reverse step-cols))
+         (result (make-array n :initial-element 0))
+         (entries (entries triangular)))
+    (iter (for i from (- n 1) downto 0)
+          (for j in step-cols)
+          (setf (aref result i)
+                0)
+          )))
+
+
+
 
 ;;; TODO special matrix type for LU decomposition, with transparent
 ;;; access to lower and upper triangular parts
