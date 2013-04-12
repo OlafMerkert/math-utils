@@ -31,7 +31,8 @@
    #:make-vector-from-rows
    #:vect
    #:matr
-   #:droprows-from))
+   #:droprows-from
+   #:make-matrix-from-rows))
 
 (in-package :linear-algebra/vectors)
 
@@ -230,13 +231,37 @@ elementwise operations."
   (elementwise-operation (vector-a vector-b)
     (gm:* vector-a vector-b)))
 
-(defmethod gm:generic-/ ((vector-a vector) (vector-b vector))
+;;; don't do division, it's nasty
+#|(defmethod gm:generic-/ ((vector-a vector) (vector-b vector))
   (elementwise-operation (vector-a vector-b)
-    (gm:/ vector-a vector-b)))
+    (gm:/ vector-a vector-b)))|#
 
+;;; operations with scalars
 (defun scalar-multiplication (scalar vector)
   (elementwise-operation (vector)
     (gm:* scalar vector)))
+
+(defmethod gm:generic-+ ((rational rational) (vector vector))
+  (elementwise-operation (vector)
+    (gm:+ rational vector)))
+
+(defmethod gm:generic-* ((rational rational) (vector vector))
+  (elementwise-operation (vector)
+    (gm:* rational vector)))
+
+(gm:declare-commutative rational vector
+  gm:generic-+
+  gm:generic-*)
+
+(defmethod gm:generic-- ((rational rational) (vector vector))
+  (elementwise-operation (vector)
+    (gm:- rational vector)))
+
+(defmethod gm:generic-- ((vector vector) (rational rational))
+  (gm:generic-+ (- rational) vector))
+
+(defmethod gm:generic-/ ((vector vector) (rational rational))
+  (gm:generic-* (/ rational) vector))
 
 (defmacro! define-index-transform (name (&rest args) dim-form &rest index-forms)
   "Define a transformation of a multidim vector V by supplying a

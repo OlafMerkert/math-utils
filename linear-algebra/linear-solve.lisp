@@ -5,17 +5,18 @@
         :linear-algebra/vectors
         :linear-algebra/elementary-matrices)
   (:export
-   #:lu-decomposition))
+   #:lu-decomposition
+   #:nullspace
+   #:solve-upper-triangular
+   #:compute-l-p
+   #:compute-l-inverse
+   #:compute-l))
 
 (in-package :linear-algebra/linear-solve)
 
 
 ;;; ----------------------------------------------------------------------
-;;; TODO LU decomposition for 2d matrices
-
-(defmacro awhen (test &body body)
-  `(let ((it ,test))
-     (when it ,@body)))
+;;; LU decomposition for 2d matrices
 
 (defun find-pivot-helper (find-pivot matrix row column)
   (aif (funcall find-pivot
@@ -160,16 +161,18 @@ the complement."
 
 ;;; TODO solving triangular systems, calculating nullspace
 (defun nullspace (matrix)
-  "return vectors spanning the nullspace of the given MATRIX."
+  "return vectors spanning the nullspace of the given MATRIX, and the dimension as second value."
   (multiple-value-bind (triangular l p rank step-cols other-cols) (lu-decomposition matrix t)
     (declare (ignore l p))
     ;; remove zero rows
     (setf triangular (droprows-from triangular rank))
     ;; length of step-cols is exactly the rank, and the other cols
     ;; correspond to the generators of the kernel
-    (iter (for j in other-cols)
-          (collect (nullspace-column triangular step-cols
-                                     j (subcol triangular j))))))
+    (values
+     (iter (for j in other-cols)
+           (collect (nullspace-column triangular step-cols
+                                      j (subcol triangular j))))
+     rank)))
 
 (defun nullspace-column (triangular step-cols col-index column2)
   (let ((column1 (solve-upper-triangular triangular (gm:- column2) step-cols))
