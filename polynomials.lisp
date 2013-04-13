@@ -38,6 +38,8 @@
   coefficient the first entry of COEFFICIENTS."))
 
 ;; unify polynomial interface with power series interface
+(defmethod degree ((rational rational)) 0)
+
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
 
