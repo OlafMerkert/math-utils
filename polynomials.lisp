@@ -86,25 +86,25 @@
   (and (zerop (degree polynomial))
        (one-p (constant-coefficient polynomial))))
 
-(defun simplify-poly (polynomial)
+(defun simplify-poly (polynomial &optional (downgrade t))
   (with-slots (coefficients) polynomial
     (let* ((deg (- (length coefficients) 1))
            (nz (or (position-if-not #'zero-p coefficients
                                     :end deg)
                    deg)))
-      (cond ((and (= nz deg) (rationalp (aref coefficients deg)))
+      (cond ((and downgrade (= nz deg) (rationalp (aref coefficients deg)))
              ;; got a constant polynomial with rational coeff, just
              ;; return that one.
              (values (aref coefficients deg) nz))
             ;; TODO also allow other types for constant downgrade?
             ;; then need corresponding upgrade too.
-        (t (setf coefficients
-               (subseq coefficients nz))
-         (values polynomial nz))))))
+            (t (setf coefficients
+                     (subseq coefficients nz))
+               (values polynomial nz))))))
 
-(defmethod simplify ((polynomial polynomial) &key)
+(defmethod simplify ((polynomial polynomial) &key (downgrade t))
   "Remove all leading zeros from the coefficients.  In case of a constant polynomial"
-  (simplify-poly polynomial))
+  (simplify-poly polynomial downgrade))
 
 ;;; arithmetic of polynomials
 (defun poly*poly (poly-a poly-b &optional (type 'polynomial))
@@ -312,4 +312,7 @@ Keep this in mind when using."
   must be one. 0 as input is invalid."
   (when (zero-p polynomial)
     (error "Cannot make the zero polynomial monic."))
-  (poly*constant polynomial (gm:/ (leading-coefficient polynomial))))
+  (let ((lk (leading-coefficient polynomial)))
+    (when (zero-p lk)
+      (error "Cannot make non-simplified polynomial monic."))
+   (poly*constant polynomial (gm:/ lk))))

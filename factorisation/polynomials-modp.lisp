@@ -76,6 +76,7 @@ used to remove duplicates from factors-1."
 (defun factorise (polynomial)
   ;; TODO perhaps we move some normalisation here, and make result
   ;; prettier (sorting factors by degree might be useful)
+  ;; TODO perhaps include leading coefficient in the factorisation?
   (factorise-generic-poly polynomial))
 
 (defun constant-p  (polynomial)
@@ -143,32 +144,25 @@ used to remove duplicates from factors-1."
           ;; otherwise find factors
           (iter (for vcoeffs in v)
                 (for factors first (splitting-helper p vcoeffs u)
-                     then (union (mapcan (lambda (w) (splitting-helper p vcoeffs w)) factors)
-                                 factors :test #'gm:=))
-                (until (cl:= r (length factors)))
-                (finally (return factors)))))))
+                     then  (mapcan (lambda (w) (splitting-helper p vcoeffs w)) factors))
+                (until (cl:<= r (length factors)))
+                (finally (return (mapcar #'make-monic factors))))))))
 
 (defun splitting-helper (p coeff-vector poly-to-split)
   ;; indexing of coefficients can simply be chosen to be consistent
   ;; with how we collect the 'rows' (rather cols) above.
-  (let ((poly (simplify (make-instance 'polynomial :coefficients (vectors:entries coeff-vector))))
+  (let ((poly (simplify (make-instance 'polynomial :coefficients (vectors:entries coeff-vector)) :downgrade nil))
         (factors))
     (dotimes (s p)
       (aif (non-constant-p (ggt (gm:- poly (int% s p)) poly-to-split))
            (push it factors)))
-    factors))
+    ;; either we found some (finer grained) factors, or we just keep
+    ;; the factor
+    (or factors
+        (list poly-to-split))))
 
 (defun multiply-factors (factors)
   "inverse to the FACTORISE function."
   (reduce #'generic-*
           factors :key (lambda (x) (destructuring-bind (factor . exp) x
                                 (expt factor exp)))))
-
-
-;;; some tests
-#|(setf example (finite-fields:with-modulus (7) (polynomials:make-polynomial 1 0 0 0 -1)))|#
-
-#|(setf factors (factorise example))|#
-
-#|(multiply-factors factors)|#
-;;; TODO results are not right yet; check indices, transposed matrix etc
