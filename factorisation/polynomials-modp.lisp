@@ -108,6 +108,7 @@ used to remove duplicates from factors-1."
                  (factorise-squarefree-poly polynomial))))))
 
 (defun pad-vector-front (vector required-length)
+  "add zeroes to the front of VECTOR, until it has REQUIRED-LENGTH."
   (let ((n (length vector))
         (new-vector (make-array required-length :initial-element 0)))
     (when (> n required-length)
@@ -117,20 +118,24 @@ used to remove duplicates from factors-1."
           (setf (aref new-vector i) el))
     new-vector))
 
-
 (defun factorise-squarefree-poly (u)
   ;; use Berlekamp's algorithm
   (let* ((p (get-prime u))
          (n (degree u))
          (q (vectors:make-matrix-from-rows
-             ;; TODO check index directions etc, maybe have to transpose
-             (iter (for k from 0 below n)
+             ;; counting k down, because our poly coeffs start with
+             ;; leading coefficients.
+             (iter (for k from (- n 1) downto 0)
                    (collect (pad-vector-front
+                             ;; here the order of coefficients does
+                             ;; not really matter
                              (coefficients (nth-value
                                             1
                                             (/ (make-monomial (* p k) (int% 1 p))
                                                u)))
                              n))))))
+    ;; here we have to tranpose (Knuth has the vector on the left side
+    ;; of the matrix)
     (multiple-value-bind (v r) (linsolve:nullspace (- (vectors:transpose q) (vectors:identity-matrix n)))
       (if (cl:= r 1)
           ;; polynomial is irreducible
@@ -144,8 +149,9 @@ used to remove duplicates from factors-1."
                 (finally (return factors)))))))
 
 (defun splitting-helper (p coeff-vector poly-to-split)
-  ;; todo check indexing of coefficients
-  (let ((poly (make-instance 'polynomial :coefficients (vectors:entries coeff-vector)))
+  ;; indexing of coefficients can simply be chosen to be consistent
+  ;; with how we collect the 'rows' (rather cols) above.
+  (let ((poly (simplify (make-instance 'polynomial :coefficients (vectors:entries coeff-vector))))
         (factors))
     (dotimes (s p)
       (aif (non-constant-p (ggt (gm:- poly (int% s p)) poly-to-split))
@@ -153,6 +159,7 @@ used to remove duplicates from factors-1."
     factors))
 
 (defun multiply-factors (factors)
+  "inverse to the FACTORISE function."
   (reduce #'generic-*
           factors :key (lambda (x) (destructuring-bind (factor . exp) x
                                 (expt factor exp)))))
