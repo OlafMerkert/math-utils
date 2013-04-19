@@ -15,22 +15,22 @@
       (and (every (lambda (m) (cl:= (gcd m (first numbers)) 1)) (rest numbers))
            (ensure-pairwise-prime (rest numbers)))))
 
-(defun crt-transform-matrix% (moduli)
-  "compute a_i s.t. sum a_i x_i = x mod (* MODULI) where x_i = x mod M
+(defmemfun crt-transform-matrix (moduli n)
+  "compute a_i s.t. sum a_i x_i = x mod (* MODULI) = n where x_i = x mod M
   for all M in MODULI."
-  (ecase (length moduli)
-    (1 (list 1))
-    (2 (multiple-value-bind (d u v) (nt:xgcd (first moduli) (second moduli))
-         (declare (ignore d))
-         (list (* v (second moduli))
-               (* u (first moduli)))))))
-
-(defun crt-transform-matrix (moduli)
-  (make-instance 'matrix :entries (coerce (crt-transform-matrix% moduli) 'cl:vector)))
+  (make-instance
+   'matrix
+   :entries (map 'cl:vector
+                 (lambda (q)
+                   (let ((m (/ n q)))
+                     (multiple-value-bind (d r s) (nt:xgcd q m)
+                       (declare (ignore d r))
+                       (int% (* m s) n))))
+                 moduli)))
 
 (defun crt-to-product (integer-mod moduli)
   (unless (ensure-pairwise-prime moduli)
-    (error "CRT only works with pairwise squarefree moduli, but got ~A." moduli))
+    (error "CRT only works with pairwise prime moduli, but got ~A." moduli))
   (unless (= (modulus integer-mod) (reduce #'* moduli))
     (error "The product of moduli ~A must be the modulus ~A." moduli (modulus integer-mod)))
   ;; now just reduce
@@ -48,10 +48,9 @@
   (let* ((moduli (map 'list #'modulus (entries imod-vector)))
          (n (reduce #'* moduli)))
     (unless (ensure-pairwise-prime moduli)
-      (error "CRT only works with pairwise squarefree moduli, but got ~A." moduli))
-    (int% (gm:* (crt-transform-matrix moduli)
-                (elemwise-remainder imod-vector))
-          n)))
+      (error "CRT only works with pairwise prime moduli, but got ~A." moduli))
+    (gm:* (crt-transform-matrix moduli n)
+          (elemwise-remainder imod-vector))))
 
 ;;; TODO figure out a system that allows to declare explicit levels
 ;;; for math objects -- i.e. a set where they live, which might have

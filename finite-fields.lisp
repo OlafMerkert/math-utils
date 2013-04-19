@@ -129,3 +129,6 @@
                                              power
                                              (modulus base))
                  :mod (modulus base)))
+
+;;; TODO in principle, this code should also be usable for quotients
+;;; of the polynomial ring.
