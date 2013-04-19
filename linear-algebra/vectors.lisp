@@ -32,7 +32,8 @@
    #:vect
    #:matr
    #:droprows-from
-   #:make-matrix-from-rows))
+   #:make-matrix-from-rows
+   #:elementwise-operation))
 
 (in-package :linear-algebra/vectors)
 
@@ -47,7 +48,7 @@
   (array-dimensions (entries vector)))
 
 (defun mref (vector-or-matrix &rest indices)
-  "access vector or matrix entreis, where indexing start with 0."
+  "access vector or matrix entries, where indexing start with 0."
   (apply #'aref (entries vector-or-matrix) indices))
 
 (defun set-mref (vector-or-matrix &rest indices+value)

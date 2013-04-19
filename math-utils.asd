@@ -52,4 +52,5 @@
                                                       "finite-fields")
                         :components ((:file "vectors")
                                      (:file "elementary-matrices" :depends-on ("vectors"))
-                                     (:file "linear-solve" :depends-on ("vectors" "elementary-matrices"))))))
+                                     (:file "linear-solve" :depends-on ("vectors" "elementary-matrices"))
+                                     (:file "chinese-remainder-thm" :depends-on ("vectors"))))))
