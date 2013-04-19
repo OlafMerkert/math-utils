@@ -7,7 +7,11 @@
         :polynomials
         :finite-fields
         :fractions)
-  (:export))
+  (:export
+   #:get-prime
+#:merge-factors
+#:factorise
+#:multiply-factors))
 
 (in-package :factorisation-polynomials-modp)
 
@@ -66,28 +70,12 @@ used to remove duplicates from factors-1."
              (merge-factors (rest factors-1) factors-2))
            (merge-factors (rest factors-1) (cons (car factors-1) factors-2)))))
 
-(defun map-on-car (fn alist)
-  "Call FN on every CAR of ALIST, preserving the CDR."
-  (mapcar (lambda (x)
-            (cons (funcall fn (car x))
-                  (cdr x)))
-          alist))
 
 (defun factorise (polynomial)
   ;; TODO perhaps we move some normalisation here, and make result
   ;; prettier (sorting factors by degree might be useful)
   ;; TODO perhaps include leading coefficient in the factorisation?
   (factorise-generic-poly polynomial))
-
-(defun constant-p  (polynomial)
-  (or (not (typep polynomial 'polynomial))
-      (cl:= (degree polynomial) 0)))
-
-(defun non-constant-p (polynomial)
-  (if (constant-p polynomial)
-      nil
-      polynomial))
-
 
 (defun factorise-generic-poly (polynomial)
   (let* ((polynomial (make-monic polynomial))
@@ -161,6 +149,7 @@ used to remove duplicates from factors-1."
     (or factors
         (list poly-to-split))))
 
+;; TODO move to more suitable place?
 (defun multiply-factors (factors)
   "inverse to the FACTORISE function."
   (reduce #'generic-*

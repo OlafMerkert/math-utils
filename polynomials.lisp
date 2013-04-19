@@ -23,7 +23,9 @@
    :make-monomial
    :ord-p/generic
    :content
-   :make-monic))
+   :make-monic
+   :non-constant-p
+   :constant-p))
 
 (in-package :polynomials)
 
@@ -61,6 +63,15 @@
 (defun constant-coefficient (polynomial)
   "This is just an abbreviation for (nth-coefficient p 0)"
   (nth-coefficient polynomial 0))
+
+(defun constant-p (polynomial)
+  (or (not (typep polynomial 'polynomial))
+      (cl:= (degree polynomial) 0)))
+
+(defun non-constant-p (polynomial)
+  (if (constant-p polynomial)
+      nil
+      polynomial))
 
 (defmethod simplified-p ((polynomial polynomial))
   (or (zerop (degree polynomial))
