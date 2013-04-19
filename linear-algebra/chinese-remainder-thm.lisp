@@ -28,7 +28,10 @@
                        (int% (* m s) n))))
                  moduli)))
 
-(defun crt-to-product (integer-mod moduli)
+(defun crt-to-product (integer-mod &optional moduli)
+  ;; if no moduli are given, use something canonical
+  (unless moduli
+    (setf moduli (nt-f:factor-into-prime-powers (modulus integer-mod))))
   (unless (ensure-pairwise-prime moduli)
     (error "CRT only works with pairwise prime moduli, but got ~A." moduli))
   (unless (= (modulus integer-mod) (reduce #'* moduli))
