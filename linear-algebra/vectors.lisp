@@ -360,21 +360,26 @@ elementwise operations."
 
 (defun dot-product (matrix-a matrix-b &optional (return-type 'matrix))
   (multiple-value-bind (dims-a m-a) (split-last (copy-list (dimensions matrix-a)) )
-    (destructuring-bind (m-b dims-b) (dimensions matrix-b)
+    (destructuring-bind (m-b . dims-b) (dimensions matrix-b)
       (unless (= m-a m-b)
         (error "Dimensions of ~A and ~A are not compatible for matrix multiplication." matrix-a matrix-b))
       (let ((split (length dims-a))
             (entries-a (entries matrix-a))
-            (entries-b (entries matrix-b)))
-        (make-vector%
-         (append dims-a dims-b)
-         (ilambda (this &rest indices)
-           (let ((ind-a (subseq indices 0 split))
-                 (ind-b (subseq indices split)))
-             (gm:summing (i 0 m-a t)
-                         (gm:+ (apply #'aref entries-a (append1 ind-a i))
-                               (apply #'aref entries-b i ind-b)))))
-         return-type)))))
+            (entries-b (entries matrix-b))
+            (dims (append dims-a dims-b)))
+        (if dims
+            (make-vector% dims
+                          (ilambda (this &rest indices)
+                            (let ((ind-a (subseq indices 0 split))
+                                  (ind-b (subseq indices split)))
+                              (gm:summing (i 0 m-a t)
+                                          (gm:* (apply #'aref entries-a (append1 ind-a i))
+                                                (apply #'aref entries-b i ind-b)))))
+                          return-type)
+            ;; special case if dims is empty list (i.e. dot-product
+            ;; of two simple vectors)
+            (gm:summing (i 0 m-a t)
+                        (gm:* (aref entries-a i) (aref entries-b i))))))))
 
 (defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))
   (dot-product matrix-a matrix-b 'matrix))
@@ -386,11 +391,8 @@ elementwise operations."
   (dot-product matrix-a vector-b 'vector))
 
 ;;; TODO scalar multiplication and addition
-
 ;;; TODO sparse matrices
 ;;; TODO matrix construction utilities
-;;; TODO vector -> matrix casting
-;;; TODO vector * matrix multiplication
 
 (defun make-diagonal-vector (number &rest dimensions)
   (make-vector (:list dimensions) t
