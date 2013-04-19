@@ -121,7 +121,23 @@
 (define->-method (integer-mod integer (:mod modulus 2))
     :rem integer)
 
-(default-simple-type-conversion integer integer-mod)
+(create-binary->-wrappers integer-mod integer
+    (:left)
+  generic-+
+  generic--
+  generic-*
+  generic-/)
+
+(create-binary->-wrappers integer-mod integer
+    (:right)
+  generic-/)
+
+(declare-commutative integer integer-mod
+  generic-+
+  generic-*)
+
+(declare-fold-operation integer integer-mod
+  (generic-- generic-+ 0))
 
 (defmethod gm:expt ((base integer-mod) (power integer))
   (make-instance 'integer-mod
