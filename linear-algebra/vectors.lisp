@@ -42,6 +42,10 @@
                  :accessor entries))
   (:documentation "Model a vector representated by a multi-dimensional array."))
 
+(defclass matrix (vector)
+  ()
+  (:documentation "extend the vector class with matrix multiplication."))
+
 (defgeneric dimensions (vector))
 
 (defmethod dimensions ((vector vector))
@@ -355,10 +359,6 @@ elementwise operations."
     indices))
 
 ;;; Matrixmultiplikation
-(defclass matrix (vector)
-  ()
-  (:documentation "extend the vector class with matrix multiplication."))
-
 (defun dot-product (matrix-a matrix-b &optional (return-type 'matrix))
   (multiple-value-bind (dims-a m-a) (split-last (copy-list (dimensions matrix-a)) )
     (destructuring-bind (m-b . dims-b) (dimensions matrix-b)
