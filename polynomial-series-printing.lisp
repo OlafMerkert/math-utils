@@ -134,7 +134,7 @@
        (defun ,name ,args
          (,impl-name *current-printer* ,@args%)))))
 
-(defmacro implement-printer-method (name printer-type args &body body)
+(defmacro implement-printer-method ((name printer-type) args &body body)
   ;; PRINTER is anaphoric
   `(defmethod ,(symb+ :pspr name '-implementation) ((printer (eql ',printer-type)) ,@args)
      ,@body))
@@ -146,10 +146,10 @@
 (define-printer-method print-superscript  (base exponent))
 
 ;;; implementation of printer interface for the repl
-(implement-printer-method print-math-object string-printer (object)
+(implement-printer-method (print-math-object string-printer) (object)
   (format nil "~A" object))
 
-(implement-printer-method print-sum string-printer (summands-with-sign)
+(implement-printer-method (print-sum string-printer) (summands-with-sign)
   (with-output-to-string (stream)
     (iter (for sws in summands-with-sign)
           (for sum = (first sws))
@@ -160,14 +160,14 @@
               (format stream " ~A " sign))
           (princ sum stream))))
 
-(implement-printer-method print-sum+ellipsis string-printer (summands-with-sign)
+(implement-printer-method (print-sum+ellipsis string-printer) (summands-with-sign)
   (concatenate 'string (print-sum-implementation printer summands-with-sign)
                " + ..."))
 
-(implement-printer-method print-product string-printer (factors)
+(implement-printer-method (print-product string-printer) (factors)
   (format nil "~{~A~^ ~}" factors))
 
-(implement-printer-method print-superscript string-printer (base exponent)
+(implement-printer-method (print-superscript string-printer) (base exponent)
   (format nil "~A^~A" base exponent))
 
 (defmethod print-object ((polynomial polynomial) stream)
@@ -196,12 +196,12 @@
     (princ #\] stream)))
 
 ;; implementation for print-object/tex
-(implement-printer-method print-math-object tex-printer (object)
+(implement-printer-method (print-math-object tex-printer) (object)
   (with-output-to-string (stream)
     (print-object/tex object stream)))
 
 ;; this one is identical to the string printer
-(implement-printer-method print-sum tex-printer (summands-with-sign)
+(implement-printer-method (print-sum tex-printer) (summands-with-sign)
   (with-output-to-string (stream)
     (iter (for sws in summands-with-sign)
           (for sum = (first sws))
@@ -212,14 +212,14 @@
               (format stream " ~A " sign))
           (princ sum stream))))
 
-(implement-printer-method print-sum+ellipsis tex-printer (summands-with-sign)
+(implement-printer-method (print-sum+ellipsis tex-printer) (summands-with-sign)
   (concatenate 'string (print-sum-implementation printer summands-with-sign)
                " + \\dots"))
 
-(implement-printer-method print-product tex-printer (factors)
+(implement-printer-method (print-product tex-printer) (factors)
   (format nil "~{~A~^ \\, ~}" factors))
 
-(implement-printer-method print-superscript tex-printer (base exponent)
+(implement-printer-method (print-superscript tex-printer) (base exponent)
   (format nil "{~A}^{~A}" base exponent))
 
 (defmethod print-object/tex ((polynomial polynomial) stream)
