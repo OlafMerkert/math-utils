@@ -38,7 +38,7 @@
 
 (in-package :linear-algebra/vectors)
 
-(defclass vector ()
+(defclass vector (generic-math-object)
   ((entries :initarg :entries
                  :accessor entries))
   (:documentation "Model a vector representated by a multi-dimensional array."))

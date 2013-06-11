@@ -29,7 +29,7 @@
 
 (in-package :polynomials)
 
-(defclass polynomial ()
+(defclass polynomial (generic-math-object)
   ((coefficients :initform (vector 0)
                  :initarg :coefficients
                  :reader coefficients)

@@ -23,7 +23,7 @@
 
 (in-package :power-series)
 
-(defclass power-series ()
+(defclass power-series (generic-math-object)
   ((degree :initform 0
            :initarg :degree
            :reader degree)

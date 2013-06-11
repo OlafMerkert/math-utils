@@ -11,7 +11,7 @@
 
 (in-package :fractions)
 
-(defclass fraction ()
+(defclass fraction (generic-math-object)
   ((numerator :initarg :numerator
               :initform 0
               :accessor numerator)

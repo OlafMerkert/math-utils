@@ -14,7 +14,7 @@
 (in-package :finite-fields)
 
 ;;; calculate mod p in the integer numbers
-(defclass integer-mod ()
+(defclass integer-mod (generic-math-object)
   ((remainder :initarg :rem
               :reader   remainder)
    (modulus   :initarg :mod

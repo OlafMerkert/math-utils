@@ -26,7 +26,7 @@
 (defgeneric inverse (matrix)
   (:documentation "compute the inverse of the given matrix."))
 
-(defclass elementary-matrix ()
+(defclass elementary-matrix (generic-math-object)
   ((dimension :initarg :dimension
               :initform :automatic
               :accessor dimension))

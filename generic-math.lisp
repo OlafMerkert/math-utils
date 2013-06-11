@@ -4,36 +4,42 @@
            :expt :sqrt)
   (:use :cl :ol)
   (:export
-   :argument
-   :+ :generic-+
-   :- :generic--
-   :* :generic-*
-   :/ :generic-/
-   := :generic-=
-   :zero
-   :one
-   :simplify
-   :expt
-   :sqrt
-   :->
-   :define-generic-binary-operation
-   :simplified-p
-   :zero-p
-   :one-p
-   :summing
-   :create-binary->-wrappers
-   :print-object/tex
-   :print-object/helper
-   :*tex-output-mode*
-   :minus-p
-   :define->-method
-   :declare-commutative
-   :declare-fold-operation
-   :default-simple-type-conversion
-   :define->-method/identity
-   :define->-method/custom))
+   #:argument
+   #:+ #:generic-+
+   #:- #:generic--
+   #:* #:generic-*
+   #:/ #:generic-/
+   #:= #:generic-=
+   #:zero
+   #:one
+   #:simplify
+   #:expt
+   #:sqrt
+   #:->
+   #:define-generic-binary-operation
+   #:simplified-p
+   #:zero-p
+   #:one-p
+   #:summing
+   #:create-binary->-wrappers
+   #:print-object/tex
+   #:print-object/helper
+   #:*tex-output-mode*
+   #:minus-p
+   #:define->-method
+   #:declare-commutative
+   #:declare-fold-operation
+   #:default-simple-type-conversion
+   #:define->-method/identity
+   #:define->-method/custom
+   #:generic-math-object))
 
 (in-package :generic-math)
+
+(defclass generic-math-object ()
+  ()
+  (:documentation "an abstract root class for all mathematical
+  objects (except for primtive types like numbers.)"))
 
 (defmacro! define-generic-binary-operation
     (name unit &optional single-argument reduce-right)
