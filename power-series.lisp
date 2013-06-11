@@ -30,8 +30,8 @@
    (coefficients :initform (la% 0)
                  :initarg :coefficients
                  :reader coefficients)
-   #|(var :initform 'x
-        :accessor var)|#)
+   (var :initform 'x
+        :accessor var))
   (:documentation "Model a laurent series in VAR^-1 with the first
   coefficient being for VAR^DEGREE."))
 
