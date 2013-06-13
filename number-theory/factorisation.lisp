@@ -5,7 +5,8 @@
         :number-theory)
   (:export
    :factorise
-   :factor-into-prime-powers))
+   :factor-into-prime-powers
+   :factorise-over-s))
 
 (in-package :number-theory/factorisation)
 
@@ -42,15 +43,39 @@ a list, sorted by size. Multiple factors appear multiple times. We search for fa
                 (setf m mm))
               (incf i))))))
 
-(defun factorise (n &optional (compress t))
-  "As factorise%, but if compress is t, compress the list of
-  factors."
+(defun compress-wrap (list compress)
   (ecase compress
-    ((nil) #1=(factorise% n))
+    ((nil) #1=list)
     ((t)  (compress #1#))
     ((:singletons) (compress #1# :singletons t))))
+
+(defun factorise (n &optional (compress t) factor-bound)
+  "As factorise%, but if compress is t, compress the list of
+  factors."
+  (compress-wrap (if factor-bound (factorise% n factor-bound) (factorise% n)) compress))
 
 (defun factor-into-prime-powers (n)
   "give a list of all the maximal prime power p^e dividing N."
   (mapcar (lambda (x) (expt (car x) (cdr x)))
           (factorise n :singletons)))
+
+(defun factorise-over-s% (n s)
+  "Extract all the factors from the prime factor system S."
+  (if (minusp n)
+      (list* -1 (factorise-over-s (- n) s))
+      (do ((p (pop s))
+           (m n)
+           (divs nil))
+          ((or (= m 1) (not p))
+           (if (= m 1) (nreverse divs) (nreverse (cons m divs))))
+        (mvbind (mm rr) (floor m p)
+          (if (zerop rr)
+              (progn
+                (push p divs)
+                (setf m mm))
+              (setf p (pop s)))))))
+
+(defun factorise-over-s (n s &optional (compress t))
+  "As factorise-over-s%, but if compress is t, compress the list of
+  factors."
+  (compress-wrap (factorise-over-s% n s) compress))
