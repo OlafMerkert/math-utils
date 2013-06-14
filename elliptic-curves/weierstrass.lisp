@@ -58,7 +58,7 @@
   (with-slots (a) curve
     (* 1728 4 (^ a 3) (/ (discriminant curve :simple t)))))
 
-(defclass point-2 (generic-math-object)
+(defclass point-2 (gm:generic-math-object)
   ((x :initarg :x
          :initform 0
          :accessor x)
@@ -79,7 +79,7 @@
       (= (^ y 2)
          (+ (^ x 3) (* a x) b)))))
 
-(defclass ec-point-infinity (generic-math-object)
+(defclass ec-point-infinity (gm:generic-math-object)
   ((curve :initarg :curve
          :initform nil
          :accessor curve))
