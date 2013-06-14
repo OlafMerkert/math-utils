@@ -1,7 +1,7 @@
 (defpackage :generic-math
   (:nicknames :gm)
   (:shadow :+ :- :* :/ :=
-           :expt :sqrt)
+           :expt :^ :sqrt)
   (:use :cl :ol)
   (:export
    #:argument
@@ -32,9 +32,12 @@
    #:default-simple-type-conversion
    #:define->-method/identity
    #:define->-method/custom
-   #:generic-math-object))
+   #:generic-math-object
+   #:^))
 
 (in-package :generic-math)
+
+(defalias ^ expt (base exponent))
 
 (defclass generic-math-object ()
   ()

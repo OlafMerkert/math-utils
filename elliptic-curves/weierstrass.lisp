@@ -2,7 +2,7 @@
   (:nicknames :ec-ws)
   (:shadow :zero)
   (:shadowing-import-from :generic-math
-                          :+ :* :/ :expt :- :=)
+                          :+ :* :/ :expt :- := :^)
   (:use :cl :ol :iterate)
   (:export
    #:elliptic-curve-weierstrass
@@ -28,12 +28,6 @@
 ;;; TODO use operations from generic math
 
 (in-package :elliptic-curve-weierstrass)
-
-;;; TODO move this to a better place.
-(declaim (inline ^))
-(defun ^ (base power)
-  "an alias for EXPT."
-  (expt base power))
 
 (defclass elliptic-curve ()
   ()
