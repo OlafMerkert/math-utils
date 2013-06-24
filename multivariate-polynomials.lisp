@@ -2,6 +2,7 @@
   (:nicknames :mpoly)
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :iterate
         :generic-math
@@ -52,8 +53,6 @@ polynomial."
                (poly+constant a b 'mpolynomial)
                (poly+poly a b 'mpolynomial)
                (poly+constant b a 'mpolynomial)))
-
-
 
 (defmethod generic-* ((a mpolynomial) (b mpolynomial))
   (mpoly-cases (a (var b))

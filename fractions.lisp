@@ -1,6 +1,6 @@
 (defpackage :fractions
   (:shadow :numerator :denominator)
-  (:shadowing-import-from :generic-math :summing  :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :generic-math :summing  :+ :- :* :/ := :expt :sqrt :^ :_)
   (:use :cl :ol :iterate :generic-math)
   (:export
    #:ggt

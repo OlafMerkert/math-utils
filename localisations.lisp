@@ -1,6 +1,7 @@
 (defpackage :localisations
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:use :cl :ol
         :generic-math
         :finite-fields

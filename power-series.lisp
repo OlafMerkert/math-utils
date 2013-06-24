@@ -1,5 +1,6 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
         :iterate

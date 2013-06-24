@@ -1,6 +1,7 @@
 (defpackage :infinite-math
   (:nicknames :im)
   (:shadowing-import-from :cl :+ :- :* :/ :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :gm := :summing)
   (:use :cl :ol :iterate :generic-math)
   (:export
