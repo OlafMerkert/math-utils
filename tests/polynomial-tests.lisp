@@ -2,7 +2,7 @@
 
 (def-suite polynomials :in math-utils)
 
-(in-suite number-theory)
+(in-suite polynomials)
 
 (test make-poly
   (let ((p (polynomials:make-polynomial 2 7 1/8)))
