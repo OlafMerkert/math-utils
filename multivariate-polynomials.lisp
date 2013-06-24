@@ -79,3 +79,26 @@ polynomial."
 (defmethod ggt ((a mpolynomial) (b mpolynomial))
   ;; TODO implement ggt for polynomials properly
   1)
+
+(defun make-mpolynomial (var lk &rest coefficients)
+  (if coefficients
+      ;; TODO consider checking for proper ordering of variables
+      (let ((poly (make-instance 'mpolynomial :var var
+                                 :coefficients (list->array (list* lk coefficients)))))
+        ;; TODO do we need different downgrading for mpolys??
+        (simplify-poly poly nil)
+        poly)
+      ;; if only one coefficient is given, don't bother so much
+      lk))
+
+(defun make-monomial+ (vars degrees coefficient)
+  (make-monomial-helper coefficient
+                        (sort (mapcar #'cons vars degrees)
+                              #'var< :key #'car)))
+
+(defun make-monomial-helper (coefficient vars+degs)
+  (if (null vars+degs)
+      coefficient
+      (make-monomial-helper
+       (make-monomial (cdr vars+degs) coefficient (car vars+degs) 'mpolynomial)
+       (rest vars+degs))))

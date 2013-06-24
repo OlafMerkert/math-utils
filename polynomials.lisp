@@ -84,10 +84,10 @@
     (simplify-poly poly nil)
     poly))
 
-(defun make-monomial (degree coefficient)
+(defun make-monomial (degree coefficient &optional (var 'x) (class 'polynomial))
   (let ((coeff (make-array (+ 1 degree) :initial-element 0)))
     (setf (aref coeff 0) coefficient)
-    (make-instance 'polynomial :coefficients coeff)))
+    (make-instance class :coefficients coeff :var var)))
 
 (defmethod zero-p ((polynomial polynomial))
   ;; assume poly is simplified for now
