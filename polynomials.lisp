@@ -80,7 +80,9 @@
             (nth-coefficient% polynomial 0)))))
 
 (defun make-polynomial (lk &rest coefficients)
-  (make-instance 'polynomial :coefficients (list->array (list* lk coefficients))))
+  (let ((poly (make-instance 'polynomial :coefficients (list->array (list* lk coefficients)))))
+    (simplify-poly poly nil)
+    poly))
 
 (defun make-monomial (degree coefficient)
   (let ((coeff (make-array (+ 1 degree) :initial-element 0)))
