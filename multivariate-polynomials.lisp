@@ -13,7 +13,9 @@
    #:mpolynomial
    #:mpoly-p
    #:mpoly-cases
-   #:mdegree))
+   #:mdegree
+   #:make-mpolynomial
+   #:make-monomial+))
 
 (in-package :multivariate-polynomials)
 
@@ -68,6 +70,10 @@ polynomial."
 
 (defmethod generic-/ ((poly mpolynomial) (number rational))
   (generic-* (/ number) poly))
+
+(defmethod generic-/ ((poly-numer mpolynomial) (poly-denom mpolynomial))
+  ;; TODO test for divisibility
+  (fractions:frac poly-numer poly-denom))
 
 ;;; rational functions built from polynomials
 

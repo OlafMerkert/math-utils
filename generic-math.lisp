@@ -9,6 +9,7 @@
    #:- #:generic--
    #:* #:generic-*
    #:/ #:generic-/
+   #:div
    #:= #:generic-=
    #:zero
    #:one
@@ -117,6 +118,12 @@ as :from-end parameter to reduce."
 
 (defmethod generic-/ (a (b (eql 1)))
   a)
+
+(defgeneric div (number modulus)
+  (:documentation "The division function for Euclidean rings."))
+
+(defmethod div ((number number) (modulus number))
+  (floor number modulus))
 
 (defgeneric expt (base power))
 (defmethod expt ((base number) (power number))

@@ -177,7 +177,7 @@
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (poly*constant poly-b -1)))
 
-(defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
+(defmethod div ((poly-numer polynomial) (poly-denom polynomial))
   "This actually implements polynomial division with a remainder.
 Keep this in mind when using."
   (unless (simplified-p poly-denom)
@@ -204,6 +204,18 @@ Keep this in mind when using."
                                            :coefficients qn))
                   (simplify (make-instance 'polynomial :var (var poly-numer)
                                            :coefficients (subseq an m-n))))))))
+
+(defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
+  "Automatically fall back to fractions."
+  (unless (simplified-p poly-denom)
+    (error "Cannot divide by the POLY-DENOM ~A unless it is
+    normalised, i.e. the first coefficient is non-zero." poly-denom))
+  (when (zero-p poly-denom)
+    (error "Cannot divide by ZERO."))
+  (mvbind (q r) (div poly-numer poly-denom)
+    (if (zero-p r)
+        q
+        (fractions:frac poly-numer poly-denom))))
 
 ;; TODO provide condition when division has remainder
 

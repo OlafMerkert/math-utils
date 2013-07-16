@@ -44,7 +44,8 @@
 (defun make-constant-series (constant)
   (make-instance 'constant-series :coefficients (la% 0 constant)))
 
-;; TODO add support for different variables.
+;; TODO add support for different variables (also when working
+;; together with polynomials).
 
 (defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
