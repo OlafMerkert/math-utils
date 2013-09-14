@@ -286,8 +286,8 @@ polynomials."
     (setf (var root-poly) (var polynomial))
     ;; check whether the root is a polynomial.
     (if (gm:= (gm:expt root-poly 2) polynomial)
-        root-poly
-        root)))
+        (values root-poly t)
+        (values root nil))))
 
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
