@@ -3,7 +3,13 @@
   (:shadow #:length)
   (:use :cl :ol :iterate
         :infinite-math)
-  (:export))
+  (:export
+   #:finite-sequence-p
+   #:length
+   #:sref
+   #:subsequence
+   #:map-sequence
+   #:bind-seq))
 
 (in-package :infinite-sequence)
 
@@ -16,6 +22,16 @@
 
 (defsetf sref (iseq n) (value)
   `(set-sref ,iseq ,n ,value))
+
+(defgeneric subsequence (sequence start &optional end))
+
+(defgeneric map-sequence (function sequence))
+
+(defmacro! bind-seq (sequences o!index &body body)
+  "For `sequences' given by symbols A, write A instead of (sref A index) -- this is intended only for read access."
+  `(let ,(mapcar #`(,a1 (sref ,a1 ,g!index)) sequences)
+     ,@body))
+
 
 ;;; singly infinite sequences
 (defclass infinite+-sequence ()
@@ -143,7 +159,8 @@ uncalculated values."
                 ;; here we make use of the compatibility layer that
                 ;; allows transparent use of the array
                 (setf (aref data+ k)
-                      (funcall generating-function data+ j)))))
+                      (funcall generating-function data+ j)))
+          (setf fs (+ (- n start) 1))))
       ;; TODO track circular dependencies for as-needed filling
       (with-iseq
         (setf (aref data+ i)
@@ -158,6 +175,40 @@ uncalculated values."
             value))))
 
 ;;; TODO do we actually want mutability??
+;;; todo track mutations and allow automatic recomputing
+
+;;; important mapping and slicing functions
+(defmethod subsequence ((iseq infinite+-sequence) start &optional (end infinity+))
+  ;; first make sure start and end are in-range
+  (cond ((not (in-range iseq start))
+         (error 'index-out-of-range :start (start iseq) :index start :end (end iseq)))
+        ((not (or (eq end infinity+)
+                  (in-range iseq end)))
+         (error 'index-out-of-range :start (start iseq) :index end :end (end iseq)))
+        (t (let ((start-offset (- start (start iseq))))
+             (make-instance 'infinite+-sequence
+                            :fill-strategy (if (sequential-filling-p iseq)
+                                               (- (minimal-uncalculated iseq)
+                                                  start-offset))
+                            :start start
+                            :end end
+                            :data+ (subseq (data+ iseq) start-offset)
+                            :generating-function (ilambda (iseq2 n)
+                                                   (sref iseq n)))))))
+
+(defmethod map-sequence (function (iseq infinite+-sequence))
+  (make-instance 'infinite+-sequence
+                 :fill-strategy (if (sequential-filling-p iseq)
+                                    0)
+                 :start (start iseq)
+                 :end (end iseq)
+                 :generating-function (ilambda (iseq2 n)
+                                        (funcall function (sref iseq n)))))
+
+
+
+;;; todo helper functions to quickly transform arrays into infinite
+;;; sequences and so on.
 
 ;;; here comes compatibility functions for ordinary lisp sequences
 (defmethod finite-sequence-p ((sequence sequence))
@@ -170,12 +221,20 @@ uncalculated values."
 
 (defmethod sref ((array array) n)
   (aref array (- n sequence-offset)))
-
 (defmethod set-sref ((array array) n value)
   (setf (aref array (- n sequence-offset)) value))
 
 (defmethod sref ((list list) n)
   (nth (- n sequence-offset) list))
-
 (defmethod set-sref ((list list) n value)
   (setf (nth (- n sequence-offset) list) value))
+
+(defmethod subsequence ((sequence sequence) start &optional end)
+  (subseq sequence start end))
+
+(defmethod map-sequence (function (list list))
+  (map 'list function list))
+
+(defmethod map-sequence (function (vector vector))
+  (map 'vector function vector))
+
