@@ -2,6 +2,7 @@
   :depends-on (ol-utils cl-utilities iterate)
   :components ((:file "generic-math")
                (:file "infinite-math" :depends-on ("generic-math"))
+               (:file "infinite-sequence" :depends-on ("infinite-math"))
                (:file "elementary-combinatorics")
                (:module "number-theory"
                         :depends-on ("generic-math")
