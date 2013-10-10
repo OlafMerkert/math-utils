@@ -1,21 +1,27 @@
 (defpackage :infinite-sequence
-  (:nicknames :infseq)
+  (:nicknames :ins)
   (:shadow #:length)
   (:use :cl :ol :iterate
         :infinite-math)
   (:export
    #:finite-sequence-p
-   #:length
+   #:sequence-length
    #:sref
    #:subsequence
    #:map-sequence
-   #:bind-seq))
+   #:bind-seq
+   #:seq->array
+   #:infinite+-sequence))
 
 (in-package :infinite-sequence)
 
 ;;; general (infinite) sequence API
 (defgeneric finite-sequence-p (sequence))
 (defgeneric length (sequence))
+
+(declaim (inline sequence-length))
+(defun sequence-length (sequence)
+  (length sequence))
 
 (defgeneric sref (sequence n))
 (defgeneric set-sref (sequence n value))
@@ -32,6 +38,7 @@
   `(let ,(mapcar #`(,a1 (sref ,a1 ,g!index)) sequences)
      ,@body))
 
+(defgeneric seq->array (sequence))
 
 ;;; singly infinite sequences
 (defclass infinite+-sequence ()
@@ -114,7 +121,6 @@ index `n' to the array index `i'."
       array))
 
 (declaim (inline in-range))
-
 (defun in-range (iseq n)
   "Make sure the given index is valid for the sequence."
   (and (integerp n)
@@ -131,7 +137,6 @@ index `n' to the array index `i'."
        (progn ,@body)
        (error 'index-out-of-range :index n :start (start iseq) :end (end iseq))))
 
-
 (defmethod sref ((iseq infinite+-sequence) n)
   "Access element at position `n' in a sequence. Compute previously
 uncalculated values."
@@ -142,11 +147,6 @@ uncalculated values."
         (if (eq value +uncalculated+)
             (compute-value iseq n)
             value)))))
-
-;;; TODO provide different update strategies: sequential filling, as
-;;; needed and maybe others
-
-;;; TODO make the sequence interface compatible with arrays and lists.
 
 (defun compute-value (iseq n)
   "Fill position `n' in the sequence `iseq' using the
@@ -210,6 +210,43 @@ uncalculated values."
 ;;; todo helper functions to quickly transform arrays into infinite
 ;;; sequences and so on.
 
+(defun compute-all (iseq)
+  "For finite sequences, compute all elements of the sequence."
+  (if (sequential-filling-p iseq)
+      (sref iseq (- (end iseq) 1))
+      (iter (for i from (start iseq) below (end iseq))
+            (sref iseq i))))
+
+(define-condition infinite-length-not-supported ()
+  ((seq :initarg :seq :reader seq)
+   (fn :initarg :fn :reader fn)))
+
+(defmethod seq->array ((iseq infinite+-sequence))
+  "Return the array corresponding to a finite sequence."
+  (if (finite-sequence-p iseq)
+      (progn
+        (compute-all iseq)
+        (subseq (data+ iseq) 0 (- (end iseq) (start iseq))))
+      (error 'infinite-length-not-supported
+             :seq iseq :fn 'seq->array)))
+
+(defun array->iseq (array &key (start 0))
+  "Generate a finite sequence from an `array'."
+  (make-instance 'infinite+-sequence
+                 :start start
+                 :end (+ start (length array))
+                 :data+ array))
+
+(defun list->iseq (list &key (start 0))
+  "Generate a finite sequence from a `list'."
+  (make-instance 'infinite+-sequence
+                 :start start
+                 :end (+ start (length list))
+                 :data+ (coerce list 'vector)))
+
+;;; todo special indirect infinite sequences (useful for slicing and shifting?)
+;;; todo infinite sequence with standard value outside its range.
+
 ;;; here comes compatibility functions for ordinary lisp sequences
 (defmethod finite-sequence-p ((sequence sequence))
   t)
@@ -218,6 +255,12 @@ uncalculated values."
   (cl:length sequence))
 
 (defparameter sequence-offset 0)
+
+(defmethod start ((sequence sequence))
+  sequence-offset)
+
+(defmethod end ((sequence sequence))
+  (+ sequence-offset (cl:length sequence)))
 
 (defmethod sref ((array array) n)
   (aref array (- n sequence-offset)))
@@ -237,4 +280,10 @@ uncalculated values."
 
 (defmethod map-sequence (function (vector vector))
   (map 'vector function vector))
+
+(defmethod seq->array ((list list))
+  (coerce list 'array))
+
+(defmethod seq->array ((array array))
+  array)
 
