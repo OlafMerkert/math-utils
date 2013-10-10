@@ -7,7 +7,10 @@
    #:infinity+
    #:infinity-
    #:infinite-p
-   #:i<))
+   #:i<
+   #:i<=
+   #:i>=
+   #:i>))
 
 (in-package :infinite-math)
 
@@ -24,9 +27,22 @@
   "comparing numbers and infinite numbers."
   (cond ((eq a infinity+) nil)
         ((eq b infinity-) nil)
+        ((eq a infinity-) (not (eq b infinity-)))
+        ((eq b infinity+) (not (eq a infinity+)))
+        (t (cl:< a b))))
+
+(defun i<= (a b)
+  "comparing numbers and infinite numbers."
+  (cond ((eq a infinity+) (eq b infinity+))
+        ((eq b infinity-) (eq a infinity-))
         ((eq a infinity-) t)
         ((eq b infinity+) t)
-        (t (cl:< a b))))
+        (t (cl:<= a b))))
+
+(declaim (inline i> i>=))
+
+(defun i> (a b) (i< b a))
+(defun i>= (a b) (i<= b a))
 
 (defmethod one-p ((number (eql infinity+)))
   nil)
