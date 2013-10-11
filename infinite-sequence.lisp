@@ -41,14 +41,17 @@
 (defgeneric seq->array (sequence))
 
 ;;; singly infinite sequences
-(defclass infinite+-sequence ()
+(defclass infinite-sequence ()
   ((start :initarg :start
           :initform 0
           :reader start)
    (end :initarg :end
         :initform infinity+
-        :reader end)
-   (data+ :initform (make-array 100 :initial-element +uncalculated+
+        :reader end))
+  (:documentation "base class for infinite sequences."))
+
+(defclass infinite+-sequence (infinite-sequence)
+  ((data+ :initform (make-array 100 :initial-element +uncalculated+
                                 :adjustable t)
           :reader data+)
    ;; for sequential filling, we need to keep track of the minimal
@@ -67,9 +70,8 @@
    ;; to avoid circular dependencies.
    )
   (:documentation "An infinite sequence on integers, from an arbitrary
-  integer N to +infinity."))
-
-
+  integer N to +infinity. The infinity is realised using a generating
+  function."))
 
 (defmethod initialize-instance :after ((iseq infinite+-sequence) &key)
   (with-slots ((fs minimal-uncalculated) data+) iseq
@@ -96,11 +98,11 @@
 ;;   (:documentation "An infinite sequence on integers, covering all
 ;;   integers"))
 
-(defmethod length ((iseq infinite+-sequence))
+(defmethod length ((iseq infinite-sequence))
   (with-slots (start end) iseq
     (gm:- end start)))
 
-(defmethod finite-sequence-p ((seq infinite+-sequence))
+(defmethod finite-sequence-p ((seq infinite-sequence))
   (numberp (length seq)))
 
 (defmacro with-iseq (&body body)
@@ -217,9 +219,7 @@ uncalculated values."
       (iter (for i from (start iseq) below (end iseq))
             (sref iseq i))))
 
-(define-condition infinite-length-not-supported ()
-  ((seq :initarg :seq :reader seq)
-   (fn :initarg :fn :reader fn)))
+(define-condition infinite-length-not-supported () ())
 
 (defmethod seq->array ((iseq infinite+-sequence))
   "Return the array corresponding to a finite sequence."
@@ -227,8 +227,7 @@ uncalculated values."
       (progn
         (compute-all iseq)
         (subseq (data+ iseq) 0 (- (end iseq) (start iseq))))
-      (error 'infinite-length-not-supported
-             :seq iseq :fn 'seq->array)))
+      (error 'infinite-length-not-supported)))
 
 (defun array->iseq (array &key (start 0))
   "Generate a finite sequence from an `array'."
@@ -244,10 +243,119 @@ uncalculated values."
                  :end (+ start (length list))
                  :data+ (coerce list 'vector)))
 
-;;; todo special indirect infinite sequences (useful for slicing and shifting?)
-;;; todo infinite sequence with standard value outside its range.
+;;; todo special indirect infinite sequences (useful for slicing and
+;;; shifting?) that allow sharing content by reusing the backing array
+(defclass indirect-sequence (infinite-sequence)
+  ((refer-to :initarg :refer-to
+             :accessor refer-to)
+   (index-transform :initarg :index-transform
+                    :initform #'identity
+                    :accessor index-transform))
+  (:documentation "Transparently access elements of sequence
+  `refer-to' after transforming the index with `index-transform'.
+  Careful with indices that are out of range."))
 
-;;; here comes compatibility functions for ordinary lisp sequences
+(defmethod initialize-instance :after ((iseq indirect-sequence) &key)
+  ;; make sure refer-to does not hit an indirect-sequence
+  (let (pre-refer-to)
+    (setf (index-transform iseq)
+          (apply #'compose/red
+                 (iter (for seq first iseq then (refer-to seq))
+                       (while (typep seq 'indirect-sequence))
+                       (setf pre-refer-to seq)
+                       (collect (index-transform seq) at start)))
+          (refer-to iseq)
+          (refer-to pre-refer-to))))
+
+(defmethod sref ((iseq indirect-sequence) n)
+  (sref (refer-to iseq)
+        (funcall (index-transform iseq) n)))
+
+(defmethod set-sref ((iseq indirect-sequence) n value)
+  (set-sref (refer-to iseq)
+            (funcall (index-transform iseq) n)
+            value))
+
+(defmethod subsequence ((iseq infinite-sequence) start &optional (end infinity+))
+  (make-instance 'indirect-sequence
+                 :start (imax start (start iseq))
+                 :end (imin end (end iseq))
+                 :refer-to iseq))
+
+(defun shift (iseq offset)
+  (make-instance 'indirect-sequence
+                 :start (gm:+ (start iseq) offset)
+                 :end (gm:+ (end iseq) offset)
+                 :refer-to iseq
+                 :index-transform (lambda (n) (- n offset))))
+
+(define-condition infinite-start-not-supported () ())
+
+(defmethod map-sequence (function (iseq indirect-sequence))
+  (with-slots (start end refer-to index-transform) iseq
+      (if (infinite-p start)
+          (error 'infinite-start-not-supported)
+          (make-instance
+           'infinite+-sequence
+           :start start
+           :end end
+           :generating-function
+           (ilambda (iseq2 n)
+             (funcall function
+                      (sref refer-to (funcall index-transform n))))))))
+
+(defmethod seq->array ((iseq indirect-sequence))
+  (if (finite-sequence-p iseq)
+      (iter (for i from (start iseq) below (end iseq))
+            (collect (sref iseq i) result-type vector))
+      (error 'infinite-length-not-supported)))
+
+;;; infinite sequence with standard value outside its range.
+(defclass infinite-sequence/standard-value (infinite-sequence)
+  ((data :initarg :data
+         :initform #()
+         :accessor data)
+   (standard-value :initarg :standard-value
+                   :initform nil
+                   :accessor standard-value))
+  (:documentation "A doubly infinite sequence where only finitely many
+  values are explicitly specified, for the rest we return a standard
+  value. The `end' slot is automatically set to `start' + (length
+  `data'). "))
+
+(defmethod initialize-instance :after ((iseq infinite-sequence/standard-value) &key)
+  ;; adjust end
+  (with-slots (start end data) iseq
+    (setf end (+ start (length data)))))
+
+
+(defmethod finite-sequence-p ((iseq infinite-sequence/standard-value))
+  t)
+
+(defmethod length ((iseq infinite-sequence/standard-value))
+  (- (end iseq) (start iseq)))
+
+(defmethod sref ((iseq infinite-sequence/standard-value) n)
+  (if (in-range iseq n)
+      (aref (data iseq) (- n (start iseq)))
+      (standard-value iseq)))
+
+(defmethod set-sref ((iseq infinite-sequence/standard-value) n value)
+  (when-in-range
+    (setf (aref (data iseq) (- n (start iseq))) value)))
+
+(defmethod map-sequence (function (iseq infinite-sequence/standard-value))
+  (make-instance 'infinite-sequence/standard-value
+                 :start (start iseq)
+                 :end (end iseq)
+                 :data (map 'vector function (data iseq))
+                 :standard-value (funcall function (standard-value iseq))))
+
+(defmethod seq->array ((iseq infinite-sequence/standard-value))
+  (data iseq))
+
+
+;;; here come compatibility functions for ordinary lisp sequences
 (defmethod finite-sequence-p ((sequence sequence))
   t)
 
