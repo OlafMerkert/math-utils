@@ -180,24 +180,6 @@ uncalculated values."
 ;;; todo track mutations and allow automatic recomputing
 
 ;;; important mapping and slicing functions
-(defmethod subsequence ((iseq infinite+-sequence) start &optional (end infinity+))
-  ;; first make sure start and end are in-range
-  (cond ((not (in-range iseq start))
-         (error 'index-out-of-range :start (start iseq) :index start :end (end iseq)))
-        ((not (or (eq end infinity+)
-                  (in-range iseq end)))
-         (error 'index-out-of-range :start (start iseq) :index end :end (end iseq)))
-        (t (let ((start-offset (- start (start iseq))))
-             (make-instance 'infinite+-sequence
-                            :fill-strategy (if (sequential-filling-p iseq)
-                                               (- (minimal-uncalculated iseq)
-                                                  start-offset))
-                            :start start
-                            :end end
-                            :data+ (subseq (data+ iseq) start-offset)
-                            :generating-function (ilambda (iseq2 n)
-                                                   (sref iseq n)))))))
-
 (defmethod map-sequence (function (iseq infinite+-sequence))
   (make-instance 'infinite+-sequence
                  :fill-strategy (if (sequential-filling-p iseq)
@@ -353,6 +335,20 @@ uncalculated values."
 
 (defmethod seq->array ((iseq infinite-sequence/standard-value))
   (data iseq))
+
+(defun list->iseq/sv (list &key (start 0) standard-value)
+  (make-instance 'infinite-sequence/standard-value
+                 :start start
+                 :end (+ start (length list))
+                 :data (coerce list 'vector)
+                 :standard-value standard-value ))
+
+(defun array->iseq/sv (array &key (start 0) standard-value)
+  (make-instance 'infinite-sequence/standard-value
+                 :start start
+                 :end (+ start (length array))
+                 :data array
+                 :standard-value standard-value ))
 
 
 ;;; here come compatibility functions for ordinary lisp sequences
