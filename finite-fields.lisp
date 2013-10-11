@@ -1,5 +1,6 @@
 (defpackage :finite-fields
   (:shadowing-import-from :cl :+ :- :* :/ :expt := :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
         :iterate)
@@ -14,7 +15,7 @@
 (in-package :finite-fields)
 
 ;;; calculate mod p in the integer numbers
-(defclass integer-mod ()
+(defclass integer-mod (generic-math-object)
   ((remainder :initarg :rem
               :reader   remainder)
    (modulus   :initarg :mod

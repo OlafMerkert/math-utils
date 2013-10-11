@@ -1,7 +1,7 @@
 (defpackage :factorisation-polynomials-modp
   (:nicknames :pfactp)
   (:shadowing-import-from :fractions :numerator :denominator)
-  (:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :summing)
+  (:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :summing :^ :_)
   (:use :cl :ol :iterate
         :generic-math
         :polynomials

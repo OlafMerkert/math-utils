@@ -1,5 +1,6 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
         :iterate
@@ -23,15 +24,15 @@
 
 (in-package :power-series)
 
-(defclass power-series ()
+(defclass power-series (generic-math-object)
   ((degree :initform 0
            :initarg :degree
            :reader degree)
    (coefficients :initform (la% 0)
                  :initarg :coefficients
                  :reader coefficients)
-   #|(var :initform 'x
-        :accessor var)|#)
+   (var :initform 'x
+        :accessor var))
   (:documentation "Model a laurent series in VAR^-1 with the first
   coefficient being for VAR^DEGREE."))
 
@@ -43,7 +44,8 @@
 (defun make-constant-series (constant)
   (make-instance 'constant-series :coefficients (la% 0 constant)))
 
-;; TODO add support for different variables.
+;; TODO add support for different variables (also when working
+;; together with polynomials).
 
 (defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
@@ -284,8 +286,8 @@ polynomials."
     (setf (var root-poly) (var polynomial))
     ;; check whether the root is a polynomial.
     (if (gm:= (gm:expt root-poly 2) polynomial)
-        root-poly
-        root)))
+        (values root-poly t)
+        (values root nil))))
 
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")

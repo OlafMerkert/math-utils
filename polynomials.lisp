@@ -1,6 +1,7 @@
 (defpackage :polynomials
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
         :iterate :fractions)
@@ -29,7 +30,7 @@
 
 (in-package :polynomials)
 
-(defclass polynomial ()
+(defclass polynomial (generic-math-object)
   ((coefficients :initform (vector 0)
                  :initarg :coefficients
                  :reader coefficients)
@@ -79,12 +80,14 @@
             (nth-coefficient% polynomial 0)))))
 
 (defun make-polynomial (lk &rest coefficients)
-  (make-instance 'polynomial :coefficients (list->array (list* lk coefficients))))
+  (let ((poly (make-instance 'polynomial :coefficients (list->array (list* lk coefficients)))))
+    (simplify-poly poly nil)
+    poly))
 
-(defun make-monomial (degree coefficient)
+(defun make-monomial (degree coefficient &optional (var 'x) (class 'polynomial))
   (let ((coeff (make-array (+ 1 degree) :initial-element 0)))
     (setf (aref coeff 0) coefficient)
-    (make-instance 'polynomial :coefficients coeff)))
+    (make-instance class :coefficients coeff :var var)))
 
 (defmethod zero-p ((polynomial polynomial))
   ;; assume poly is simplified for now
@@ -174,7 +177,7 @@
 (defmethod generic-- ((poly-a polynomial) (poly-b polynomial))
   (generic-+ poly-a (poly*constant poly-b -1)))
 
-(defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
+(defmethod div ((poly-numer polynomial) (poly-denom polynomial))
   "This actually implements polynomial division with a remainder.
 Keep this in mind when using."
   (unless (simplified-p poly-denom)
@@ -201,6 +204,18 @@ Keep this in mind when using."
                                            :coefficients qn))
                   (simplify (make-instance 'polynomial :var (var poly-numer)
                                            :coefficients (subseq an m-n))))))))
+
+(defmethod generic-/ ((poly-numer polynomial) (poly-denom polynomial))
+  "Automatically fall back to fractions."
+  (unless (simplified-p poly-denom)
+    (error "Cannot divide by the POLY-DENOM ~A unless it is
+    normalised, i.e. the first coefficient is non-zero." poly-denom))
+  (when (zero-p poly-denom)
+    (error "Cannot divide by ZERO."))
+  (mvbind (q r) (div poly-numer poly-denom)
+    (if (zero-p r)
+        q
+        (fractions:frac poly-numer poly-denom))))
 
 ;; TODO provide condition when division has remainder
 

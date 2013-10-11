@@ -5,4 +5,6 @@
                         :serial t
                         :components ((:file "packages")
                                      (:file "generic-math-tests")
-                                     (:file "number-theory-tests")))))
+                                     (:file "number-theory-tests")
+                                     (:file "polynomial-tests")
+                                     (:file "mpolynomial-tests")))))

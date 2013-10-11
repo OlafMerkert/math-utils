@@ -31,9 +31,6 @@
                (:file "power-series"  :depends-on ("generic-math"
                                                    "polynomials"
                                                    "finite-fields"))
-               (:file "polynomial-series-printing" :depends-on ("generic-math"
-                                                                "polynomials"
-                                                                "power-series"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
                (:module "factorisation" :depends-on ("generic-math"

@@ -106,3 +106,8 @@ n is a prime or not."
         (iter (for j from (* 2 i) by i to s)
               (setf (aref candidates j) nil))
         (collect i result-type vector)))
+
+(defun next-prime (n)
+  (cond ((prime-p n) n)
+        ((evenp n) (next-prime (+ 1 n)))
+        (t (next-prime (+ 2 n)))))

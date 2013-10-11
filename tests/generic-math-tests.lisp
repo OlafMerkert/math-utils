@@ -28,14 +28,14 @@
     (is (not (gm:= b a b b)))))
 
 (test zero
-  (is (zero-p 0))
-  (is (zero-p (zero 20)))
-  (is (gm:= 0 (zero 77))))
+  (is (gm:zero-p 0))
+  (is (gm:zero-p (gm:zero 20)))
+  (is (gm:= 0 (gm:zero 77))))
 
 (test one
-  (is (one-p 1))
-  (is (one-p (one 20)))
-  (is (gm:= 1 (one 77))))
+  (is (gm:one-p 1))
+  (is (gm:one-p (gm:one 20)))
+  (is (gm:= 1 (gm:one 77))))
 
 ;;; todo some more tests of the equality test
 (test equal

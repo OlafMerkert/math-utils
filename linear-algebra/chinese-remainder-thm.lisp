@@ -10,12 +10,12 @@
 
 ;;; chinese remainder theorem
 
-(defmemfun ensure-pairwise-prime (numbers)
+(memodefun ensure-pairwise-prime (numbers)
   (if (null numbers) t
       (and (every (lambda (m) (cl:= (gcd m (first numbers)) 1)) (rest numbers))
            (ensure-pairwise-prime (rest numbers)))))
 
-(defmemfun crt-transform-matrix (moduli n)
+(memodefun crt-transform-matrix (moduli n)
   "compute a_i s.t. sum a_i x_i = x mod (* MODULI) = n where x_i = x mod M
   for all M in MODULI."
   (make-instance

@@ -2,6 +2,7 @@
   (:nicknames :mpoly)
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
+  (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :iterate
         :generic-math
@@ -12,7 +13,9 @@
    #:mpolynomial
    #:mpoly-p
    #:mpoly-cases
-   #:mdegree))
+   #:mdegree
+   #:make-mpolynomial
+   #:make-monomial+))
 
 (in-package :multivariate-polynomials)
 
@@ -53,8 +56,6 @@ polynomial."
                (poly+poly a b 'mpolynomial)
                (poly+constant b a 'mpolynomial)))
 
-
-
 (defmethod generic-* ((a mpolynomial) (b mpolynomial))
   (mpoly-cases (a (var b))
                (poly*constant a b 'mpolynomial)
@@ -70,6 +71,10 @@ polynomial."
 (defmethod generic-/ ((poly mpolynomial) (number rational))
   (generic-* (/ number) poly))
 
+(defmethod generic-/ ((poly-numer mpolynomial) (poly-denom mpolynomial))
+  ;; TODO test for divisibility
+  (fractions:frac poly-numer poly-denom))
+
 ;;; rational functions built from polynomials
 
 ;;; in theory, this construction should be completely generic.
@@ -80,3 +85,26 @@ polynomial."
 (defmethod ggt ((a mpolynomial) (b mpolynomial))
   ;; TODO implement ggt for polynomials properly
   1)
+
+(defun make-mpolynomial (var lk &rest coefficients)
+  (if coefficients
+      ;; TODO consider checking for proper ordering of variables
+      (let ((poly (make-instance 'mpolynomial :var var
+                                 :coefficients (list->array (list* lk coefficients)))))
+        ;; TODO do we need different downgrading for mpolys??
+        (simplify-poly poly nil)
+        poly)
+      ;; if only one coefficient is given, don't bother so much
+      lk))
+
+(defun make-monomial+ (vars degrees coefficient)
+  (make-monomial-helper coefficient
+                        (sort (mapcar #'cons vars degrees)
+                              #'var< :key #'car)))
+
+(defun make-monomial-helper (coefficient vars+degs)
+  (if (null vars+degs)
+      coefficient
+      (make-monomial-helper
+       (make-monomial (cdr vars+degs) coefficient (car vars+degs) 'mpolynomial)
+       (rest vars+degs))))
