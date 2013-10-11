@@ -405,3 +405,18 @@ uncalculated values."
 
 (defmethod seq->array ((array array))
   array)
+
+;;; a helper macro to port from lazy-array
+#|(defmacro make-lazy-array ((&key start (index-var 'index) finite default-value) &body fill-form)
+  (if (or finite default-value)
+      `(make-instance 'infinite-sequence/standard-value
+                      :standard-value ,default-value
+                      :end (or finite infinite-math:infinity+)
+                      :data+ (vector ,@start))
+      `(make-instance 'infinite+-sequence
+                      :fill-strategy :sequential
+                      :data+ (vector ,@start)
+                      :generating-function (lambda (this ,index-var)
+                                             ,@(subst-if 'sref
+                                                         (lambda (x) (member x '(aref lazy-aref)))
+                                                         fill-form)))))|#
