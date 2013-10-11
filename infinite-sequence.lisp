@@ -11,7 +11,18 @@
    #:map-sequence
    #:bind-seq
    #:seq->array
-   #:infinite+-sequence))
+   #:infinite+-sequence
+   #:infinite-sequence/standard-value
+   #:data
+   #:standard-value
+   #:data+
+   #:generating-function
+   #:infinite-sequence
+   #:start
+   #:end
+   #:indirect-sequence
+   #:refer-to
+   #:index-transform))
 
 (in-package :infinite-sequence)
 
@@ -51,7 +62,8 @@
   (:documentation "base class for infinite sequences."))
 
 (defclass infinite+-sequence (infinite-sequence)
-  ((data+ :initform (make-array 100 :initial-element +uncalculated+
+  ((data+ :initarg :data+
+          :initform (make-array 100 :initial-element +uncalculated+
                                 :adjustable t)
           :reader data+)
    ;; for sequential filling, we need to keep track of the minimal
@@ -86,7 +98,9 @@
           ((eq fs :sequential)
            ;; we determine the first uncalculated index automatically
            ;; and use sequential filling.
-           (setf fs (position +uncalculated+ data+))))))
+           (setf fs (or (position +uncalculated+ data+)
+                        (length data+)))))
+    (ensure-adjustable-array data+)))
 
 (declaim (inline sequential-filling-p))
 
