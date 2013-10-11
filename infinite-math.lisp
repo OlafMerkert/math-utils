@@ -10,7 +10,9 @@
    #:i<
    #:i<=
    #:i>=
-   #:i>))
+   #:i>
+   #:imax
+   #:imin))
 
 (in-package :infinite-math)
 
@@ -43,6 +45,23 @@
 
 (defun i> (a b) (i< b a))
 (defun i>= (a b) (i<= b a))
+
+(defun imin (a b)
+  "minimal value between `a' and `b'."
+  (cond ((or (eq a infinity-)
+             (eq b infinity-)) infinity-)
+        ((eq a infinity+) b)
+        ((eq b infinity+) a)
+        (t (min a b))))
+
+(defun imax (a b)
+  "maximal value between `a' and `b'."
+  (cond ((or (eq a infinity+)
+             (eq b infinity+)) infinity+)
+        ((eq a infinity-) b)
+        ((eq b infinity-) a)
+        (t (max a b))))
+
 
 (defmethod one-p ((number (eql infinity+)))
   nil)
