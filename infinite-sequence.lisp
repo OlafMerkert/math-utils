@@ -367,12 +367,10 @@ uncalculated values."
 (defmethod end ((sequence sequence))
   (+ sequence-offset (cl:length sequence)))
 
-(defmethod sref ((iseq array) n)
-  (when-in-range
-    (aref iseq (- n sequence-offset))))
-(defmethod set-sref ((iseq array) n value)
-  (when-in-range
-    (setf (aref iseq (- n sequence-offset)) value)))
+(defmethod sref ((array array) n)
+  (aref array (- n sequence-offset)))
+(defmethod set-sref ((array array) n value)
+  (setf (aref array (- n sequence-offset)) value))
 
 (defmethod sref ((list list) n)
   (nth (- n sequence-offset) list))
