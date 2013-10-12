@@ -15,14 +15,17 @@
    #:infinite-sequence/standard-value
    #:data
    #:standard-value
-   #:data+
    #:generating-function
    #:infinite-sequence
    #:start
    #:end
    #:indirect-sequence
    #:refer-to
-   #:index-transform))
+   #:index-transform
+   #:finseq
+   #:inf+seq
+   #:infinite--sequence
+   #:inf-seq))
 
 (in-package :infinite-sequence)
 
@@ -85,10 +88,10 @@
   (:documentation "base class for infinite sequences."))
 
 (defclass infinite+-sequence (infinite-sequence)
-  ((data+ :initarg :data+
+  ((data :initarg :data
           :initform (make-array 100 :initial-element +uncalculated+
                                 :adjustable t)
-          :reader data+)
+          :reader data)
    ;; for sequential filling, we need to keep track of the minimal
    ;; non-filled entry in the data array. This should refer to actual
    ;; array indices, not sequence indices.
@@ -109,7 +112,7 @@
   function."))
 
 (defmethod initialize-instance :after ((iseq infinite+-sequence) &key)
-  (with-slots ((fs minimal-uncalculated) data+) iseq
+  (with-slots ((fs minimal-uncalculated) data) iseq
     (cond ((or (null fs) (eq fs :as-needed))
            ;; by default, we don't track minimal filled and just fill
            ;; as needed.
@@ -121,9 +124,12 @@
           ((eq fs :sequential)
            ;; we determine the first uncalculated index automatically
            ;; and use sequential filling.
-           (setf fs (or (position +uncalculated+ data+)
-                        (length data+)))))
-    (ensure-adjustable-array data+)))
+           (setf fs (or (position +uncalculated+ data)
+                        (length data)))))
+    (if (length=0 data)
+        (setf data (make-array 100 :initial-element +uncalculated+
+                               :adjustable t))
+        (ensure-adjustable-array data))))
 
 (declaim (inline sequential-filling-p))
 
@@ -143,9 +149,9 @@
   (numberp (length seq)))
 
 (defmacro with-iseq (&body body)
-  "Bind slots `start' and `data+'. Moreover, transform the sequence
+  "Bind slots `start' and `data'. Moreover, transform the sequence
 index `n' to the array index `i'."
-  `(with-slots (start data+) iseq
+  `(with-slots (start data) iseq
      (let ((i (- n start)))
        ,@body)))
 
@@ -181,8 +187,8 @@ index `n' to the array index `i'."
 uncalculated values."
   (when-in-range
     (with-iseq
-      (ensure-array-size data+ i)
-      (let ((value (aref data+ i)))
+      (ensure-array-size data i)
+      (let ((value (aref data i)))
         (if (eq value +uncalculated+)
             (compute-value iseq n)
             value)))))
@@ -190,27 +196,28 @@ uncalculated values."
 (defun compute-value (iseq n)
   "Fill position `n' in the sequence `iseq' using the
 `generating-function'."
-  (if (sequential-filling-p iseq)
-      (with-slots (start data+ generating-function (fs minimal-uncalculated)) iseq
-        (let ((sequence-offset start)) ; special variable
-          (iter (for j from (+ start fs) to n)
-                (for k from fs)
-                ;; here we make use of the compatibility layer that
-                ;; allows transparent use of the array
-                (setf (aref data+ k)
-                      (funcall generating-function data+ j)))
-          (setf fs (+ (- n start) 1))))
-      ;; TODO track circular dependencies for as-needed filling
-      (with-iseq
-        (setf (aref data+ i)
+  (with-iseq
+    (if (sequential-filling-p iseq)
+        (with-slots (generating-function (fs minimal-uncalculated)) iseq
+          (let ((sequence-offset start)) ; special variable
+            (iter (for j from (+ start fs) to n)
+                  (for k from fs)
+                  ;; here we make use of the compatibility layer that
+                  ;; allows transparent use of the array
+                  (setf (aref data k)
+                        (funcall generating-function data j)))
+            (setf fs (+ i 1))
+            (aref data i)))
+        ;; TODO track circular dependencies for as-needed filling
+        (setf (aref data i)
               (funcall (generating-function iseq) iseq n)))))
 
-(defmethod set-sref ((iseq infinite+-sequence) n value)
+(defmethod set-sref ((iseq infinite+-sequence) (n integer) value)
   "Manually set position `n' in the sequence `iseq'."
   (when-in-range
     (with-iseq
-      (ensure-array-size (data+ iseq) i)
-      (setf (aref data+ i)
+      (ensure-array-size (data iseq) i)
+      (setf (aref data i)
             value))))
 
 ;;; TODO do we actually want mutability??
@@ -245,7 +252,7 @@ uncalculated values."
   (if (finite-sequence-p iseq)
       (progn
         (compute-all iseq)
-        (subseq (data+ iseq) 0 (- (end iseq) (start iseq))))
+        (subseq (data iseq) 0 (- (end iseq) (start iseq))))
       (error 'infinite-length-not-supported)))
 
 (defun array->iseq (array &key (start 0))
@@ -253,14 +260,14 @@ uncalculated values."
   (make-instance 'infinite+-sequence
                  :start start
                  :end (+ start (length array))
-                 :data+ array))
+                 :data array))
 
 (defun list->iseq (list &key (start 0))
   "Generate a finite sequence from a `list'."
   (make-instance 'infinite+-sequence
                  :start start
                  :end (+ start (length list))
-                 :data+ (coerce list 'vector)))
+                 :data (coerce list 'vector)))
 
 ;;; todo special indirect infinite sequences (useful for slicing and
 ;;; shifting?) that allow sharing content by reusing the backing array
@@ -435,11 +442,52 @@ uncalculated values."
       `(make-instance 'infinite-sequence/standard-value
                       :standard-value ,default-value
                       :end (or finite infinite-math:infinity+)
-                      :data+ (vector ,@start))
+                      :data (vector ,@start))
       `(make-instance 'infinite+-sequence
                       :fill-strategy :sequential
-                      :data+ (vector ,@start)
+                      :data (vector ,@start)
                       :generating-function (lambda (this ,index-var)
                                              ,@(subst-if 'sref
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
+;;; shorthand notation for most frequent uses
+(defmacro inf+seq (start (index-var) &body generating-expression)
+  `(make-instance 'infinite+-sequence
+                  :fill-strategy :sequential
+                  :data ,start
+                  :generating-function
+                  (ilambda (this ,index-var)
+                    ,@generating-expression)))
+
+(defmacro finseq (start standard-value)
+  `(make-instance 'infinite-sequence/standard-value
+                  :standard-value ,standard-value
+                  :data ,start))
+
+;;; todo sequences towards -infinity
+(defmacro inf-seq (start (index-var) &body generating-expression)
+  `(make-instance 'infinite--sequence
+                  :fill-strategy :sequential
+                  :data ,start
+                  :generating-function
+                  (ilambda (this ,index-var)
+                    ,@generating-expression)))
+
+(defclass infinite--sequence (indirect-sequence)
+  ((start :initform infinity-)
+   (end :initform 0)
+   (index-transform :initform #'-)
+   (refer-to :initform nil))
+  (:documentation "A singly infinite series going towards -oo."))
+
+(defmethod initialize-instance :after ((iseq infinite--sequence)
+                                       &key fill-strategy generating-function data)
+  (with-slots (start end) iseq
+    (setf (slot-value iseq 'refer-to)
+          (make-instance 'infinite+-sequence
+                         :start (gm:- end)
+                         :end (gm:- start)
+                         :fill-strategy (pass-symbol (- fill-strategy))
+                         :data (reverse data)
+                         :generating-function (lambda (iseq2 n)
+                                                (funcall generating-function iseq2 (- n)))))))
