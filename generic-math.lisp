@@ -34,9 +34,13 @@
    #:define->-method/identity
    #:define->-method/custom
    #:generic-math-object
-   #:^))
+   #:^
+   #:unsupported-operation-on-unsimplified
+   #:unsupported-operation))
 
 (in-package :generic-math)
+
+(define-condition unsupported-operation () ())
 
 (defalias ^ expt (base exponent))
 
@@ -151,6 +155,8 @@ to override this if a better algorithm is available."
 
 (defmethod simplify (number &key)
   number) ; by default no simplification is done.
+
+(define-condition unsupported-operation-on-unsimplified () ())
 
 (defgeneric generic-= (a b)
   (:documentation "Use this function to implement generic equality.
