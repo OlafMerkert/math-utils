@@ -316,20 +316,28 @@ uncalculated values."
                  :refer-to iseq
                  :index-transform (lambda (n) (- n offset))))
 
-(define-condition infinite-start-not-supported () ())
+(define-condition doubly-infinite-not-supported () ())
 
 (defmethod map-sequence (function (iseq indirect-sequence))
   (with-slots (start end refer-to index-transform) iseq
-      (if (infinite-p start)
-          (error 'infinite-start-not-supported)
-          (make-instance
-           'infinite+-sequence
-           :start start
-           :end end
-           :generating-function
-           (ilambda (iseq2 n)
-             (funcall function
-                      (sref refer-to (funcall index-transform n))))))))
+    (cond ((not (infinite-p start))
+           (make-instance 'infinite+-sequence
+                          :start start
+                          :end end
+                          :generating-function
+                          (ilambda (iseq2 n)
+                            (funcall function
+                                     (sref refer-to (funcall index-transform n))))))
+          ((not (infinite-p end))
+           (make-instance 'infinite--sequence
+                          :start start
+                          :end end
+                          :generating-function
+                          (ilambda (iseq2 n)
+                            (funcall function
+                                     (sref refer-to (funcall index-transform n))))))
+          (t (error 'doubly-infinite-not-supported)))))
+
 
 (defmethod seq->array ((iseq indirect-sequence))
   (if (finite-sequence-p iseq)
