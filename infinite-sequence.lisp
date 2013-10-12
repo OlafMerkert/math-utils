@@ -25,7 +25,9 @@
    #:finseq
    #:inf+seq
    #:infinite--sequence
-   #:inf-seq))
+   #:inf-seq
+   #:map-sequences/or
+   #:map-sequences/and))
 
 (in-package :infinite-sequence)
 
@@ -499,3 +501,68 @@ uncalculated values."
                          :data (reverse data)
                          :generating-function (lambda (iseq2 n)
                                                 (funcall generating-function iseq2 (- n)))))))
+
+;;; very powerful mapping function
+(defun map-sequences/or (function &rest sequences)
+  "Given a `function' that takes between 1 and number of `sequences'
+arguments, build a new sequence, which applies the function on the
+available elements of each index. This means, we are using the maximal
+range available (so we take the union, not the intersection of the
+domains of definition). However, all sequences should either be
+bounded from below or from above."
+  (let ((start (reduce #'imin sequences :key #'start))
+        (end   (reduce #'imax sequences :key #'end)))
+    (labels ((get-ref (seq i)
+               (handler-case (sref seq i)
+                 (index-out-of-range () +uncalculated+)))
+             (get-refs (i)
+               (remove +uncalculated+
+                       (mapcar (lambda (seq) (get-ref seq i)) sequences)))
+             (call-fun (iseq i)
+               (declare (ignore iseq))
+               (aif (get-refs i)
+                    (apply function it)
+                    (error 'index-out-of-range :start start :index i :end end))))
+      (declare (inline get-refs))
+     (cond ((not (infinite-p start)) ;; bounded below
+            (make-instance 'infinite+-sequence
+                           :start start
+                           :end end
+                           :generating-function #'call-fun))
+           ((not (infinite-p end)) ;; bounded above
+            (make-instance 'infinite--sequence
+                           :start start
+                           :end end
+                           :generating-function #'call-fun))
+           (t (error 'doubly-infinite-not-supported))))))
+
+(defun map-sequences/and (function &rest sequences)
+  "Given a `function' that takes as many arguments as there are
+  `sequences', apply the `function' on the elements at same indices
+  wherever all are defined (so we take the intersection of the domains
+  of intersection). This does not work if all `sequences' are doubly
+  infinite."
+  (let ((start (reduce #'imax sequences :key #'start))
+        (end   (reduce #'imin sequences :key #'end)))
+    (labels ((get-refs (i)
+               (mapcar (lambda (seq) (sref seq i)) sequences))
+             (call-fun (iseq i)
+               (declare (ignore iseq))
+               (aif (get-refs i)
+                    (apply function it)
+                    (error 'index-out-of-range :start start :index i :end end))))
+      (declare (inline get-refs))
+     (cond ((not (infinite-p start)) ;; bounded below
+            (make-instance 'infinite+-sequence
+                           :start start
+                           :end end
+                           :generating-function #'call-fun))
+           ((not (infinite-p end)) ;; bounded above
+            (make-instance 'infinite--sequence
+                           :start start
+                           :end end
+                           :generating-function #'call-fun))
+           (t (error 'doubly-infinite-not-supported))))))
+
+;;; todo perhaps add additional behaviour in case all sequences have
+;;; finite support.
