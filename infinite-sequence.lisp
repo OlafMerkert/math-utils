@@ -40,6 +40,29 @@
 (defsetf sref (iseq n) (value)
   `(set-sref ,iseq ,n ,value))
 
+;; support special keyword `:start' and `:end' instead of integer
+;; indices. As the end is often infinite, we do an additional check.
+(defmethod sref (sequence (n (eql :start)))
+  (sref sequence (start sequence)))
+(defmethod set-sref (sequence (n (eql :start)) value)
+  (set-sref sequence (start sequence) value))
+
+(define-condition infinite-index ()
+  ((index :initarg :index
+          :initform nil
+          :accessor index)))
+
+(defmethod sref (sequence (n (eql :end)))
+  (with-slots (end) sequence
+    (if (infinite-p end)
+        (error 'infinite-index :index end)
+        (sref sequence end))))
+(defmethod set-sref (sequence (n (eql :end)) value)
+  (with-slots (end) sequence
+    (if (infinite-p end)
+        (error 'infinite-index :index end)
+        (set-sref sequence end value))))
+
 (defgeneric subsequence (sequence start &optional end))
 
 (defgeneric map-sequence (function sequence))
@@ -153,7 +176,7 @@ index `n' to the array index `i'."
        (progn ,@body)
        (error 'index-out-of-range :index n :start (start iseq) :end (end iseq))))
 
-(defmethod sref ((iseq infinite+-sequence) n)
+(defmethod sref ((iseq infinite+-sequence) (n integer))
   "Access element at position `n' in a sequence. Compute previously
 uncalculated values."
   (when-in-range
@@ -263,11 +286,11 @@ uncalculated values."
           (refer-to iseq)
           (refer-to pre-refer-to))))
 
-(defmethod sref ((iseq indirect-sequence) n)
+(defmethod sref ((iseq indirect-sequence) (n integer))
   (sref (refer-to iseq)
         (funcall (index-transform iseq) n)))
 
-(defmethod set-sref ((iseq indirect-sequence) n value)
+(defmethod set-sref ((iseq indirect-sequence) (n integer) value)
   (set-sref (refer-to iseq)
             (funcall (index-transform iseq) n)
             value))
@@ -332,12 +355,12 @@ uncalculated values."
 (defmethod length ((iseq infinite-sequence/standard-value))
   (- (end iseq) (start iseq)))
 
-(defmethod sref ((iseq infinite-sequence/standard-value) n)
+(defmethod sref ((iseq infinite-sequence/standard-value) (n integer))
   (if (in-range iseq n)
       (aref (data iseq) (- n (start iseq)))
       (standard-value iseq)))
 
-(defmethod set-sref ((iseq infinite-sequence/standard-value) n value)
+(defmethod set-sref ((iseq infinite-sequence/standard-value) (n integer) value)
   (when-in-range
     (setf (aref (data iseq) (- n (start iseq))) value)))
 
@@ -381,14 +404,14 @@ uncalculated values."
 (defmethod end ((sequence sequence))
   (+ sequence-offset (cl:length sequence)))
 
-(defmethod sref ((array array) n)
+(defmethod sref ((array array) (n integer))
   (aref array (- n sequence-offset)))
-(defmethod set-sref ((array array) n value)
+(defmethod set-sref ((array array) (n integer) value)
   (setf (aref array (- n sequence-offset)) value))
 
-(defmethod sref ((list list) n)
+(defmethod sref ((list list) (n integer))
   (nth (- n sequence-offset) list))
-(defmethod set-sref ((list list) n value)
+(defmethod set-sref ((list list) (n integer) value)
   (setf (nth (- n sequence-offset) list) value))
 
 (defmethod subsequence ((sequence sequence) start &optional end)
