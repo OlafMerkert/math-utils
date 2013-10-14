@@ -163,7 +163,7 @@ index `n' to the array index `i'."
 (defun ensure-array-size (array size)
   "For an adjustable `array', make sure that it can hold at least
 `size' elements."
-  (if (< (cl:length array) size)
+  (if (<= (cl:length array) size)
       (adjust-array array (+ size array-size-step) :initial-element +uncalculated+)
       array))
 
@@ -483,10 +483,25 @@ uncalculated values."
                   (ilambda (this ,index-var)
                     ,@generating-expression)))
 
+(defun index- (n &optional special)
+  "Special index transform that transparently deals with `special'
+  bounds `:start' and `:end' when taking (- n)."
+  (cond ((eq n infinity+) infinity-)
+        ((eq n infinity-) infinity+)
+        ((eq special :start)
+         ;; this is the inclusive lower bound, it should become a
+         ;; exclusive upper bound, so we go one up
+         (cl:- 1 n))
+        ((eq special :end)
+         ;; this is the exclusive upper bound, it should become an
+         ;; inclusive lower bound
+         (cl:- 1 n))
+        (t (cl:- n))))
+
 (defclass infinite--sequence (indirect-sequence)
   ((start :initform infinity-)
    (end :initform 0)
-   (index-transform :initform #'-)
+   (index-transform :initform #'index-)
    (refer-to :initform nil))
   (:documentation "A singly infinite series going towards -oo."))
 
@@ -495,12 +510,18 @@ uncalculated values."
   (with-slots (start end) iseq
     (setf (slot-value iseq 'refer-to)
           (make-instance 'infinite+-sequence
-                         :start (gm:- end)
-                         :end (gm:- start)
+                         :start (index- end :end)
+                         :end (index- start :start)
                          :fill-strategy (pass-symbol (- fill-strategy))
-                         :data (reverse data)
+                         ;; no need to reverse, that is done by the
+                         ;; index-transform
+                         :data data
                          :generating-function (lambda (iseq2 n)
                                                 (funcall generating-function iseq2 (- n)))))))
+;; todo there is still a little problem with end being exclusive and
+;; start being inclusive. Do we change this? But then, what about infinity?
+
+;; todo write some tests to make sure all of this stuff works properly
 
 ;;; very powerful mapping function
 (defun map-sequences/or (function &rest sequences)
