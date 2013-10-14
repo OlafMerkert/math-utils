@@ -27,7 +27,8 @@
    #:infinite--sequence
    #:inf-seq
    #:map-sequences/or
-   #:map-sequences/and))
+   #:map-sequences/and
+   #:strip-if))
 
 (in-package :infinite-sequence)
 
@@ -587,3 +588,34 @@ bounded from below or from above."
 
 ;;; todo perhaps add additional behaviour in case all sequences have
 ;;; finite support.
+
+(defparameter limit 1000)
+(defgeneric strip-if (test sequence &key from limit))
+
+
+(defmethod strip-if (test (iseq infinite-sequence) &key (from :start) (limit limit))
+  (ecase from
+    (:start
+     (iter (for i from (start iseq))
+           (for j from 0 to limit)
+           (while (i< i (end iseq)))
+           (while (funcall test (sref iseq i)))
+           (finally (return (values (subsequence iseq i) j)))))
+    (:end
+     (iter (for i downfrom (- (end iseq) 1))
+           (for j from 0 to limit)
+           (while (i<= (start iseq) i))
+           (while (funcall test (sref iseq i)))
+           (finally (return (values (subsequence iseq infinity- (+ i 1)) j)))))))
+
+(defmethod strip-if (test (seq sequence) &key (from :start) (limit limit))
+  ;; todo return number of stripped elements
+  (ecase from
+    (:start
+     (subseq seq (or (position-if-not test seq :end limit)
+                     (min (length seq) limit))))
+    (:end
+     (let ((lowbound (max 0 (- (length seq) limit))))
+       (subseq seq 0 (or (position-if-not test seq :from-end t :start lowbound)
+                         lowbound))))))
+
