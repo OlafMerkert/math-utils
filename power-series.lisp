@@ -69,7 +69,7 @@
         (error 'unsupported-operation-on-unsimplified))))
 
 (defmethod leading-coefficient ((series constant-series))
-    (nth-coefficient series 0))
+  (nth-coefficient series 0))
 
 (defmethod nth-coefficient% ((series power-series) n)
   "Return the nth element of the coefficients pipe--or zero, if the
@@ -126,6 +126,10 @@ by FORMULA where INDEX is anaphorically bound."
   of the second value, describing the necessary reduction in degree.
   Additionally, when the series is marked finite, and
   NORMALISATION-DEPTH is reached, we will assume the SERIES is 0."
+  (with-slots (degree coefficients) series
+    (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :end)
+      (setf coefficients coeff
+            degree (- degree stripped))))
   (let* ((coeff (coefficients series))
          (non-zero (iter (for i from (degree series) above (- (degree series) depth))
                          (finding i such-that (not (zero-p (sref coeff i)))
