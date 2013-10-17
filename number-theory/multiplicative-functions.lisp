@@ -4,7 +4,8 @@
         :number-theory)
   (:export
    #:apply-multiplicative
-   #:defmultfun))
+   #:defmultfun
+   #:euler-phi))
 
 (in-package :number-theory/multiplicative-functions)
 

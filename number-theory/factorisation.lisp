@@ -6,7 +6,8 @@
   (:export
    :factorise
    :factor-into-prime-powers
-   :factorise-over-s))
+   :factorise-over-s
+   :divisors))
 
 (in-package :number-theory/factorisation)
 
@@ -79,3 +80,18 @@ a list, sorted by size. Multiple factors appear multiple times. We search for fa
   "As factorise-over-s%, but if compress is t, compress the list of
   factors."
   (compress-wrap (factorise-over-s% n s) compress))
+
+(defun divisors (n)
+  "Produce a list of all natural numbers dividing the number `n'."
+  (labels ((add-factor (factorisation divisors)
+             (if factorisation
+                 (dbind ((first . m) &rest others) factorisation
+                   (if (zerop m) (add-factor others divisors)
+                       (add-factor (cons (cons first (- m 1)) others)
+                                   ;; todo this can probably be improved
+                                   (remove-duplicates
+                                    (append divisors
+                                            (mapcar (lambda (x) (* first x))
+                                                    divisors))))))
+                 divisors)))
+    (add-factor (factorise n :singletons) (list 1))))
