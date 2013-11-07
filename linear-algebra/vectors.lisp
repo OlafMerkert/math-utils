@@ -1,5 +1,6 @@
 (defpackage :linear-algebra/vectors
   (:nicknames :vectors)
+  (:shadow :vector)
   (:use :cl :ol :iterate)
   (:export
    #:entries
@@ -37,7 +38,14 @@
 
 (in-package :linear-algebra/vectors)
 
-(defclass vector (generic-math-object)
+(defclass empty-vector (gm:generic-math-object)
+  ()
+  (:documentation "A vector without any entries."))
+
+(defconstant/g +empty-vector+ (make-instance 'empty-vector)
+  "One empty vector for special cases.")
+
+(defclass vector (gm:generic-math-object)
   ((entries :initarg :entries
                  :accessor entries))
   (:documentation "Model a vector representated by a multi-dimensional array."))
@@ -50,6 +58,9 @@
 
 (defmethod dimensions ((vector vector))
   (array-dimensions (entries vector)))
+
+(defmethod dimensions ((vector empty-vector))
+  nil)
 
 (defun mref (vector-or-matrix &rest indices)
   "access vector or matrix entries, where indexing start with 0."
@@ -305,7 +316,8 @@ elementwise operations."
 
 (defun droprows-from (vector i)
   (if (= i (first (dimensions vector)))
-      vector
+      ;;  this should be an empty vector
+      +empty-vector+
       (droprows-from% vector i)))
 
 (defun swap (x i j)
