@@ -19,6 +19,9 @@
 ;;; LU decomposition for 2d matrices
 
 (defun find-pivot-helper (find-pivot matrix row column)
+  "Pivot search always happens on a `column' of `matrix', where we
+start from `row'. The found pivot is returned as absolute column
+number."
   (aif (funcall find-pivot
                 (subseq (entries (subcol matrix column)) row))
        (+ row it)))
@@ -28,6 +31,9 @@
   (position-if-not #'gm:zero-p seq))
 
 (defun position-maximum (seq &key (key #'identity) (compare #'<))
+  "Find the index in `seq' where the image under `key' is maximal
+w.r.t. `compare', where we favor the second argument of `compare'.
+Returns as second value this maximal value."
   (let* ((seq2 (map 'cl:vector key seq))
          (max (elt seq2 0))
          (max-index 0))
@@ -137,7 +143,9 @@ the complement."
           :initial-value (or vector
                              (identity-matrix (dimension (first l-list))))))
 
+;; TODO move to ol-utils
 (defun map-reverse (fn lst &optional acc)
+  "Apply `fn' on `lst' and return in reverse order."
   (if (consp lst)
       (map-reverse fn (cdr lst) (cons (funcall fn (car lst)) acc))
       acc))
@@ -169,31 +177,32 @@ the complement."
     ;; length of step-cols is exactly the rank, and the other cols
     ;; correspond to the generators of the kernel
     (values
-     (iter (for j in other-cols)
-           (collect (nullspace-column triangular step-cols
-                                      j (subcol triangular j))))
+     (mapcar (lambda (j) (nullspace-column triangular step-cols j)) other-cols)
      rank)))
 
-(defun nullspace-column (triangular step-cols col-index column2)
-  (let ((column1 (solve-upper-triangular triangular (gm:- column2) step-cols))
-        (column-full (make-array (second (dimensions triangular)) :initial-element 0)))
-    (iter (for i in step-cols)
-          (for e in-vector (entries column1))
-          (setf (aref column-full i) e))
-    (setf (aref column-full col-index) 1)
-    (make-instance 'vector :entries column-full)))
+(defun nullspace-column (triangular step-cols col-index)
+  ;; express `column2' as unique linear combination of step-columns
+  (let ((column1 (solve-upper-triangular triangular (gm:- (subcol triangular col-index)) step-cols)))
+    ;; as `solve-upper-triangular' only fills `step-cols', we need to
+    ;; fill in the missing one:
+    (setf (aref (entries column1) col-index) 1)
+    column1))
 
 (defun solve-upper-triangular (triangular vector &optional (step-cols (range (second (dimensions triangular)))))
   "Solve a matrix equation with only zeroes below the diagonal. We
-assume triangular is an upper triangular matrix of full rank, where
-STEP-COLS gives for each row the first column with non-zero entry."
+assume `triangular' is an upper triangular matrix of full rank, where
+`step-cols' gives for each row the first column with non-zero entry."
   (let* ((n (length step-cols))
+         ;; start from the end, because it is upper triangular
          (step-cols (reverse step-cols))
-         (result (make-array n :initial-element 0))
+         ;; not that only the coefficients for the step-cols will be nonzero
+         (result (make-array (second (dimensions triangular)) :initial-element 0))
          (entries (entries triangular)))
     (iter (for i from (- n 1) downto 0)
           (for j in step-cols)
-          (setf (aref result i)
+          ;; compute the coefficient, think of `triangular' as a
+          ;; quadratic matrix, simply ignore the non-step-columns
+          (setf (aref result j)
                 (gm:/ (gm:- (mref vector i)
                             (reduce #'gm:+ previous-columns
                                     :key (lambda (c) (gm:* (aref entries i c)
