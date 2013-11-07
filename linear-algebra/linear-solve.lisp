@@ -124,24 +124,28 @@ the complement."
             (nreverse step-cols) (nreverse other-cols))))
 ;;; TODO mark the matrix as triangular.
 
+(defun compute-elementary-matrix-product (matrix-list &key reverse inverse vector)
+  (reduce #'gm:generic-*
+          (if reverse
+              (reverse matrix-list)
+              matrix-list)
+          :key (if inverse #'inverse nil)
+          :from-end t ; want elementary always on the left
+          :initial-value (or vector
+                             (identity-matrix (dimension (first matrix-list))))))
+
+
 (defun compute-l (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
   ;; L-LIST in order, with L U = A we get L = L_k^-1 ... L_1^-1
-  (reduce #'gm:generic-*
-          (reverse l-list)
-          :key #'inverse
-          :from-end t ; want elementary on the left
-          :initial-value (or vector
-                             (identity-matrix (dimension (first l-list))))))
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product l-list :reverse t :inverse t :vector vector))
 
 (defun compute-l-inverse (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
-  ;; L-LIST in order, with L U = A we get L^1 = L_1 ... L_k
-  (reduce #'gm:generic-*
-          l-list
-          :from-end t ; want elementary on the left
-          :initial-value (or vector
-                             (identity-matrix (dimension (first l-list))))))
+  ;; L-LIST in order, with L U = A we get L^-1 = L_1 ... L_k
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product l-list :reverse nil :inverse nil :vector vector))
 
 ;; TODO move to ol-utils
 (defun map-reverse (fn lst &optional acc)
@@ -150,20 +154,23 @@ the complement."
       (map-reverse fn (cdr lst) (cons (funcall fn (car lst)) acc))
       acc))
 
-(defun compute-l-p (l-list p-list)
-  ;; we obtained U = L_1 L_2 ... L_k A where some L_i where P_j, so
+(defun compute-l-p (l-list p-list &optional vector)
+  ;; we obtained U = L_1 L_2 ... L_k A where some L_i are P_j, so
   ;; p-list contains some of the P^T = P_1 ... P_r = L_k_1 ... L_k_r with
   ;; k_1 < ... < k_r. Now we want L U = P A, so P^T L U = P^T P A = A,
   ;; thus L = P_1 ... P_r L_k^-1 ... L_1^-1 and P = P_r ... P_1
-  (values (reduce #'gm:generic-*
-                  (append p-list
-                          (map-reverse #'inverse l-list))
-                  :from-end t
-                  :initial-value (identity-matrix (dimension (first l-list))))
-          (reduce #'gm:generic-*
-                  (reverse p-list)
-                  :from-end t
-                  :initial-value (identity-matrix (dimension (first p-list))))))
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product
+   p-list :reverse nil :inverse nil
+   :vector (compute-elementary-matrix-product
+            l-list :reverse t :inverse t
+            :vector vector)))
+
+(defun compute-p (p-list &optional vector)
+  ;; see above
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product p-list :reverse nil :inverse nil :vector vector))
+
 
 ;;; TODO apply-l and apply-l-inverse
 
@@ -210,6 +217,38 @@ assume `triangular' is an upper triangular matrix of full rank, where
                       (aref entries i j)))
           (collect j into previous-columns at beginning))
     (make-instance 'vector :entries result)))
+
+(defun linear-solve (matrix vector &key (all-solutions t))
+  "Solve the linear system, return one base solution (if it exists),
+  and as second value the vectors spanning the affine solution space
+  at the base solution. The third value gives the rank of the
+  `matrix'."
+  (mvbind (triangular l p rank step-cols other-cols) (lu-decomposition matrix t)
+    (declare (ignore p))
+    ;; first apply `l' and `p' onto `vector', recall that `p' is a
+    ;; sublist of `l'
+    (let ((vector1 (compute-l-inverse l vector)))
+      ;; next, we test that the entries from rank are all 0
+      (if (not (every #'gm:zero-p (subseq (entries vector1) rank)))
+          ;; no solutions
+          nil
+          ;; otherwise, get rid of the zero stuff and compute the
+          ;; solution
+          (progn
+            (setf triangular (droprows-from triangular rank)
+                  vector1 (droprows-from vector1 rank))
+            (values
+             ;; we get the base solution
+             (solve-upper-triangular triangular vector1 step-cols)
+             ;; and the generators of the nullspace, which describe
+             ;; all the other solutions
+             (cond (all-solutions
+                    (mapcar (lambda (j) (nullspace-column triangular step-cols j))
+                            other-cols))
+                   ((null other-cols) nil)
+                   (t :uncomputed))
+             rank))))))
+
 
 ;;; TODO what about destructive operations (for efficiency?)
 ;;; can probably be implemented as additional type
