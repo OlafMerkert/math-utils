@@ -8,13 +8,13 @@
         :polynomials :finite-fields)
   (:export
    #:distinct-degree-factorise
-   #:baby-step-giant-step))
+   #:baby-step-giant-step
+   #:equal-degree-factorise
+   #:map-equal-degree-factorise))
 
 (in-package :factorisation/degree-separation)
 
 
-
-;;; square-free factorisation (for polynomials over a finite field)
 
 ;; todo move somewhere (or get rid of it)
 (defun monomial-diff (deg+ deg- &optional (coeff+ 1) (coeff- -1))
@@ -109,3 +109,51 @@ which holds the products of irreducible factors of degree `i' at index
       (unless (one-p f)
         (setf (aref ff-list (degree f)) f))
       ff-list)))
+
+;;; Equal-Degree factorisation due to Cantor, Zassenhaus
+;; todo perhaps move these
+(defun random-polynomial (p d)
+  "Choose a random polynomial of degree < d over F_p."
+  (apply #'make-polynomial (iter (repeat d) (collect (int% (random p) p)))))
+
+(defun random-polynomial/non-constant (p d)
+  "Choose a random non-constant polynomial of degree < d over F_p."
+  (do ((poly (random-polynomial p d)))
+      ((non-constant-p poly))))
+
+(defun equal-degree-factorise-helper (poly d &optional (p (modulus poly)) (n (degree poly)))
+  (let* ((a (random-polynomial/non-constant p n))
+         (g1 (ggt a poly)))
+    (if (not (one-p g1))
+        g1
+        (let* ((r (cl:/ (cl:- (cl:expt p d) 1) 2))
+               (b (expt-mod a r poly))
+               (g2 (ggt (- b 1) poly)))
+          (if (or (one-p g2) (= g2 poly))
+              nil
+              g2)))))
+
+(defun equal-degree-factorise (poly d)
+  "Factorise square-free, monic `poly', of which every irreducible factor has degree
+  `d'."
+  (do ((p (modulus poly))
+       (irreducibles)
+       (reducibles (make-queue))
+       (poly poly (dequeue reducibles)))
+      ((not poly) (mapcar (clambda (make-factor :base x!)) irreducibles))
+      (let ((n (degree poly)))
+        (if (cl:= d n)
+            (push poly irreducibles)
+            (let ((g (equal-degree-factorise-helper poly d p n)))
+              (if g
+                  (progn ; on success we refine to two new factors
+                    (enqueue g reducibles)
+                    (enqueue (/ poly g) reducibles))
+                  (enqueue poly reducibles)))))))
+
+
+(defun map-equal-degree-factorise (ed-fac-fun ed-poly-vector)
+  (iter (for d from 0)
+        (for poly in-vector ed-poly-vector)
+        (unless (one-p poly)
+          (nconcing (funcall ed-fac-fun poly d)))))
