@@ -35,8 +35,11 @@
                                                      "finite-fields"
                                                      "polynomials"
                                                      "fractions"
-                                                     "linear-algebra")
-                        :components ((:file "polynomials-modp")))
+                                                     "linear-algebra"
+                                                     "number-theory")
+                        :components ((:file "datastructures")
+                                     (:file "squarefree-factorisation"
+                                            :depends-on '("datastructures"))))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
