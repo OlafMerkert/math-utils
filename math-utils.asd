@@ -39,7 +39,7 @@
                                                      "number-theory")
                         :components ((:file "datastructures")
                                      (:file "squarefree-factorisation"
-                                            :depends-on '("datastructures"))))
+                                            :depends-on ("datastructures"))))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"

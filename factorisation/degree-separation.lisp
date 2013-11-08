@@ -1,33 +1,51 @@
-(in-package :factorisation-polynomials-modp)
+(defpackage :factorisation/degree-separation
+  (:nicknames :fac-degsep)
+  #.gm:+gm-shadow-imports+
+  #.gm:+frac-shadow-imports+
+  (:use :cl :ol :iterate
+        :fac-ds
+        :generic-math :fractions
+        :polynomials :finite-fields)
+  (:export
+   #:distinct-degree-factorise
+   #:baby-step-giant-step))
+
+(in-package :factorisation/degree-separation)
+
+
 
 ;;; square-free factorisation (for polynomials over a finite field)
 
+;; todo move somewhere (or get rid of it)
 (defun monomial-diff (deg+ deg- &optional (coeff+ 1) (coeff- -1))
   (let* ((deg (max deg+ deg-))
-         (i+ (- deg deg+))
-         (i- (- deg deg-)))
+         (i+ (cl:- deg deg+))
+         (i- (cl:- deg deg-)))
     (make-instance 'polynomial
                    :coefficients (make-array/sparse (deg) 0
                                    (i+ coeff+)
                                    (i- coeff-)))))
 
+;; todo move somewhere
 (defmethod modulus ((poly polynomial))
   ;; todo perhaps check all coefficients have same modulus.
   (modulus (leading-coefficient poly)))
 
 (defun distinct-degree-factorise (poly)
-  "produce a factorisation of a squarefree poly into factors, where
-  all irreducibles dividing a factor have same degree."
-  (let ((p (modulus poly))
-        (factors))
-    (do* ((i 1 (+ i 1))
-          (factor #1=(ggt (monomial-diff (expt p i) 1 (int% 1 p) (int% -1 p))
-                          poly) #1#)
-          (poly #2=(/ poly factor) #2#))
-         ((constant-p poly) #3=(unless (constant-p factor)
-                                 (push factor factors)))
-      #3#)
-    factors))
+  "produce a factorisation of a squarefree, monic `poly' into a vector
+products of irreducible factors of same degree grouped by this degree
+coinciding with the index."
+  (let* ((p (modulus poly))
+         (x (make-monomial 1 (int% 1 p))))
+    (iter (initially (push 1 factors))
+          (for h initially (expt-mod x p poly) then (expt-mod h p poly))
+          (for f initially poly then (/ f g))
+          ;; extract the part that divides x^(p^i) - x
+          (for g next (ggt (- h x) f))
+          (until (one-p g))
+          (collect g result-type vector into factors))
+    ;; todo what about constant factor? -> we assume `poly' is monic here!
+    ))
 
 ;;; baby-step, giant-step
 (defun compute-step-polys (poly p start end &optional (step 1))
@@ -42,38 +60,52 @@ range (end inclusive). For better efficiency, work mod `poly'."
           (collect h result-type vector))))
 
 (defun baby-step-giant-step (poly beta)
+  "Compute a distinct degree factorisation of a squarefree, monic `poly', where the return is an array of length 1+deg `poly',
+which holds the products of irreducible factors of degree `i' at index
+`i'. `beta' should be a number between 0 and 1."
+  (assert (<= 0 beta 1))
   (let* ((n (degree poly))
          (p (modulus poly))
          (baby-step (ceiling (cl:expt n beta)))
-         (giant-step (ceiling (cl:/ n (cl:* 2 baby-step)))))
-    (let* ((h-list  (compute-step-polys poly p 0 baby-step))
+         (giant-step (ceiling (cl:/ n baby-step 2))))
+    (let* ((h-list  (compute-step-polys poly p 0 (- baby-step 1)))
            (hh-list (compute-step-polys poly p 1 giant-step baby-step))
            ;; after having our list of powers, build a vector of the
-           ;; products of differences. todo check explanation
+           ;; products of differences x^(p^i) - x^(p^j) where i-j
+           ;; covers a babystep interval below i. We use this for the
+           ;; coarse DDF (distinct-degree-factorisation)
            (ii-list (map 'vector
                          (lambda (hh)
                            (reduce (lambda (a b) (div (* a b) poly))
-                                   (subseq h-list 0 baby-step) :key (lambda (h) (- hh h))))
+                                   h-list :key (lambda (h) (- hh h))))
                          hh-list))
            (f poly)
-           ;; coarse ddf
+           ;; coarse ddf: irreducible polynomials of degree l divide
+           ;; ii iff l divides i-j. Starting with the smallest i, we
+           ;; split these factors out
            (fj-list (iter (for ii in-vector ii-list)
                           (for fj = (ggt f ii))
                           (setf f (/ f fj))
                           (collect fj result-type vector)))
-           (ff-list (make-array (* baby-step giant-step))))
-      (iter (for k from 1 to n)
-            (setf (aref ff-list k) 1))
-      ;; fine ddf
+           ;; The array will hold at position `d' the product of
+           ;; irreducible factors of degree `d'.
+           (ff-list (make-array n :initial-element 1)))
+      ;; fine ddf: 
       (iter (for j from 1 to giant-step)
             (for g in-vector fj-list)
             (for hh in-vector hh-list)
             (iter (for i from (- baby-step 1) downto 0)
                   (for h in-vector h-list)
                   (for ff = (ggt g (- hh h)))
+                  ;; if g is constant, we can skip the rest of the iteration
+                  (when (constant-p g) (return))
                   (setf g (/ g ff))
-                  (setf (aref ff-list (- (* baby-step j) i))
-                        ff)))
+                  (setf (aref ff-list (- (* baby-step j) i)) ff)))
+      ;; note that baby-step * giant-step ~ n/2, so we divide out only
+      ;; irreducible factors of degree <= n/2. It might however happen
+      ;; that there is one irreducible factor of degree > n/2, for
+      ;; which we account here (this also takes care of a remaining
+      ;; constant factor)
       (unless (one-p f)
         (setf (aref ff-list (degree f)) f))
       ff-list)))
