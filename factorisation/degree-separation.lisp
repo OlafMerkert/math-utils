@@ -2,34 +2,26 @@
 
 ;;; square-free factorisation (for polynomials over a finite field)
 
-(defun two-monomials (deg-1 coeff-1 deg-2 coeff-2)
-  (make-instance
-   'polynomial
-   :coefficients (make-nlazy-array (:index-var i :finite (max deg-1 deg-2))
-                   (cond
-                     ((cl:= i deg-1) coeff-1)
-                     ((cl:= i deg-2) coeff-2)
-                     (t 0)))))
-
-(defun monomial-diff (deg+ deg-)
-  (let ((deg (max deg+ deg-))
-        (i+ (- deg deg+))
-        (i- (- deg deg-)))
+(defun monomial-diff (deg+ deg- &optional (coeff+ 1) (coeff- -1))
+  (let* ((deg (max deg+ deg-))
+         (i+ (- deg deg+))
+         (i- (- deg deg-)))
     (make-instance 'polynomial
                    :coefficients (make-array/sparse (deg) 0
-                                   (i+ 1)
-                                   (i- -1)))))
+                                   (i+ coeff+)
+                                   (i- coeff-)))))
 
-
+(defmethod modulus ((poly polynomial))
+  ;; todo perhaps check all coefficients have same modulus.
+  (modulus (leading-coefficient poly)))
 
 (defun distinct-degree-factorise (poly)
   "produce a factorisation of a squarefree poly into factors, where
   all irreducibles dividing a factor have same degree."
-  (let ((p (modulus (leading-coefficient poly)))
+  (let ((p (modulus poly))
         (factors))
     (do* ((i 1 (+ i 1))
-          (factor #1=(ggt (two-monomials 1 (int% -1 p)
-                                         (expt p i) (int% 1 p))
+          (factor #1=(ggt (monomial-diff (expt p i) 1 (int% 1 p) (int% -1 p))
                           poly) #1#)
           (poly #2=(/ poly factor) #2#))
          ((constant-p poly) #3=(unless (constant-p factor)
@@ -39,26 +31,28 @@
 
 ;;; baby-step, giant-step
 (defun compute-step-polys (poly p start end &optional (step 1))
-  (iter (for i from start to end)
-        (collect (poly-mod (make-monomial (expt p (* step i)) (int% 1 p))
-                           poly)
-          result-type vector)))
-
-;;; TODO implement quotients of polynomial rings
-(defun poly-mod (poly modulus)
-  (nth-value 1 (/ poly modulus)))
-
+  "Produce a list of the powers X^(p^i) where i goes of the supplied
+range (end inclusive). For better efficiency, work mod `poly'."
+  (let ((q (expt p step)))
+    (iter (for i from start to end)
+          (for h initially (div (make-monomial (expt q start)
+                                               (int% 1 p))
+                                poly)
+               then (expt-mod h q poly))
+          (collect h result-type vector))))
 
 (defun baby-step-giant-step (poly beta)
   (let* ((n (degree poly))
-         (p todo)
+         (p (modulus poly))
          (baby-step (ceiling (cl:expt n beta)))
          (giant-step (ceiling (cl:/ n (cl:* 2 baby-step)))))
     (let* ((h-list  (compute-step-polys poly p 0 baby-step))
            (hh-list (compute-step-polys poly p 1 giant-step baby-step))
+           ;; after having our list of powers, build a vector of the
+           ;; products of differences. todo check explanation
            (ii-list (map 'vector
                          (lambda (hh)
-                           (reduce (lambda (a b) (poly-mod (* a b) poly))
+                           (reduce (lambda (a b) (div (* a b) poly))
                                    (subseq h-list 0 baby-step) :key (lambda (h) (- hh h))))
                          hh-list))
            (f poly)

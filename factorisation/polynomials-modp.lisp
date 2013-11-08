@@ -9,9 +9,9 @@
         :fractions)
   (:export
    #:get-prime
-#:merge-factors
-#:factorise
-#:multiply-factors))
+   #:merge-factors
+   #:factorise
+   #:multiply-factors))
 
 (in-package :factorisation-polynomials-modp)
 
