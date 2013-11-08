@@ -34,7 +34,9 @@
    #:droprows-from
    #:make-matrix-from-rows
    #:elementwise-operation
-   #:multi-dim-dotimes+))
+   #:multi-dim-dotimes+
+   #:make-diagonal-vector
+   #:make-diagonal-matrix))
 
 (in-package :linear-algebra/vectors)
 

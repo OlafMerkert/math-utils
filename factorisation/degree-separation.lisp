@@ -157,3 +157,5 @@ which holds the products of irreducible factors of degree `i' at index
         (for poly in-vector ed-poly-vector)
         (unless (one-p poly)
           (nconcing (funcall ed-fac-fun poly d)))))
+
+;; todo check whether x^(p^i) is really the right thing to compute
