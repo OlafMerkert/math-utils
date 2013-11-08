@@ -26,10 +26,15 @@
                                    (i+ coeff+)
                                    (i- coeff-)))))
 
-;; todo move somewhere
+;; todo move somewhere?
+(defparameter poly-fast-modulus t)
+
 (defmethod modulus ((poly polynomial))
-  ;; todo perhaps check all coefficients have same modulus.
-  (modulus (leading-coefficient poly)))
+  (let ((p (modulus (leading-coefficient poly))))
+    ;;  perhaps check all coefficients have same modulus.
+    (if (or poly-fast-modulus (every (lambda (x) (cl:= p (modulus x))) (coefficients poly)))
+        p
+        (error "Different moduli in the coefficients of polynomial ~A" poly))))
 
 (defun distinct-degree-factorise (poly)
   "produce a factorisation of a squarefree, monic `poly' into a vector

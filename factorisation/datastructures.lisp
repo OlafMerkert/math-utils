@@ -10,7 +10,8 @@
    #:map-on-exponents
    #:map-on-factors
    #:merge-factorisations%
-   #:merge-factorisations))
+   #:merge-factorisations
+   #:multiply-factors))
 
 (in-package :factorisation/datastructures)
 
@@ -72,3 +73,11 @@ the non-destructive version"
 (defun merge-duplicate-factors (list)
   "Merge together any duplicate factors occuring in a factorisation."
   (merge-factorisations% nil list))
+
+(defun multiply-factors (factor-list)
+  "inverse to the `factorise' function - produce the product of the
+factors with their multiplicities."
+  (reduce #'gm:generic-*
+          factor-list
+          :key (lambda (factor) (expt (factor-base factor)
+                                 (factor-exponent factor)))))
