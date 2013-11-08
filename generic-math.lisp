@@ -1,7 +1,8 @@
 (defpackage :generic-math
   (:nicknames :gm)
   (:shadow :+ :- :* :/ :=
-           :expt :^ :sqrt)
+           :expt :^ :sqrt
+           :expt-mod)
   (:use :cl :ol)
   (:export
    #:argument
@@ -34,9 +35,20 @@
    #:define->-method/identity
    #:define->-method/custom
    #:generic-math-object
-   #:^))
+   #:^
+   #:expt-mod
+   #:+gm-shadow-imports+
+   #:+frac-shadow-imports+))
 
 (in-package :generic-math)
+
+;; some useful constants for shadowing imports
+(defparameter +gm-shadow-imports+
+  '(:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :summing :^ :_))
+
+(defparameter +frac-shadow-imports+
+  '(:shadowing-import-from :fractions :numerator :denominator))
+
 
 (defalias ^ expt (base exponent))
 
@@ -391,3 +403,9 @@ default-value). These can be accessed from the BODY."
 
 ;;; TODO compiler macros to replace gm:op with cl:op if all arguments
 ;;; are standard cl types
+
+;;; some generally useful math functions
+(defun expt-mod (base exponent modulus)
+  (square-multiply base exponent
+                   (clambda (div (generic-* x!a x!b) modulus))
+                   (clambda (div (generic-* x!a x!a) modulus))))

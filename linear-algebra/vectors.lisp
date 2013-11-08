@@ -38,9 +38,10 @@
 
 (in-package :linear-algebra/vectors)
 
+(ew
 (defclass empty-vector (gm:generic-math-object)
-  ()
-  (:documentation "A vector without any entries."))
+   ()
+   (:documentation "A vector without any entries.")))
 
 (defconstant/g +empty-vector+ (make-instance 'empty-vector)
   "One empty vector for special cases.")
