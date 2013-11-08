@@ -37,9 +37,11 @@
                                                      "fractions"
                                                      "linear-algebra"
                                                      "number-theory")
+                        :serial t
                         :components ((:file "datastructures")
-                                     (:file "squarefree-factorisation"
-                                            :depends-on ("datastructures"))))
+                                     (:file "squarefree-factorisation")
+                                     (:file "degree-separation")
+                                     (:file "berlekamp")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
