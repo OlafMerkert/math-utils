@@ -243,16 +243,15 @@ Keep this in mind when using."
   (reduce #'ggt (coefficients a) :key #'content))
 
 (defmethod ggt ((a polynomial) (b polynomial))
-  (cond ((and (modulus a) (modulus b))
+  (cond ((or (modulus a) (modulus b))
          ;; over finite field, ggt should be monic
          (if (zero-p b) (make-monic a)
              (ggt b (divr a b))))
-        ((not (or (modulus a) (modulus b)))
+        (t
          ;; otherwise, we also keep track of content
          (if (zero-p b) a
              (gm:* (ggt (content a) (content b))
-                   (ggt b (divr a b)))))
-        (t (error "polynomials ~A and ~B have incompatible modulus, cannot compute ggt." a b))))
+                   (ggt b (divr a b)))))))
 
 (declare-commutative rational polynomial ggt)
 
@@ -260,6 +259,13 @@ Keep this in mind when using."
   (if (zerop a)
       b
       (ggt (content a) (content b))))
+
+(declare-commutative integer-mod polynomial ggt)
+
+(defmethod ggt ((a integer-mod) (b polynomial))
+  (if (zero-p a)
+      (make-monic b)
+      (int% 1 (modulus a))))
 
 ;;; there still remains some trouble with signs, but this seems to
 ;;; have got rid of
