@@ -63,11 +63,9 @@ with the smallest order in P."
     (position-maximum seq :key (lambda (x) (nt:ord-p p (finite-fields:remainder x)))
                       :compare #'>)))
 
-;;; TODO perhaps choose maximal entry
+;;; perhaps choose maximal entry
 ;;; for this there are probably different strategies
 
-;;; fix the problem with discrepancy in rank and number of step-cols
-;;; fix problem with output matrix not being triangular
 (defun lu-decomposition (matrix &optional normalise-pivot (find-pivot #'find-pivot))
   "Decompose A = L U where U is upper triangular, and L is a product
 of elementary row operations. Returns (values U L P RANK STEP-COLS
@@ -76,7 +74,6 @@ COMPUTE-L, COMPUTE-L-INVERSE and COMPUTE-L-P, as well as APPLY-L and
 APPLY-L-INVERSE. RANK is the rank of the matrix (equal for A and U).
 STEP-COLS lists the columns where the next row starts, OTHER-COLS is
 the complement."
-  ;; TODO what about normalising stuff at the pivot?
   (let (row-ops
         pivot-transpositions
         (current-row 0)
@@ -108,16 +105,16 @@ the complement."
                      (setf pivot-entry (gm:- pivot-entry)))
                  ;; then go on clearing the column below the pivot
                  (iter (for i from (+ 1 current-row) below m)
-                       (for entry = (mref matrix i current-column))
+                       (for entry next (mref matrix i current-column))
                        (unless (gm:zero-p entry)
                          (let ((rowop (make-add-row/col-matrix i current-row
                                                                (gm:/ entry pivot-entry)
                                                                m)))
                            (push rowop row-ops)
-                           (setf matrix (gm:generic-* rowop matrix)))))))
+                           (setf matrix (gm:generic-* rowop matrix))))))
+               ;; now we mounted the ladder
+               (incf current-row))
              (push current-column other-cols))
-        ;; now we mounted the ladder
-        (incf current-row)
         ;; no pivot found means the column was zero below current-row,
         ;; so try the next one.
         ))

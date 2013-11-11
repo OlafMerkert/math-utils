@@ -506,7 +506,7 @@ elementwise operations."
 (defun print-vector (stream array)
   (case (length (array-dimensions array))
     (1 (format stream "~{~A~^ ~}" (coerce array 'list)))
-    (2 (format stream "~&~{~{~,3T~A~}~%~}" (vector2->list  array)))
+    (2 (format stream "~&~{~{~,4T~A~}~%~}" (vector2->list  array)))
     (t (format stream "~A" array))))
 
 
