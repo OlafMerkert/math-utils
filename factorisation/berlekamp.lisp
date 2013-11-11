@@ -2,7 +2,7 @@
   (:nicknames :fac-bk)
   #.gm:+gm-shadow-imports+
   #.gm:+frac-shadow-imports+
-  (:use :cl :ol :iterate 
+  (:use :cl :ol :iterate
         :fac-ds
         :generic-math :fractions
         :polynomials :finite-fields)
@@ -84,11 +84,11 @@
                      (incf factor-count)
                      (push it split-factors)
                      (setf poly (/ poly it))
-                     (test-all-factors)))
+                     (test-all-factors poly)))
                  ;; the part we couldn't split off must not be forgotten
                  (unless (constant-p poly)
                    (push poly split-factors)))
-               (test-all-factors ()
+               (test-all-factors (poly)
                  ;; short circuit out of our multiloop construction as
                  ;; soon as we have all factors but one -- the one
                  ;; remaining sits in poly.
@@ -119,5 +119,3 @@
                                               :coefficients (reverse (entries v)))))
                        vectors)))
           (berlekamp-find-factors poly basis-polynomials p dim)))))
-
-
