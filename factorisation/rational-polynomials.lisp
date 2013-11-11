@@ -9,6 +9,32 @@
 
 (in-package :factorisation/rational-polynomials)
 
+;;; first some normalisation steps are in order
+(defun make-monic/integer (polynomial &optional (leading-coeff (leading-coefficient polynomial)))
+  "Transform poly a_0 X^n + ... to (a_0)^(n-1) a_0 (X/a_0)^n + ... to
+  make it monic. The inverse of this operation is the same, but called
+  with (/ original-leading-coeff)."
+  ;; this corresponds to multiplying a_i with a_i^( (n-1) - i )
+  (let ((factor (/ leading-coeff)))
+    (values
+     (make-instance 'polynomial :var (var polynomial)
+                    ;; careful, here we assume map operates
+                    ;; sequentially from the beginning
+                    :coefficients (map 'vector (lambda (x) (prog1 (* x factor)
+                                                        (setf factor (* factor leading-coeff))))
+                                       (coefficients polynomial)))
+     leading-coeff)))
+
+(defun lcm-of-coeffs (polynomial)
+  (reduce #'lcm (coefficients polynomial) :key #'denominator))
+
+(defun eliminate-denominator (polynomial)
+  "Multiplity the `polynomial' with a factor, so it is defined over
+the integers. Second value is the factor we multiply with"
+  (let ((m (lcm-of-coeffs polynomial)))
+    (values (poly*constant polynomial m) m)))
+
+
 ;;; with lift we produce a polynomial defined over the integers from
 ;;; one that is given over a finite field, keeping the size of
 ;;; coefficients as small as possible.
