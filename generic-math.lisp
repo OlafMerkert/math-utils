@@ -403,9 +403,3 @@ default-value). These can be accessed from the BODY."
 
 ;;; TODO compiler macros to replace gm:op with cl:op if all arguments
 ;;; are standard cl types
-
-;;; some generally useful math functions
-(defun expt-mod (base exponent modulus)
-  (square-multiply base exponent
-                   (clambda (div (generic-* x!a x!b) modulus))
-                   (clambda (div (generic-* x!a x!a) modulus))))

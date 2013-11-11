@@ -147,13 +147,6 @@ the complement."
   (declare (inline compute-elementary-matrix-product))
   (compute-elementary-matrix-product l-list :reverse nil :inverse nil :vector vector))
 
-;; TODO move to ol-utils
-(defun map-reverse (fn lst &optional acc)
-  "Apply `fn' on `lst' and return in reverse order."
-  (if (consp lst)
-      (map-reverse fn (cdr lst) (cons (funcall fn (car lst)) acc))
-      acc))
-
 (defun compute-l-p (l-list p-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where some L_i are P_j, so
   ;; p-list contains some of the P^T = P_1 ... P_r = L_k_1 ... L_k_r with

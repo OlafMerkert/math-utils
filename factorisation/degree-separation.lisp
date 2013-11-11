@@ -14,28 +14,6 @@
 
 (in-package :factorisation/degree-separation)
 
-
-
-;; todo move somewhere (or get rid of it)
-(defun monomial-diff (deg+ deg- &optional (coeff+ 1) (coeff- -1))
-  (let* ((deg (max deg+ deg-))
-         (i+ (cl:- deg deg+))
-         (i- (cl:- deg deg-)))
-    (make-instance 'polynomial
-                   :coefficients (make-array/sparse (deg) 0
-                                   (i+ coeff+)
-                                   (i- coeff-)))))
-
-;; todo move somewhere?
-(defparameter poly-fast-modulus t)
-
-(defmethod modulus ((poly polynomial))
-  (let ((p (modulus (leading-coefficient poly))))
-    ;;  perhaps check all coefficients have same modulus.
-    (if (or poly-fast-modulus (every (lambda (x) (cl:= p (modulus x))) (coefficients poly)))
-        p
-        (error "Different moduli in the coefficients of polynomial ~A" poly))))
-
 (defun distinct-degree-factorise (poly)
   "produce a factorisation of a squarefree, monic `poly' into a vector
 products of irreducible factors of same degree grouped by this degree
@@ -116,15 +94,6 @@ which holds the products of irreducible factors of degree `i' at index
       ff-list)))
 
 ;;; Equal-Degree factorisation due to Cantor, Zassenhaus
-;; todo perhaps move these
-(defun random-polynomial (p d)
-  "Choose a random polynomial of degree < d over F_p."
-  (apply #'make-polynomial (iter (repeat d) (collect (int% (random p) p)))))
-
-(defun random-polynomial/non-constant (p d)
-  "Choose a random non-constant polynomial of degree < d over F_p."
-  (until-t (non-constant-p (random-polynomial p d))))
-
 (defun equal-degree-factorise-helper (poly d &optional (p (modulus poly)) (n (degree poly)))
   (let* ((a (random-polynomial/non-constant p n))
          (g1 (ggt a poly)))

@@ -26,7 +26,10 @@
    :content
    :make-monic
    :non-constant-p
-   :constant-p))
+   :constant-p
+   :poly-fast-modulus
+   :random-polynomial/non-constant
+   :random-polynomial))
 
 (in-package :polynomials)
 
@@ -342,3 +345,21 @@ Keep this in mind when using."
     (when (zero-p lk)
       (error "Cannot make non-simplified polynomial monic."))
    (poly*constant polynomial (gm:/ lk))))
+
+;;; helper functions for polynomials over finite fields:
+(defparameter poly-fast-modulus t)
+
+(defmethod finite-fields:modulus ((poly polynomial))
+  (let ((p (finite-fields:modulus (leading-coefficient poly))))
+    ;;  perhaps check all coefficients have same modulus.
+    (if (or poly-fast-modulus (every (lambda (x) (cl:= p (finite-fields:modulus x))) (coefficients poly)))
+        p
+        (error "Different moduli in the coefficients of polynomial ~A" poly))))
+
+(defun random-polynomial (p d)
+  "Choose a random polynomial of degree < d over F_p."
+  (apply #'make-polynomial (iter (repeat d) (collect (finite-fields:int% (random p) p)))))
+
+(defun random-polynomial/non-constant (p d)
+  "Choose a random non-constant polynomial of degree < d over F_p."
+  (until-t (non-constant-p (random-polynomial p d))))

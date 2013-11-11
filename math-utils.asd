@@ -41,7 +41,8 @@
                         :components ((:file "datastructures")
                                      (:file "squarefree-factorisation")
                                      (:file "degree-separation")
-                                     (:file "berlekamp")))
+                                     (:file "berlekamp")
+                                     (:file "rational-polynomial")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
