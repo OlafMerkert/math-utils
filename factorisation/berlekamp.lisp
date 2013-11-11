@@ -72,6 +72,7 @@
   ;; combination) satisfies b^p - b =0, so in a factor of the CRT
   ;; product, one of these must vanish.
   (let ((factor-count 1)
+        (rank (- rank 1))
         split-factors
         (factors (list poly)))
     (block search-all-factors
@@ -88,7 +89,8 @@
                    (push poly split-factors)))
                (test-all-factors ()
                  ;; short circuit out of our multiloop construction as
-                 ;; soon as we have all factors.
+                 ;; soon as we have all factors but one -- the one
+                 ;; remaining sits in poly.
                  (when (<= rank factor-count)
                    (if (non-constant-p poly)
                        (push poly split-factors))
