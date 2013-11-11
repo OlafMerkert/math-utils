@@ -4,7 +4,8 @@
   (:shadowing-import-from :ol :^ :_)
   (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :generic-math
-        :iterate :fractions)
+        :iterate :fractions
+        :finite-fields)
   (:export
    :degree
    :nth-coefficient%
@@ -44,7 +45,7 @@
   coefficient the first entry of COEFFICIENTS."))
 
 ;; unify polynomial interface with power series interface
-(defmethod degree ((rational rational)) 0)
+(defmethod degree (constant) 0)
 
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
@@ -63,6 +64,9 @@
 (defmethod nth-coefficient ((polynomial polynomial) n)
   (let ((d (degree polynomial)))
     (nth-coefficient% polynomial (- d n))))
+
+(defmethod nth-coefficient (constant (n (eql 0)))
+  constant)
 
 (defun constant-coefficient (polynomial)
   "This is just an abbreviation for (nth-coefficient p 0)"
@@ -290,6 +294,7 @@ Keep this in mind when using."
                                      (coefficients polynomial)))))
 
 (defmethod derivative (number &key (var 'X))
+  (declare (ignore var))
   (zero number))
 
 (defmethod derivative ((polynomial polynomial) &key (var 'X))
@@ -352,10 +357,14 @@ Keep this in mind when using."
   (let ((lk (leading-coefficient polynomial)))
     (when (zero-p lk)
       (error "Cannot make non-simplified polynomial monic."))
-   (poly*constant polynomial (gm:/ lk))))
+   (values (poly*constant polynomial (gm:/ lk)) lk)))
 
 ;;; helper functions for polynomials over finite fields:
 (defparameter poly-fast-modulus t)
+
+(defmethod finite-fields:modulus (number)
+  ;; by default, no modulus
+  nil)
 
 (defmethod finite-fields:modulus ((poly polynomial))
   (let ((p (finite-fields:modulus (leading-coefficient poly))))

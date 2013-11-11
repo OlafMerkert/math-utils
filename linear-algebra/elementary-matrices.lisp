@@ -1,6 +1,6 @@
 (defpackage :linear-algebra/elementary-matrices
   (:shadowing-import-from :linear-algebra/vectors #:vector #:fill-array)
-  (:import-from :generic-math :->)
+  (:import-from :generic-math #:-> #:generic-math-object)
   (:use :cl :ol :iterate :linear-algebra/vectors)
   (:export
    #:elementary-matrix
