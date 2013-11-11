@@ -318,9 +318,10 @@ elementwise operations."
   indices)
 
 (defun droprows-from (vector i)
+  "Remove all rows with index starting from i"
+  ;; if i coincides with the total number of rows ...
   (if (= i (first (dimensions vector)))
-      ;;  this should be an empty vector
-      +empty-vector+
+      vector
       (droprows-from% vector i)))
 
 (defun swap (x i j)

@@ -8,7 +8,8 @@
         :polynomials :finite-fields)
   (:import-from :linear-algebra/linear-solve #:nullspace)
   (:import-from :linear-algebra/vectors #:entries)
-  (:export))
+  (:export
+   #:berlekamp))
 
 (in-package :factorisation/berlekamp)
 
@@ -67,12 +68,12 @@
 ;; nullspace computations, because we have to start the whole process
 ;; again.
 
-(defun berlekamp-find-factors (poly basis-polynomials p &optional (rank (length basis-polynomials)))
+(defun berlekamp-find-factors (poly basis-polynomials p &optional (dim (length basis-polynomials)))
   ;; use the fact that each basis-polynomial (and also every linear
   ;; combination) satisfies b^p - b =0, so in a factor of the CRT
   ;; product, one of these must vanish.
   (let ((factor-count 1)
-        (rank (- rank 1))
+        (dim (- dim 1))
         split-factors
         (factors (list poly)))
     (block search-all-factors
@@ -91,7 +92,7 @@
                  ;; short circuit out of our multiloop construction as
                  ;; soon as we have all factors but one -- the one
                  ;; remaining sits in poly.
-                 (when (<= rank factor-count)
+                 (when (<= dim factor-count)
                    (if (non-constant-p poly)
                        (push poly split-factors))
                    (return-from  search-all-factors
@@ -107,14 +108,15 @@
         ;; something went wrong
         (error "Did not find all factors with the split off method.")))))
 
-(defun berlekamp (poly)
-  (let ((p (modulus poly)))
-    (mvbind (vectors rank) (nullspace (berlekamp-build-matrix poly p))
-      (if (cl:= rank 1)
-          (list (make-factor :base poly))
-          (let ((basis-polynomials
-                  (mapcar (lambda (v) (make-instance 'polynomial
-                                                :var (var poly)
-                                                :coefficients (reverse (entries v))))
-                          vectors)))
-            (berlekamp-find-factors poly basis-polynomials p rank))))))
+(defun berlekamp (poly &optional (p (modulus poly)))
+  (mvbind (vectors dim) (nullspace (berlekamp-build-matrix poly p))
+    (if (cl:= dim 1)
+        (list (make-factor :base poly))
+        (let ((basis-polynomials
+               (mapcar (lambda (v) (make-instance 'polynomial
+                                             :var (var poly)
+                                             :coefficients (reverse (entries v))))
+                       vectors)))
+          (berlekamp-find-factors poly basis-polynomials p dim)))))
+
+

@@ -66,6 +66,8 @@ with the smallest order in P."
 ;;; TODO perhaps choose maximal entry
 ;;; for this there are probably different strategies
 
+;;; fix the problem with discrepancy in rank and number of step-cols
+;;; fix problem with output matrix not being triangular
 (defun lu-decomposition (matrix &optional normalise-pivot (find-pivot #'find-pivot))
   "Decompose A = L U where U is upper triangular, and L is a product
 of elementary row operations. Returns (values U L P RANK STEP-COLS
@@ -178,7 +180,8 @@ the complement."
     ;; correspond to the generators of the kernel
     (values
      (mapcar (lambda (j) (nullspace-column triangular step-cols j)) other-cols)
-     rank)))
+     ;; dimension of the kernel is the number of other-cols
+     (- (nth 1 (dimensions matrix)) rank))))
 
 (defun nullspace-column (triangular step-cols col-index)
   ;; express `column2' as unique linear combination of step-columns
