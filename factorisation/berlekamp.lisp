@@ -62,19 +62,57 @@
         (berlekamp-random-polynomial basis-polynomials p)
         poly)))
 
+;; an alternative to the somewhat probabilistic approach in
+;; `berlekamp-find-factor', which moreover might require additional
+;; nullspace computations, because we have to start the whole process
+;; again.
+
+(defun berlekamp-find-factors (poly basis-polynomials p &optional (rank (length basis-polynomials)))
+  ;; use the fact that each basis-polynomial (and also every linear
+  ;; combination) satisfies b^p - b =0, so in a factor of the CRT
+  ;; product, one of these must vanish.
+  (let ((factor-count 1)
+        split-factors
+        (factors (list poly)))
+    (block search-all-factors
+      (labels ((split-off-factors (poly basis-poly)
+                 (dotimes (k p)
+                   ;; every time we find a new factor, put it into `split-factors'
+                   (awhen (non-constant-p (ggt (- basis-poly k) poly))
+                     (incf factor-count)
+                     (push it split-factors)
+                     (setf poly (/ poly it))
+                     (test-all-factors)))
+                 ;; the part we couldn't split off must not be forgotten
+                 (unless (constant-p poly)
+                   (push poly split-factors)))
+               (test-all-factors ()
+                 ;; short circuit out of our multiloop construction as
+                 ;; soon as we have all factors.
+                 (when (<= rank factor-count)
+                   (if (non-constant-p poly)
+                       (push poly split-factors))
+                   (return-from  search-all-factors
+                     (mapcar (clambda (make-factor :base x!)) (nconc split-factors factors))))))
+        (iter (for b in basis-polynomials)
+              (ol::while% factors
+                (split-off-factors (pop factors) b))
+              ;; after one basis-polynomial is done, everything moved
+              ;; from factors to split-factors -- time to move it back
+              (setf factors split-factors
+                    split-factors nil))
+        ;; if at this point, we haven't found all factors yet,
+        ;; something went wrong
+        (error "Did not find all factors with the split off method.")))))
 
 (defun berlekamp (poly)
   (let ((p (modulus poly)))
     (mvbind (vectors rank) (nullspace (berlekamp-build-matrix poly p))
       (if (cl:= rank 1)
-          (values (list (make-factor :base poly)) :irreducible)
-          (let* ((basis-polynomials
+          (list (make-factor :base poly))
+          (let ((basis-polynomials
                   (mapcar (lambda (v) (make-instance 'polynomial
                                                 :var (var poly)
                                                 :coefficients (reverse (entries v))))
-                          vectors))
-                 (factor (until-t (berlekamp-find-factor poly basis-polynomials p))))
-            (list (make-factor :base factor)
-                  (make-factor :base (/ poly factor))))))))
-;; todo in theory, it should be avoidable to solve more nullspace
-;; problems -- maybe we can reuse the basis of the nullspace??
+                          vectors)))
+            (berlekamp-find-factors poly basis-polynomials p rank))))))

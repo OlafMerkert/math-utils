@@ -42,7 +42,7 @@
                                      (:file "squarefree-factorisation")
                                      (:file "degree-separation")
                                      (:file "berlekamp")
-                                     (:file "rational-polynomial")))
+                                     (:file "rational-polynomials")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
