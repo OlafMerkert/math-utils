@@ -123,8 +123,7 @@ which holds the products of irreducible factors of degree `i' at index
 
 (defun random-polynomial/non-constant (p d)
   "Choose a random non-constant polynomial of degree < d over F_p."
-  (do ((poly (random-polynomial p d)))
-      ((non-constant-p poly))))
+  (until-t (non-constant-p (random-polynomial p d))))
 
 (defun equal-degree-factorise-helper (poly d &optional (p (modulus poly)) (n (degree poly)))
   (let* ((a (random-polynomial/non-constant p n))
