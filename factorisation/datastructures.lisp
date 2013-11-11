@@ -58,7 +58,7 @@ The main use of this function is to refine factorisations."
 for factors appearing in both lists by adding multiplicities. This is
 the destructive version."
   (mapc (lambda (factor)
-          (aif (find factor list1 :key #'factor-base :test #'gm:=)
+          (aif (find (factor-base factor) list1 :key #'factor-base :test #'gm:=)
                (incf (factor-exponent it) (factor-exponent factor))
                (push factor list1)))
         list2)

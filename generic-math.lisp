@@ -142,6 +142,11 @@ as :from-end parameter to reduce."
 (defmethod div ((number number) (modulus number))
   (floor number modulus))
 
+(defmethod div ((number (eql 0)) modulus)
+  (when (zero-p modulus)
+    (error "Division by 0!"))
+  (values 0 0))
+
 (defgeneric expt (base power))
 (defmethod expt ((base number) (power number))
   (cl:expt base power))

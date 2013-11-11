@@ -19,7 +19,7 @@ s.t. f^p = poly."
     (assert (nt:divides-p p n))
     (make-instance 'polynomial
                    :coefficients
-                   (make-array/fill ((cl:/ n p)) (i)
+                   (make-array/fill ((cl:+ 1 (cl:/ n p))) (i)
                      (nth-coefficient% poly (cl:* i p))))))
 
 (defun square-free-factorise (poly)
@@ -32,9 +32,9 @@ s.t. f^p = poly."
                (lambda (x) (* x p))
                (square-free-factorise (finite-field-poly-p-root poly p)))))
            ((non-constant-p (ggt poly derivative))
-            (merge-factor
+            (merge-factorisations
              (square-free-factorise it)
-             (make-factor :base (/ poly it))))
+             (list (make-factor :base (/ poly it)))))
            (t (list (make-factor :base poly))))))
 
 ;; when we reduce mod p, we have to be slightly careful
