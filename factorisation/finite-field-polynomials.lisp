@@ -14,8 +14,10 @@
   ;; first step: make the polynomial monic
   (mvbind (polynomial leading-coefficient) (make-monic polynomial)
     ;; then get at the square factors:
-    (let ((sqf-factors (square-free-factorise polynomial)))
+    (let* ((sqf-factors (square-free-factorise polynomial))
+           (factorisation (map-on-factors #'berlekamp sqf-factors)))
       ;; each of them can be factorised with Berlekamp:
-      (list* (make-factor :base leading-coefficient)
-             (map-on-factors #'berlekamp sqf-factors)))))
+      (if (gm:one-p leading-coefficient)
+          factorisation
+          (list* (make-factor :base leading-coefficient) factorisation)))))
 

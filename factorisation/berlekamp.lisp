@@ -14,7 +14,7 @@
 (in-package :factorisation/berlekamp)
 
 
-(defun berlekamp-build-matrix (poly &optional (p (modulus poly)) (n (+ 1 (degree poly))))
+(defun berlekamp-build-matrix (poly &optional (p (modulus poly)) (n (degree poly)))
   ;; we choose the basis 1, x, x^2, ..., x^(n-1) and compute the
   ;; matrix for the map t -> t^p - t
   (let* ((x^p (expt-mod (make-monomial 1 1) p poly))
@@ -80,7 +80,7 @@
       (labels ((split-off-factors (poly basis-poly)
                  (dotimes (k p)
                    ;; every time we find a new factor, put it into `split-factors'
-                   (awhen (non-constant-p (ggt (- basis-poly k) poly))
+                   (awhen (non-constant-p (ggt (- basis-poly (int% k p)) poly))
                      (incf factor-count)
                      (push it split-factors)
                      (setf poly (/ poly it))
@@ -113,9 +113,10 @@
     (if (cl:= dim 1)
         (list (make-factor :base poly))
         (let ((basis-polynomials
-               (mapcar (lambda (v) (make-instance 'polynomial
-                                             :var (var poly)
-                                             :coefficients (reverse (entries v))))
+               (mapcar (lambda (v) (simplify
+                               (make-instance 'polynomial
+                                              :var (var poly)
+                                              :coefficients (reverse (entries v)))))
                        vectors)))
           (berlekamp-find-factors poly basis-polynomials p dim)))))
 
