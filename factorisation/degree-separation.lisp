@@ -36,7 +36,7 @@ coinciding with the index."
 range (end inclusive). For better efficiency, work mod `poly'."
   (let ((q (expt p step)))
     (iter (for i from start to end)
-          (for h initially (div (make-monomial (expt q start)
+          (for h initially (divr (make-monomial (expt q start)
                                                (int% 1 p))
                                 poly)
                then (expt-mod h q poly))
@@ -59,7 +59,7 @@ which holds the products of irreducible factors of degree `i' at index
            ;; coarse DDF (distinct-degree-factorisation)
            (ii-list (map 'vector
                          (lambda (hh)
-                           (reduce (lambda (a b) (div (* a b) poly))
+                           (reduce (lambda (a b) (divr (* a b) poly))
                                    h-list :key (lambda (h) (- hh h))))
                          hh-list))
            (f poly)

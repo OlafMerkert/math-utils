@@ -3,8 +3,8 @@
 ;;; some generally useful math functions
 (defun expt-mod (base exponent modulus)
   (square-multiply base exponent
-                   (clambda (div (generic-* x!a x!b) modulus))
-                   (clambda (div (generic-* x!a x!a) modulus))))
+                   (clambda (divr (generic-* x!a x!b) modulus))
+                   (clambda (divr (generic-* x!a x!a) modulus))))
 
 (defun order-find (group-element multiplication identity-test &optional (order-bound))
   "Determine the order of some `group-element' in a group with given

@@ -3,7 +3,7 @@
   (:shadow :+ :- :* :/ :=
            :expt :^ :sqrt
            :expt-mod)
-  (:use :cl :ol)
+  (:use :cl :ol :iterate)
   (:export
    #:argument
    #:+ #:generic-+
@@ -38,7 +38,8 @@
    #:^
    #:expt-mod
    #:+gm-shadow-imports+
-   #:+frac-shadow-imports+))
+   #:+frac-shadow-imports+
+   #:divr))
 
 (in-package :generic-math)
 
@@ -133,6 +134,10 @@ as :from-end parameter to reduce."
 
 (defgeneric div (number modulus)
   (:documentation "The division function for Euclidean rings."))
+
+(defun divr (number modulus)
+  "The remainder of the generic division."
+  (nth-value 1 (div number modulus)))
 
 (defmethod div ((number number) (modulus number))
   (floor number modulus))
