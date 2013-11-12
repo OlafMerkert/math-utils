@@ -357,13 +357,13 @@ elementwise operations."
                           (ilambda (this &rest indices)
                             (let ((ind-a (subseq indices 0 split))
                                   (ind-b (subseq indices split)))
-                              (gm:summing (i 0 m-a t)
+                              (gm:gm-summing (i 0 m-a t)
                                           (gm:* (apply #'aref entries-a (append1 ind-a i))
                                                 (apply #'aref entries-b i ind-b)))))
                           return-type)
             ;; special case if dims is empty list (i.e. dot-product
             ;; of two simple vectors)
-            (gm:summing (i 0 m-a t)
+            (gm:gm-summing (i 0 m-a t)
                         (gm:* (aref entries-a i) (aref entries-b i))))))))
 
 (defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))

@@ -2,7 +2,7 @@
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :generic-math :summing)
+  (:import-from :generic-math :gm-summing)
   (:use :cl :ol :generic-math
         :iterate :fractions
         :finite-fields)
@@ -140,7 +140,7 @@
                        (:index-var n
                                    :default-value 0
                                    :finite (+ deg-a deg-b 1))
-                     (summing (i (max 0 (- n deg-b))
+                     (gm-summing (i (max 0 (- n deg-b))
                                  (min n deg-a))
                               (gm:* (aref array-a i)
                                     (aref array-b (- n i))))))))

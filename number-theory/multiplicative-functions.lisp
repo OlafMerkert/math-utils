@@ -57,6 +57,7 @@
    n
    :combination #'list+))
 
+;; todo move to ol-utils
 (defun list+ (car cdr)
   (if (consp cdr)
       (cons car cdr)

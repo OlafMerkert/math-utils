@@ -2,7 +2,7 @@
   (:nicknames :im)
   (:shadowing-import-from :cl :+ :- :* :/ :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :gm := :summing)
+  (:shadowing-import-from :gm :=)
   (:use :cl :ol :iterate :generic-math)
   (:export
    #:infinity+

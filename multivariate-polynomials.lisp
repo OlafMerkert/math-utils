@@ -3,7 +3,6 @@
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :generic-math :summing)
   (:use :cl :ol :iterate
         :generic-math
         :fractions

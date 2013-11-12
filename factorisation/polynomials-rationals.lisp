@@ -1,7 +1,6 @@
 (defpackage :factorisation-polynomials-rationals
   (:nicknames :pfactrat)
   (:shadowing-import-from :cl :numerator :denominator)
-  (:shadowing-import-from :gm :summing)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadow #:factorise-generic-poly)
   (:use :cl :ol :iterate

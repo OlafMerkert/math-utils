@@ -1,7 +1,7 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :generic-math :summing)
+  (:import-from :generic-math :gm-summing)
   (:use :cl :ol :generic-math
         :iterate
         :polynomials)
@@ -157,7 +157,7 @@ by FORMULA where INDEX is anaphorically bound."
                                    :default-value 0
                                    :finite (la-finite-test (array-a array-b)
                                              (+ array-a array-b)))
-                     (summing (i 0 n)
+                     (gm-summing (i 0 n)
                               (gm:* (lazy-aref array-a i)
                                     (lazy-aref array-b (- n i))))))))
 
@@ -192,7 +192,7 @@ by FORMULA where INDEX is anaphorically bound."
                                                           :index-var n
                                                           :default-value 0)
                                    (gm:/ (gm:- (lazy-aref cn n)
-                                               (summing (i 1 n)
+                                               (gm-summing (i 1 n)
                                                         (gm:* (lazy-aref an i)
                                                               (aref this (- n i)))))
                                          a0)))))
@@ -218,7 +218,7 @@ by FORMULA where INDEX is anaphorically bound."
                    (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
                                             :index-var n
                                             :default-value 0)
-                     (gm:/ (gm:- (summing (i 1 n)
+                     (gm:/ (gm:- (gm-summing (i 1 n)
                                           (gm:* (lazy-aref an i)
                                                 (aref this (- n i)))))
                            a0)))))
@@ -270,7 +270,7 @@ by FORMULA where INDEX is anaphorically bound."
                                             :index-var n
                                             :default-value 0)
                      (gm:/ (gm:- (lazy-aref b n)
-                                 (summing (i 1 n t) (gm:* (aref this i)
+                                 (gm-summing (i 1 n t) (gm:* (aref this i)
                                                           (aref this (- n i)))))
                            a0 2)))))
 
