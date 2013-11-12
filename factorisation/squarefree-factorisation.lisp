@@ -8,7 +8,8 @@
         :polynomials :finite-fields)
   (:export
    #:finite-field-poly-p-root
-   #:square-free-factorise))
+   #:square-free-factorise
+   #:square-free-p))
 
 (in-package :factorisation/squarefree)
 
