@@ -35,7 +35,7 @@
 (defun berlekamp-find-factor (poly basis-polynomials p)
   ;; choose a random nonzero element
   (let ((a (berlekamp-random-polynomial basis-polynomials p)))
-    (aif (non-constant-p (ggt a poly))
+    (aif (non-constant-p (ggt-poly a poly))
          ;; if it is not coprime with `poly', we found a non-trivial
          ;; factor.
          it
@@ -43,7 +43,7 @@
          ;; product. So b -1 = 0 for all factors happens with probability
          ;; (1/2)^r, and with luck, we get a non-trivial factor
          (let ((b (expt-mod a (/ (- p 1) 2) poly)))
-           (non-constant-p (ggt (- b 1) poly))))))
+           (non-constant-p (ggt-poly (- b 1) poly))))))
 
 ;; todo might we not get into trouble for characteristic 2 here?
 ;; todo ensure that we are always getting monic polynomials -- this
@@ -81,7 +81,7 @@
       (labels ((split-off-factors (poly basis-poly)
                  (dotimes (k p)
                    ;; every time we find a new factor, put it into `split-factors'
-                   (awhen (non-constant-p (ggt (- basis-poly (int% k p)) poly))
+                   (awhen (non-constant-p (ggt-poly (- basis-poly (int% k p)) poly))
                      (incf factor-count)
                      (push it split-factors)
                      (setf poly (/ poly it))

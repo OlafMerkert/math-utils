@@ -30,7 +30,8 @@
    :constant-p
    :poly-fast-modulus
    :random-polynomial/non-constant
-   :random-polynomial))
+   :random-polynomial
+   :ggt-poly))
 
 (in-package :polynomials)
 
@@ -241,6 +242,12 @@ Keep this in mind when using."
 
 (defmethod content ((a polynomial))
   (reduce #'ggt (coefficients a) :key #'content))
+
+;; provide a simplified version for polynomials over fields
+(defun ggt-poly (a b)
+  (if (zero-p b)
+      (if (constant-p a) 1 (make-monic a))
+      (ggt b (divr a b))))
 
 (defmethod ggt ((a polynomial) (b polynomial))
   (cond ((or (modulus a) (modulus b))
