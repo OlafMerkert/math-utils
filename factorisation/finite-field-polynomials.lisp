@@ -21,3 +21,11 @@
           factorisation
           (list* (make-factor :base leading-coefficient) factorisation)))))
 
+;; (setf math-utils-format:*print-poly-pretty* t)
+
+(defun example (n p)
+  (let ((poly (gm:-> 'finite-fields:integer-mod
+                     (gm:- (polynomials:make-monomial n 1)
+                           (polynomials:make-monomial 1 1)) :mod p)))
+    (dbug "Poly: ~A" poly)
+    (factorise/poly-over-finite-field poly)))
