@@ -11,7 +11,9 @@
    #:map-on-factors
    #:merge-factorisations%
    #:merge-factorisations
-   #:multiply-factors))
+   #:multiply-factors
+   #:sort-factors-by
+   #:compact-factors))
 
 (in-package :factorisation/datastructures)
 
@@ -81,3 +83,17 @@ factors with their multiplicities."
           factor-list
           :key (lambda (factor) (expt (factor-base factor)
                                  (factor-exponent factor)))))
+
+(defun sort-factors-by (factor-list &key (comparator #'<) (key #'polynomials:degree))
+  "Sort a list of factors, by default we sort for ascending degree."
+  (sort factor-list comparator :key (compose key #'factor-base)))
+
+(defun compact-factors (factor-list &optional (compress t))
+  "Produce a sorted and compressed list of factors, in the style of
+  nt:factorise. However, here we only distinguish between t and :singletons for `compress', because we already know all about multiplicities"
+  (nt-f::compress-wrap
+   (mapcar (lambda (f)
+             (if (= 1 (factor-exponent f)) (factor-base f)
+                 (cons (factor-base f) (factor-exponent f))))
+           (sort-factors-by factor-list))
+   compress))
