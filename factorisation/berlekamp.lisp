@@ -73,7 +73,8 @@
   ;; combination) satisfies b^p - b =0, so in a factor of the CRT
   ;; product, one of these must vanish.
   (let ((factor-count 1)
-        (dim (- dim 1))
+        ;; have to make sure we actually have the right number of
+        ;; factors -- no shortcuts
         split-factors
         (factors (list poly)))
     (block search-all-factors
@@ -91,8 +92,7 @@
                    (push poly split-factors)))
                (test-all-factors (poly)
                  ;; short circuit out of our multiloop construction as
-                 ;; soon as we have all factors but one -- the one
-                 ;; remaining sits in poly.
+                 ;; soon as we have all factors
                  (when (<= dim factor-count)
                    (if (non-constant-p poly)
                        (push poly split-factors))
@@ -114,10 +114,11 @@
   (mvbind (vectors dim) (nullspace (berlekamp-build-matrix poly p))
     (if (cl:= dim 1)
         (list (make-factor :base poly))
-        (let ((basis-polynomials
+        (let* ((basis-polynomials
                (mapcar (lambda (v) (simplify
                                (make-instance 'polynomial
                                               :var (var poly)
                                               :coefficients (reverse (entries v)))))
-                       vectors)))
+                       vectors))
+               (basis-polynomials (remove-if #'constant-p basis-polynomials)))
           (berlekamp-find-factors poly basis-polynomials p dim)))))
