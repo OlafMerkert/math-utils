@@ -87,6 +87,7 @@
                      (test-all-factors poly)))
                  ;; the part we couldn't split off must not be forgotten
                  (unless (constant-p poly)
+                   (incf factor-count)
                    (push poly split-factors)))
                (test-all-factors (poly)
                  ;; short circuit out of our multiloop construction as
@@ -99,6 +100,7 @@
                      (mapcar (clambda (make-factor :base x!)) (nconc split-factors factors))))))
         (iter (for b in basis-polynomials)
               (ol::while% factors
+                (decf factor-count)
                 (split-off-factors (pop factors) b))
               ;; after one basis-polynomial is done, everything moved
               ;; from factors to split-factors -- time to move it back
