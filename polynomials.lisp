@@ -245,7 +245,7 @@ Keep this in mind when using."
 (defmethod ggt ((a polynomial) (b polynomial))
   (cond ((or (modulus a) (modulus b))
          ;; over finite field, ggt should be monic
-         (if (zero-p b) (make-monic a)
+         (if (zero-p b) (nth-value 0 (make-monic a))
              (ggt b (divr a b))))
         (t
          ;; otherwise, we also keep track of content
@@ -255,10 +255,15 @@ Keep this in mind when using."
 
 (declare-commutative rational polynomial ggt)
 
+(defmethod ggt ((a integer) (b polynomial))
+  (cond ((zerop a) b)
+        ((or (cl:= a 1) (cl:= a -1)) 1)
+        (t (ggt (content a) (content b)))))
+
 (defmethod ggt ((a rational) (b polynomial))
-  (if (zerop a)
-      b
-      (ggt (content a) (content b))))
+  ;; a = 0 is impossible, this should always return 1 because we are
+  ;; working with polynomial over the field of rationals.
+  1)
 
 (declare-commutative integer-mod polynomial ggt)
 
@@ -266,6 +271,20 @@ Keep this in mind when using."
   (if (zero-p a)
       (make-monic b)
       (int% 1 (modulus a))))
+
+(defmethod ggt ((a integer-mod) (b integer))
+  (if (and (zero-p a) (zero-p b))
+      (error "GGT of two 0")
+      (int% 1 (modulus a))))
+
+(declare-commutative integer-mod integer ggt)
+
+(defmethod content ((a integer-mod))
+  (warn "Why is `content' called on ~A?" a)
+  (if (zero-p a)
+      (int% 0 (modulus a))
+      (int% 1 (modulus a))))
+
 
 ;;; there still remains some trouble with signs, but this seems to
 ;;; have got rid of
