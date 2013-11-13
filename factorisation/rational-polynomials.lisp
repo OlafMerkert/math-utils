@@ -1,4 +1,5 @@
 (defpackage :factorisation/rational-polynomials
+  (:nicknames :fac-poly)
   #.gm:+gm-shadow-imports+
   #.gm:+frac-shadow-imports+
   (:use :cl :ol :iterate
@@ -8,7 +9,8 @@
         :generic-math :fractions
         :polynomials :finite-fields)
   (:export
-   #:lift))
+   #:lift
+   #:factorise))
 
 (in-package :factorisation/rational-polynomials)
 
@@ -205,14 +207,11 @@ the integers. Second value is the factor we multiply with"
         (error "remaining factor ~A in `combine-factors'." poly)))
     actual-factors))
 
-;; (setf math-utils-format:*print-poly-pretty* t)
-
-(defun example-1 (n)
-  (let ((poly (- (make-monomial n 1) 1)))
-    (dbug "Poly: ~A" poly)
-    (factorise/rational-polynomial poly)))
-
-(defun example-2 ()
-  (let ((poly (make-polynomial 1 0 -6 -6 12 -36 1)))
-    (dbug "Poly: ~A" poly)
-    (factorise/rational-polynomial poly)))
+;; general polynomial factorisation
+(defun factorise (polynomial)
+  "Factorise a `polynomial', automatically detecting whether the base
+field is F_p or Q."
+  (compact-factors
+   (if (modulus polynomial)
+       (fac-ffp:factorise/poly-over-finite-field polynomial)
+       (factorise/rational-polynomial polynomial))))
