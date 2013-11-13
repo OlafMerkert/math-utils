@@ -9,7 +9,11 @@
   (:import-from :linear-algebra/linear-solve #:nullspace)
   (:import-from :linear-algebra/vectors #:entries)
   (:export
-   #:berlekamp))
+   #:berlekamp
+   #:berlekamp-build-matrix
+   #:berlekamp-find-factor
+   #:berlekamp-random-polynomial
+   #:berlekamp-find-factors))
 
 (in-package :factorisation/berlekamp)
 

@@ -10,7 +10,11 @@
         :polynomials :finite-fields)
   (:export
    #:lift
-   #:factorise))
+   #:factorise
+   #:compute-mignotte-bounded-prime
+   #:maxnorm
+   #:factorise/big-prime-method
+   #:combine-factors))
 
 (in-package :factorisation/rational-polynomials)
 
