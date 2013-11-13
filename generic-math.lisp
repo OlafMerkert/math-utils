@@ -39,13 +39,21 @@
    #:+gm-shadow-imports+
    #:+frac-shadow-imports+
    #:divr
-   #:gm-summing))
+   #:gm-summing
+   #:+cl-shadow-imports+
+   #:+ol-shadow-imports+))
 
 (in-package :generic-math)
 
 ;; some useful constants for shadowing imports
 (defparameter +gm-shadow-imports+
-  '(:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :summing :^ :_))
+  '(:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :^ :_))
+
+(defparameter +cl-shadow-imports+
+  '(:shadowing-import-from :common-lisp :+ :- :* :/ := :expt :sqrt))
+
+(defparameter +ol-shadow-imports+
+  '(:shadowing-import-from :ol-utils :^ :_))
 
 (defparameter +frac-shadow-imports+
   '(:shadowing-import-from :fractions :numerator :denominator))
