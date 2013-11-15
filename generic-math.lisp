@@ -365,10 +365,10 @@ default-value). These can be accessed from the BODY."
                   (-> ,to ,from)))
          generic-functions))))
 
-(defmacro declare-commutative (to-left to-right &body generic-functions)
+(defmacro! declare-commutative (to-left to-right &body generic-functions)
   `(progn
-     ,@(mapcar #`(defmethod ,a1 ((,to-right ,to-right) (,to-left ,to-left))
-                   (,a1 ,to-left ,to-right))
+     ,@(mapcar #`(defmethod ,a1 ((,g!to-right ,to-right) (,g!to-left ,to-left))
+                   (,a1 ,g!to-left ,g!to-right))
                generic-functions)))
 
 (defmacro declare-fold-operation (to-left to-right &body generic-functions+units)

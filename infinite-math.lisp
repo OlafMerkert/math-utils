@@ -92,6 +92,16 @@
 
 ;; polynomial formatting requires additive inverses (because we return
 ;; t in (minus-p infinity-)
+(defmethod generic-+ ((a number) (b (eql infinity+)))
+  infinity+)
+
+(defmethod generic-+ ((a number) (b (eql infinity-)))
+  infinity-)
+
+(declare-commutative number (eql infinity+) generic-+)
+(declare-commutative number (eql infinity-) generic-+)
+
+
 (defmethod generic-- (a (b (eql infinity+)))
   (unless (zero-p a)
     (error "substracting infinity from anything but 0 is not well defined."))

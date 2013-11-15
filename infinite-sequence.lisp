@@ -28,7 +28,8 @@
    #:inf-seq
    #:map-sequences/or
    #:map-sequences/and
-   #:strip-if))
+   #:strip-if
+   #:shift))
 
 (in-package :infinite-sequence)
 
@@ -141,10 +142,15 @@
            ;; and use sequential filling.
            (setf fs (or (position +uncalculated+ data)
                         (length data)))))
-    (if (length=0 data)
-        (setf data (make-array 100 :initial-element +uncalculated+
-                               :adjustable t))
-        (ensure-adjustable-array data))))
+    (cond ((length=0 data)
+           (setf data (make-array 100 :initial-element +uncalculated+
+                                  :adjustable t)))
+          ((arrayp data)
+           (ensure-adjustable-array data))
+          ((listp data)
+           (setf data (make-array (length data) :adjustable t
+                                  :initial-contents data)))
+          (t (error "invalid data in infinite+-sequence: ~A" data)))))
 
 (declaim (inline sequential-filling-p))
 
@@ -176,8 +182,8 @@ index `n' to the array index `i'."
 (defun ensure-array-size (array size)
   "For an adjustable `array', make sure that it can hold at least
 `size'+1 elements (i.e. we can get at the index `size')."
-  (if (<= (cl:length array) (+ 1 size))
-      (adjust-array array (+ 1 size array-size-step) :initial-element +uncalculated+)
+  (if (>= size (cl:length array))
+      (adjust-array array (+ size array-size-step) :initial-element +uncalculated+)
       array))
 
 (declaim (inline in-range))
@@ -215,8 +221,8 @@ uncalculated values."
     (if (sequential-filling-p iseq)
         (with-slots (generating-function (fs minimal-uncalculated)) iseq
           (let ((sequence-offset start)) ; special variable
-            (iter (for j from (+ start fs) to n)
-                  (for k from fs)
+            (iter (for j from (+ start fs))
+                  (for k from fs to i)
                   ;; here we make use of the compatibility layer that
                   ;; allows transparent use of the array
                   (setf (aref data k)
