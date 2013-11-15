@@ -35,7 +35,32 @@
               (index2 (gen-integer :min 0 :max 90)))
       (is (= (ins:sref seq1 index2) (ins:sref seq4 index2) ))
       (is (= (ins:sref seq1 (- index 8)) (ins:sref seq2 index)))
-      (is (= (ins:sref seq1 index) (ins:sref seq3 index))))))
+      (is (= (ins:sref seq1 index) (ins:sref seq3 index))))
+    (is (= 0 (ins:sref seq1 :start)))
+    (is (= 8 (ins:sref seq3 :start)))
+    (is (= 90 (ins:sref seq4 :end)))
+    (is (= 83 (ins:sequence-length seq4)))))
+
+(test map-sequence
+  (let ((seq1 (ins:inf+seq '(4 2 3) (n) (+ n 2)))
+        (seq2 (ins:inf+seq '(16 4 9) (n) (expt (+ n 2) 2)))
+        (seq4 (ins:inf-seq '(4 2 3) (n) (+ n 2)))
+        (seq5 (ins:inf-seq '(16 4 9) (n) (expt (+ n 2) 2))))
+    (let ((seq3 (ins:map-sequence (clambda (* x! x!)) seq1))
+          (seq6 (ins:map-sequence (clambda (* x! x!)) seq4)))
+      (for-all ((index (gen-integer :min 0 :max array-max-index)))
+        (is (= (ins:sref seq2 index) (ins:sref seq3 index)))
+        (is (= (ins:sref seq5 (- index)) (ins:sref seq6 (- index))))))
+    (let ((seq3 (ins:map-sequences/or #'max seq1 seq2))
+          (seq6 (ins:map-sequences/or #'min seq4 seq5)))
+      (for-all ((index (gen-integer :min 0 :max array-max-index)))
+        (is (= (ins:sref seq2 index) (ins:sref seq3 index)))
+        (is (= (ins:sref seq4 (- index)) (ins:sref seq6 (- index))))))
+    (let ((seq3 (ins:map-sequences/and #'max seq2 (ins:shift seq4 20))))
+      (for-all ((index (gen-integer :min 0 :max 20)))
+        (is (= (ins:sref seq2 index) (ins:sref seq3 index)))))))
+
+
 
 (test strip-if-seq
   (let ((seq1 #(0 0 0 8 8 0 0 0 0))

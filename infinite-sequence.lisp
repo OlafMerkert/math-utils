@@ -245,15 +245,16 @@ uncalculated values."
 ;;; todo track mutations and allow automatic recomputing
 
 ;;; important mapping and slicing functions
+
 (defmethod map-sequence (function (iseq infinite+-sequence))
+  ;; don't use sequential filling for mapped sequences, this avoids
+  ;; computations that may never be needed. If you really want this,
+  ;; you can easily get it manually.
   (make-instance 'infinite+-sequence
-                 :fill-strategy (if (sequential-filling-p iseq)
-                                    0)
                  :start (start iseq)
                  :end (end iseq)
                  :generating-function (ilambda (iseq2 n)
                                         (funcall function (sref iseq n)))))
-
 
 
 ;;; helper functions to quickly transform arrays into infinite
