@@ -127,47 +127,32 @@ by FORMULA where INDEX is anaphorically bound."
   Additionally, when the series is marked finite, and
   NORMALISATION-DEPTH is reached, we will assume the SERIES is 0."
   (with-slots (degree coefficients) series
-    (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :end)
+    (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :end :limit depth)
       (setf coefficients coeff
-            degree (- degree stripped))))
-  (let* ((coeff (coefficients series))
-         (non-zero (iter (for i from (degree series) above (- (degree series) depth))
-                         (finding i such-that (not (zero-p (sref coeff i)))
-                                  on-failure (- (degree series) depth)))))
-    (if (and (lazy-array-finite coeff) ;; todo new indices should
-             ;; simplify this, moreover we have better tests for
-             ;; finite stuff
-             (= non-zero depth))
-        ;; for finite series, treat reaching normalisation-depth as
-        ;; having found the 0 series.
-        0
-        (values
-         (make-instance 'power-series
-                        :degree (- (degree series) non-zero)
-                        :coefficients (subsequence coeff infinity- non-zero))
-         (if (= non-zero depth)
-             (- non-zero)
-             non-zero)))))
+            degree (- degree stripped))
+      (values series (if (= stripped depth) (- stripped) stripped)))))
 
 (defmethod simplify ((series constant-series) &key)
   (values series 0))
 
+;; todo how about series with finitely many entries
 (defmethod generic-* ((series-a power-series) (series-b power-series))
-  ;; todo adjust index arithmetic
-  (let ((array-a (coefficients series-a))
-        (array-b (coefficients series-b)))
+  (let ((seq-a (coefficients series-a))
+        (seq-b (coefficients series-b))
+        (deg-a (degree series-a))
+        (deg-b (degree series-b))
+        (degree (+ deg-a deg-b)))
     (make-instance 'power-series
-                   :degree (+ (degree series-a)
-                              (degree series-b))
+                   :degree degree
                    :coefficients
-                   (make-lazy-array
-                    (:index-var n
-                                :default-value 0
-                                :finite (la-finite-test (array-a array-b)
-                                                        (+ array-a array-b)))
-                    (gm-summing (i 0 n)
-                                (gm:* (sref array-a i)
-                                      (sref array-b (- n i))))))))
+                   (make-instance 'infinite--sequence
+                                  :end degree
+                                  ;; :fill-strategy :sequential
+                                  :generating-function
+                                  (lambda (this n)
+                                    (gm-summing (i (- n deg-b) deg-a)
+                                                (gm:* (sref seq-a i)
+                                                      (sref seq-b (- n i)))))))))
 
 (defmethod generic-* ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-* (constant-coefficient series-a)
@@ -193,19 +178,24 @@ by FORMULA where INDEX is anaphorically bound."
     normalised, i.e. the first coefficient is non-zero." series-denom))
   ;; todo adjust indices
   (let ((a0 (leading-coefficient series-denom))
+        (deg-a (degree series-denom))
         (an (coefficients series-denom))
-        (cn (coefficients series-numer)))
+        (cn (coefficients series-numer))
+        (degree (- (degree series-numer)
+                   (degree series-denom))))
     (make-instance 'power-series
-                   :degree (- (degree series-numer)
-                              (degree series-denom))
-                   :coefficients (make-lazy-array (:start ((gm:/ (sref cn 0) a0))
-                                                          :index-var n
-                                                          :default-value 0)
-                                   (gm:/ (gm:- (sref cn n)
-                                               (gm-summing (i 1 n)
-                                                        (gm:* (sref an i)
-                                                              (aref this (- n i)))))
-                                         a0)))))
+                   :degree degree
+                   :coefficients
+                   (make-instance 'infinite--sequence
+                                  :data (vector (gm:/ (sref cn 0) a0))
+                                  :fill-strategy :sequential
+                                  :generating-function
+                                  (lambda (this n)
+                                    (gm:/ (gm:- (sref cn n)
+                                                (gm-summing (i (- n 1) deg-a)
+                                                            (gm:* (sref an i)
+                                                                  (aref this (- n i)))))
+                                          a0))))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
   (make-constant-series (generic-/ (constant-coefficient series-numer)
@@ -221,18 +211,21 @@ by FORMULA where INDEX is anaphorically bound."
     (error "Cannot invert the SERIES ~A unless it is properly
     normalised, i.e. first coefficient is non-zero." series-denom))
   (let ((a0 (leading-coefficient series-denom))
+        (deg-a (degree series-denom))
         (an (coefficients series-denom)))
     ;; todo adjust indices
     (make-instance 'power-series
                    :degree (- (degree series-denom))
                    :coefficients
-                   (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
-                                            :index-var n
-                                            :default-value 0)
-                     (gm:/ (gm:- (gm-summing (i 1 n)
-                                          (gm:* (sref an i)
-                                                (aref this (- n i)))))
-                           a0)))))
+                   (make-instance 'infinite--sequence
+                                  :data (vector (gm:/ (constant-coefficient series-numer) a0))
+                                  :fill-strategy :sequential
+                                  :generating-function
+                                  (lambda (this n)
+                                    (gm:/ (gm:- (gm-summing (i (- n 1) deg-a)
+                                                            (gm:* (sref an i)
+                                                                  (aref this (- n i)))))
+                                          a0))))))
 
 ;; TODO perhaps consider additional simplification for units
 
@@ -268,17 +261,21 @@ by FORMULA where INDEX is anaphorically bound."
     (error "Cannot take the root of SERIES ~A unless the degree is known to be even!" series))
   ;; now we essentially reduce to the case degree = 0
   (let ((a0 (gm:sqrt (nth-coefficient% series 0)))
-        (b  (coefficients series)))
+        (b  (coefficients series))
+        (degree (/ (degree series) 2)))
     (make-instance 'power-series
-                   :degree (/ (degree series) 2)
+                   :degree degree
                    ;; todo adjust indices
-     :coefficients (make-lazy-array (:start (a0)
-                                            :index-var n
-                                            :default-value 0)
-                     (gm:/ (gm:- (sref b n)
-                                 (gm-summing (i 1 n t) (gm:* (aref this i)
-                                                          (aref this (- n i)))))
-                           a0 2)))))
+                   :coefficients
+                   (make-instance 'infinite--sequence
+                                  :data (vector a0)
+                                  :fill-strategy :sequential
+                                  :generating-function
+                                  (lambda (this n)
+                                   (gm:/ (gm:- (sref b n)
+                                               (gm-summing (i 1 n t) (gm:* (aref this i)
+                                                                           (aref this (- n i)))))
+                                         a0 2))))))
 
 (defmethod gm:sqrt ((series constant-series))
   (multiple-value-bind (root nice) (gm:sqrt (constant-coefficient series))
