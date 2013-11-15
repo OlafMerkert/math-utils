@@ -213,14 +213,6 @@
                  nil)
                 (t t))))))
 
-;; TODO move to a more general place
-(defun order-find (group-element multiplication identity-test &optional (order-bound))
-  (iter (for n from 1 to order-bound)
-        (for g initially group-element then (funcall multiplication g group-element))
-        (when (funcall identity-test g)
-          (return n))
-        (finally (return nil))))
-
 (defun ec-rational-p (point)
   (and (rationalp (x point))
        (rationalp (y point))

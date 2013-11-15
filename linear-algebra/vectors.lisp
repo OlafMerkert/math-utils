@@ -1,6 +1,6 @@
 (defpackage :linear-algebra/vectors
   (:nicknames :vectors)
-  (:shadow :vector :fill-array)
+  (:shadow :vector)
   (:use :cl :ol :iterate)
   (:export
    #:entries
@@ -34,11 +34,21 @@
    #:droprows-from
    #:make-matrix-from-rows
    #:elementwise-operation
-   #:multi-dim-dotimes+))
+   #:multi-dim-dotimes+
+   #:make-diagonal-vector
+   #:make-diagonal-matrix))
 
 (in-package :linear-algebra/vectors)
 
-(defclass vector (generic-math-object)
+(ew
+(defclass empty-vector (gm:generic-math-object)
+   ()
+   (:documentation "A vector without any entries.")))
+
+(defconstant/g +empty-vector+ (make-instance 'empty-vector)
+  "One empty vector for special cases.")
+
+(defclass vector (gm:generic-math-object)
   ((entries :initarg :entries
                  :accessor entries))
   (:documentation "Model a vector representated by a multi-dimensional array."))
@@ -51,6 +61,9 @@
 
 (defmethod dimensions ((vector vector))
   (array-dimensions (entries vector)))
+
+(defmethod dimensions ((vector empty-vector))
+  nil)
 
 (defun mref (vector-or-matrix &rest indices)
   "access vector or matrix entries, where indexing start with 0."
@@ -118,47 +131,6 @@ instead of a vector."
 (defun make-matrix% (dimensions fill-function)
   "as make-vector%, but return a matrix instead."
   (make-vector% dimensions fill-function 'matrix))
-
-;;; TODO move this into ol-utils, this is just so useful.
-(defun multi-dim-dotimes+ (index-function positions)
-  "a helper function for FILL-ARRAY."
-  ;; just reverse the positions once here, so we don't have to reverse
-  ;; the index-lists all the time.
-  (setf positions (reverse positions))
-  (labels ((index-range (position)
-             ;; normalise the range information
-             (if (listp position)
-                 (values (first position) (second position))
-                 (values 0 position)))
-           (rec (positions indices)
-             (if positions
-                 ;; more ranges to iterate over
-                 (multiple-value-bind (start end) (index-range (first positions))
-                   (dotimes+ (i start end)
-                       ((rest (rest positions)))
-                     (rec rest
-                          (cons i indices))))
-                 ;; all index information available
-                 (funcall index-function indices))))
-    (rec positions nil)))
-
-
-(defun fill-array (array fill-function &optional (positions nil positions?))
-  "fill the ARRAY with the FILL-FUNCTION in the places given by
-POSITIONS. POSITIONS is a list of index ranges, where an index range
-is either a tuple (start end) with inclusive start and exclusive end,
-or simply an integer end, equivalent to (0 end). FILL-FUNCTION will be
-called in the same way as aref--first argument is the array, the
-remaining are the indices. "
-  (unless positions?
-    (setf positions (array-dimensions array)))
-  ;; return the now filled array
-  (multi-dim-dotimes+
-   (lambda (indices)
-     (setf (apply #'aref        array indices)
-           (apply fill-function array indices)))
-   positions)
-  array)
 
 (ew
   (defun make-vector/general (human dimensions index-vars fill-form &optional vector-type)
@@ -346,6 +318,8 @@ elementwise operations."
   indices)
 
 (defun droprows-from (vector i)
+  "Remove all rows with index starting from i"
+  ;; if i coincides with the total number of rows ...
   (if (= i (first (dimensions vector)))
       vector
       (droprows-from% vector i)))
@@ -383,13 +357,13 @@ elementwise operations."
                           (ilambda (this &rest indices)
                             (let ((ind-a (subseq indices 0 split))
                                   (ind-b (subseq indices split)))
-                              (gm:summing (i 0 m-a t)
+                              (gm:gm-summing (i 0 m-a t)
                                           (gm:* (apply #'aref entries-a (append1 ind-a i))
                                                 (apply #'aref entries-b i ind-b)))))
                           return-type)
             ;; special case if dims is empty list (i.e. dot-product
             ;; of two simple vectors)
-            (gm:summing (i 0 m-a t)
+            (gm:gm-summing (i 0 m-a t)
                         (gm:* (aref entries-a i) (aref entries-b i))))))))
 
 (defmethod gm:generic-* ((matrix-a matrix) (matrix-b matrix))
@@ -532,7 +506,7 @@ elementwise operations."
 (defun print-vector (stream array)
   (case (length (array-dimensions array))
     (1 (format stream "~{~A~^ ~}" (coerce array 'list)))
-    (2 (format stream "~&~{~{~,3T~A~}~%~}" (vector2->list  array)))
+    (2 (format stream "~&~{~{~,4T~A~}~%~}" (vector2->list  array)))
     (t (format stream "~A" array))))
 
 

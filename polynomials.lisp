@@ -2,9 +2,10 @@
   (:shadowing-import-from :fractions :numerator :denominator)
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :generic-math :summing)
+  (:import-from :generic-math :gm-summing)
   (:use :cl :ol :generic-math
-        :iterate :fractions)
+        :iterate :fractions
+        :finite-fields)
   (:export
    :degree
    :nth-coefficient%
@@ -26,7 +27,11 @@
    :content
    :make-monic
    :non-constant-p
-   :constant-p))
+   :constant-p
+   :poly-fast-modulus
+   :random-polynomial/non-constant
+   :random-polynomial
+   :ggt-poly))
 
 (in-package :polynomials)
 
@@ -41,7 +46,7 @@
   coefficient the first entry of COEFFICIENTS."))
 
 ;; unify polynomial interface with power series interface
-(defmethod degree ((rational rational)) 0)
+(defmethod degree (constant) 0)
 
 (defmethod degree ((polynomial polynomial))
   (1- (length (coefficients polynomial))))
@@ -60,6 +65,9 @@
 (defmethod nth-coefficient ((polynomial polynomial) n)
   (let ((d (degree polynomial)))
     (nth-coefficient% polynomial (- d n))))
+
+(defmethod nth-coefficient (constant (n (eql 0)))
+  constant)
 
 (defun constant-coefficient (polynomial)
   "This is just an abbreviation for (nth-coefficient p 0)"
@@ -133,7 +141,7 @@
                        (:index-var n
                                    :default-value 0
                                    :finite (+ deg-a deg-b 1))
-                     (summing (i (max 0 (- n deg-b))
+                     (gm-summing (i (max 0 (- n deg-b))
                                  (min n deg-a))
                               (gm:* (aref array-a i)
                                     (aref array-b (- n i))))))))
@@ -220,31 +228,70 @@ Keep this in mind when using."
 ;; TODO provide condition when division has remainder
 
 (defun poly-divisible-p (divisor polynomial)
-  (let ((remainder (nth-value 1 (generic-/ polynomial divisor))))
+  (let ((remainder (divr polynomial divisor)))
     (or (zero-p remainder)
         (values nil remainder))))
 
 
 ;;; TODO figure out contents for rationals vs integers
+;;; TODO what about the sign
 
-(defmethod content ((a integer)) a)
+(defmethod content ((a integer)) (abs a))
 
 (defmethod content ((a rational)) 1)
 
 (defmethod content ((a polynomial))
-  (reduce #'ggt (coefficients a)))
+  (reduce #'ggt (coefficients a) :key #'content))
+
+;; provide a simplified version for polynomials over fields
+(defun ggt-poly (a b)
+  (if (zero-p b)
+      (if (constant-p a) 1 (make-monic a))
+      (ggt b (divr a b))))
 
 (defmethod ggt ((a polynomial) (b polynomial))
-  (if (zero-p b) a
-      (gm:* (ggt (content a) (content b))
-            (ggt b (nth-value 1 (generic-/ a b))))))
+  (cond ((or (modulus a) (modulus b))
+         ;; over finite field, ggt should be monic
+         (if (zero-p b) (nth-value 0 (make-monic a))
+             (ggt b (divr a b))))
+        (t
+         ;; otherwise, we also keep track of content
+         (if (zero-p b) a
+             (gm:* (ggt (content a) (content b))
+                   (ggt b (divr a b)))))))
 
 (declare-commutative rational polynomial ggt)
 
+(defmethod ggt ((a integer) (b polynomial))
+  (cond ((zerop a) b)
+        ((or (cl:= a 1) (cl:= a -1)) 1)
+        (t (ggt (content a) (content b)))))
+
 (defmethod ggt ((a rational) (b polynomial))
-  (if (zerop a)
-      b
-      1))
+  ;; a = 0 is impossible, this should always return 1 because we are
+  ;; working with polynomial over the field of rationals.
+  1)
+
+(declare-commutative integer-mod polynomial ggt)
+
+(defmethod ggt ((a integer-mod) (b polynomial))
+  (if (zero-p a)
+      (make-monic b)
+      (int% 1 (modulus a))))
+
+(defmethod ggt ((a integer-mod) (b integer))
+  (if (and (zero-p a) (zero-p b))
+      (error "GGT of two 0")
+      (int% 1 (modulus a))))
+
+(declare-commutative integer-mod integer ggt)
+
+(defmethod content ((a integer-mod))
+  (warn "Why is `content' called on ~A?" a)
+  (if (zero-p a)
+      (int% 0 (modulus a))
+      (int% 1 (modulus a))))
+
 
 ;;; there still remains some trouble with signs, but this seems to
 ;;; have got rid of
@@ -279,6 +326,7 @@ Keep this in mind when using."
                                      (coefficients polynomial)))))
 
 (defmethod derivative (number &key (var 'X))
+  (declare (ignore var))
   (zero number))
 
 (defmethod derivative ((polynomial polynomial) &key (var 'X))
@@ -341,4 +389,26 @@ Keep this in mind when using."
   (let ((lk (leading-coefficient polynomial)))
     (when (zero-p lk)
       (error "Cannot make non-simplified polynomial monic."))
-   (poly*constant polynomial (gm:/ lk))))
+   (values (poly*constant polynomial (gm:/ lk)) lk)))
+
+;;; helper functions for polynomials over finite fields:
+(defparameter poly-fast-modulus t)
+
+(defmethod finite-fields:modulus (number)
+  ;; by default, no modulus
+  nil)
+
+(defmethod finite-fields:modulus ((poly polynomial))
+  (let ((p (finite-fields:modulus (leading-coefficient poly))))
+    ;;  perhaps check all coefficients have same modulus.
+    (if (or poly-fast-modulus (every (lambda (x) (cl:= p (finite-fields:modulus x))) (coefficients poly)))
+        p
+        (error "Different moduli in the coefficients of polynomial ~A" poly))))
+
+(defun random-polynomial (p d)
+  "Choose a random polynomial of degree < d over F_p."
+  (apply #'make-polynomial (iter (repeat d) (collect (finite-fields:int% (random p) p)))))
+
+(defun random-polynomial/non-constant (p d)
+  "Choose a random non-constant polynomial of degree < d over F_p."
+  (until-t (non-constant-p (random-polynomial p d))))

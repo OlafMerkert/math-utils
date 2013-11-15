@@ -19,6 +19,9 @@
 ;;; LU decomposition for 2d matrices
 
 (defun find-pivot-helper (find-pivot matrix row column)
+  "Pivot search always happens on a `column' of `matrix', where we
+start from `row'. The found pivot is returned as absolute column
+number."
   (aif (funcall find-pivot
                 (subseq (entries (subcol matrix column)) row))
        (+ row it)))
@@ -28,6 +31,9 @@
   (position-if-not #'gm:zero-p seq))
 
 (defun position-maximum (seq &key (key #'identity) (compare #'<))
+  "Find the index in `seq' where the image under `key' is maximal
+w.r.t. `compare', where we favor the second argument of `compare'.
+Returns as second value this maximal value."
   (let* ((seq2 (map 'cl:vector key seq))
          (max (elt seq2 0))
          (max-index 0))
@@ -57,7 +63,7 @@ with the smallest order in P."
     (position-maximum seq :key (lambda (x) (nt:ord-p p (finite-fields:remainder x)))
                       :compare #'>)))
 
-;;; TODO perhaps choose maximal entry
+;;; perhaps choose maximal entry
 ;;; for this there are probably different strategies
 
 (defun lu-decomposition (matrix &optional normalise-pivot (find-pivot #'find-pivot))
@@ -68,7 +74,6 @@ COMPUTE-L, COMPUTE-L-INVERSE and COMPUTE-L-P, as well as APPLY-L and
 APPLY-L-INVERSE. RANK is the rank of the matrix (equal for A and U).
 STEP-COLS lists the columns where the next row starts, OTHER-COLS is
 the complement."
-  ;; TODO what about normalising stuff at the pivot?
   (let (row-ops
         pivot-transpositions
         (current-row 0)
@@ -100,16 +105,16 @@ the complement."
                      (setf pivot-entry (gm:- pivot-entry)))
                  ;; then go on clearing the column below the pivot
                  (iter (for i from (+ 1 current-row) below m)
-                       (for entry = (mref matrix i current-column))
+                       (for entry next (mref matrix i current-column))
                        (unless (gm:zero-p entry)
                          (let ((rowop (make-add-row/col-matrix i current-row
                                                                (gm:/ entry pivot-entry)
                                                                m)))
                            (push rowop row-ops)
-                           (setf matrix (gm:generic-* rowop matrix)))))))
+                           (setf matrix (gm:generic-* rowop matrix))))))
+               ;; now we mounted the ladder
+               (incf current-row))
              (push current-column other-cols))
-        ;; now we mounted the ladder
-        (incf current-row)
         ;; no pivot found means the column was zero below current-row,
         ;; so try the next one.
         ))
@@ -118,44 +123,46 @@ the complement."
             (nreverse step-cols) (nreverse other-cols))))
 ;;; TODO mark the matrix as triangular.
 
+(defun compute-elementary-matrix-product (matrix-list &key reverse inverse vector)
+  (reduce #'gm:generic-*
+          (if reverse
+              (reverse matrix-list)
+              matrix-list)
+          :key (if inverse #'inverse nil)
+          :from-end t ; want elementary always on the left
+          :initial-value (or vector
+                             (identity-matrix (dimension (first matrix-list))))))
+
+
 (defun compute-l (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
   ;; L-LIST in order, with L U = A we get L = L_k^-1 ... L_1^-1
-  (reduce #'gm:generic-*
-          (reverse l-list)
-          :key #'inverse
-          :from-end t ; want elementary on the left
-          :initial-value (or vector
-                             (identity-matrix (dimension (first l-list))))))
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product l-list :reverse t :inverse t :vector vector))
 
 (defun compute-l-inverse (l-list &optional vector)
   ;; we obtained U = L_1 L_2 ... L_k A where L_i are elements of
-  ;; L-LIST in order, with L U = A we get L^1 = L_1 ... L_k
-  (reduce #'gm:generic-*
-          l-list
-          :from-end t ; want elementary on the left
-          :initial-value (or vector
-                             (identity-matrix (dimension (first l-list))))))
+  ;; L-LIST in order, with L U = A we get L^-1 = L_1 ... L_k
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product l-list :reverse nil :inverse nil :vector vector))
 
-(defun map-reverse (fn lst &optional acc)
-  (if (consp lst)
-      (map-reverse fn (cdr lst) (cons (funcall fn (car lst)) acc))
-      acc))
-
-(defun compute-l-p (l-list p-list)
-  ;; we obtained U = L_1 L_2 ... L_k A where some L_i where P_j, so
+(defun compute-l-p (l-list p-list &optional vector)
+  ;; we obtained U = L_1 L_2 ... L_k A where some L_i are P_j, so
   ;; p-list contains some of the P^T = P_1 ... P_r = L_k_1 ... L_k_r with
   ;; k_1 < ... < k_r. Now we want L U = P A, so P^T L U = P^T P A = A,
   ;; thus L = P_1 ... P_r L_k^-1 ... L_1^-1 and P = P_r ... P_1
-  (values (reduce #'gm:generic-*
-                  (append p-list
-                          (map-reverse #'inverse l-list))
-                  :from-end t
-                  :initial-value (identity-matrix (dimension (first l-list))))
-          (reduce #'gm:generic-*
-                  (reverse p-list)
-                  :from-end t
-                  :initial-value (identity-matrix (dimension (first p-list))))))
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product
+   p-list :reverse nil :inverse nil
+   :vector (compute-elementary-matrix-product
+            l-list :reverse t :inverse t
+            :vector vector)))
+
+(defun compute-p (p-list &optional vector)
+  ;; see above
+  (declare (inline compute-elementary-matrix-product))
+  (compute-elementary-matrix-product p-list :reverse nil :inverse nil :vector vector))
+
 
 ;;; TODO apply-l and apply-l-inverse
 
@@ -169,31 +176,33 @@ the complement."
     ;; length of step-cols is exactly the rank, and the other cols
     ;; correspond to the generators of the kernel
     (values
-     (iter (for j in other-cols)
-           (collect (nullspace-column triangular step-cols
-                                      j (subcol triangular j))))
-     rank)))
+     (mapcar (lambda (j) (nullspace-column triangular step-cols j)) other-cols)
+     ;; dimension of the kernel is the number of other-cols
+     (- (nth 1 (dimensions matrix)) rank))))
 
-(defun nullspace-column (triangular step-cols col-index column2)
-  (let ((column1 (solve-upper-triangular triangular (gm:- column2) step-cols))
-        (column-full (make-array (second (dimensions triangular)) :initial-element 0)))
-    (iter (for i in step-cols)
-          (for e in-vector (entries column1))
-          (setf (aref column-full i) e))
-    (setf (aref column-full col-index) 1)
-    (make-instance 'vector :entries column-full)))
+(defun nullspace-column (triangular step-cols col-index)
+  ;; express `column2' as unique linear combination of step-columns
+  (let ((column1 (solve-upper-triangular triangular (gm:- (subcol triangular col-index)) step-cols)))
+    ;; as `solve-upper-triangular' only fills `step-cols', we need to
+    ;; fill in the missing one:
+    (setf (aref (entries column1) col-index) 1)
+    column1))
 
 (defun solve-upper-triangular (triangular vector &optional (step-cols (range (second (dimensions triangular)))))
   "Solve a matrix equation with only zeroes below the diagonal. We
-assume triangular is an upper triangular matrix of full rank, where
-STEP-COLS gives for each row the first column with non-zero entry."
+assume `triangular' is an upper triangular matrix of full rank, where
+`step-cols' gives for each row the first column with non-zero entry."
   (let* ((n (length step-cols))
+         ;; start from the end, because it is upper triangular
          (step-cols (reverse step-cols))
-         (result (make-array n :initial-element 0))
+         ;; not that only the coefficients for the step-cols will be nonzero
+         (result (make-array (second (dimensions triangular)) :initial-element 0))
          (entries (entries triangular)))
     (iter (for i from (- n 1) downto 0)
           (for j in step-cols)
-          (setf (aref result i)
+          ;; compute the coefficient, think of `triangular' as a
+          ;; quadratic matrix, simply ignore the non-step-columns
+          (setf (aref result j)
                 (gm:/ (gm:- (mref vector i)
                             (reduce #'gm:+ previous-columns
                                     :key (lambda (c) (gm:* (aref entries i c)
@@ -201,6 +210,38 @@ STEP-COLS gives for each row the first column with non-zero entry."
                       (aref entries i j)))
           (collect j into previous-columns at beginning))
     (make-instance 'vector :entries result)))
+
+(defun linear-solve (matrix vector &key (all-solutions t))
+  "Solve the linear system, return one base solution (if it exists),
+  and as second value the vectors spanning the affine solution space
+  at the base solution. The third value gives the rank of the
+  `matrix'."
+  (mvbind (triangular l p rank step-cols other-cols) (lu-decomposition matrix t)
+    (declare (ignore p))
+    ;; first apply `l' and `p' onto `vector', recall that `p' is a
+    ;; sublist of `l'
+    (let ((vector1 (compute-l-inverse l vector)))
+      ;; next, we test that the entries from rank are all 0
+      (if (not (every #'gm:zero-p (subseq (entries vector1) rank)))
+          ;; no solutions
+          nil
+          ;; otherwise, get rid of the zero stuff and compute the
+          ;; solution
+          (progn
+            (setf triangular (droprows-from triangular rank)
+                  vector1 (droprows-from vector1 rank))
+            (values
+             ;; we get the base solution
+             (solve-upper-triangular triangular vector1 step-cols)
+             ;; and the generators of the nullspace, which describe
+             ;; all the other solutions
+             (cond (all-solutions
+                    (mapcar (lambda (j) (nullspace-column triangular step-cols j))
+                            other-cols))
+                   ((null other-cols) nil)
+                   (t :uncomputed))
+             rank))))))
+
 
 ;;; TODO what about destructive operations (for efficiency?)
 ;;; can probably be implemented as additional type

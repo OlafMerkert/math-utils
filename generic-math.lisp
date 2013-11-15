@@ -1,8 +1,9 @@
 (defpackage :generic-math
   (:nicknames :gm)
   (:shadow :+ :- :* :/ :=
-           :expt :^ :sqrt)
-  (:use :cl :ol)
+           :expt :^ :sqrt
+           :expt-mod)
+  (:use :cl :ol :iterate)
   (:export
    #:argument
    #:+ #:generic-+
@@ -21,7 +22,6 @@
    #:simplified-p
    #:zero-p
    #:one-p
-   #:summing
    #:create-binary->-wrappers
    #:print-object/tex
    #:print-object/helper
@@ -36,11 +36,31 @@
    #:generic-math-object
    #:^
    #:unsupported-operation-on-unsimplified
-   #:unsupported-operation))
+   #:unsupported-operation
+   #:expt-mod
+   #:+gm-shadow-imports+
+   #:+frac-shadow-imports+
+   #:divr
+   #:gm-summing
+   #:+cl-shadow-imports+
+   #:+ol-shadow-imports+))
 
 (in-package :generic-math)
 
 (define-condition unsupported-operation () ())
+
+;; some useful constants for shadowing imports
+(defparameter +gm-shadow-imports+
+  '(:shadowing-import-from :generic-math :+ :- :* :/ := :expt :sqrt :^ :_))
+
+(defparameter +cl-shadow-imports+
+  '(:shadowing-import-from :common-lisp :+ :- :* :/ := :expt :sqrt))
+
+(defparameter +ol-shadow-imports+
+  '(:shadowing-import-from :ol-utils :^ :_))
+
+(defparameter +frac-shadow-imports+
+  '(:shadowing-import-from :fractions :numerator :denominator))
 
 (defalias ^ expt (base exponent))
 
@@ -126,8 +146,17 @@ as :from-end parameter to reduce."
 (defgeneric div (number modulus)
   (:documentation "The division function for Euclidean rings."))
 
+(defun divr (number modulus)
+  "The remainder of the generic division."
+  (nth-value 1 (div number modulus)))
+
 (defmethod div ((number number) (modulus number))
   (floor number modulus))
+
+(defmethod div ((number (eql 0)) modulus)
+  (when (zero-p modulus)
+    (error "Division by 0!"))
+  (values 0 0))
 
 (defgeneric expt (base power))
 (defmethod expt ((base number) (power number))
@@ -258,7 +287,7 @@ to override this if a better algorithm is available."
 ;; TODO leverage iterate for this sort of stuff. perhaps even use a
 ;; macro to simplify things even more. (we probably want a multiplying
 ;; thingy too)
-(defmacro! summing ((var o!start o!stop &optional below) expr)
+(defmacro! gm-summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
      (do ((,var ,g!start (cl:+ 1 ,var)))
          ((,(if below '>= '>)

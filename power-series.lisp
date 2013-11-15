@@ -1,7 +1,7 @@
 (defpackage :power-series
   (:shadowing-import-from :cl :+ :- :* :/ := :expt :sqrt)
   (:shadowing-import-from :ol :^ :_)
-  (:shadowing-import-from :generic-math :summing)
+  (:import-from :generic-math :gm-summing)
   (:use :cl :ol :generic-math
         :iterate
         :polynomials
@@ -161,13 +161,13 @@ by FORMULA where INDEX is anaphorically bound."
                               (degree series-b))
                    :coefficients
                    (make-lazy-array
-                       (:index-var n
-                                   :default-value 0
-                                   :finite (la-finite-test (array-a array-b)
-                                             (+ array-a array-b)))
-                     (summing (i 0 n)
-                              (gm:* (sref array-a i)
-                                    (sref array-b (- n i))))))))
+                    (:index-var n
+                                :default-value 0
+                                :finite (la-finite-test (array-a array-b)
+                                                        (+ array-a array-b)))
+                    (gm-summing (i 0 n)
+                                (gm:* (sref array-a i)
+                                      (sref array-b (- n i))))))))
 
 (defmethod generic-* ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-* (constant-coefficient series-a)
@@ -202,7 +202,7 @@ by FORMULA where INDEX is anaphorically bound."
                                                           :index-var n
                                                           :default-value 0)
                                    (gm:/ (gm:- (sref cn n)
-                                               (summing (i 1 n)
+                                               (gm-summing (i 1 n)
                                                         (gm:* (sref an i)
                                                               (aref this (- n i)))))
                                          a0)))))
@@ -229,7 +229,7 @@ by FORMULA where INDEX is anaphorically bound."
                    (make-lazy-array (:start ((gm:/ (constant-coefficient series-numer) a0))
                                             :index-var n
                                             :default-value 0)
-                     (gm:/ (gm:- (summing (i 1 n)
+                     (gm:/ (gm:- (gm-summing (i 1 n)
                                           (gm:* (sref an i)
                                                 (aref this (- n i)))))
                            a0)))))
@@ -276,7 +276,7 @@ by FORMULA where INDEX is anaphorically bound."
                                             :index-var n
                                             :default-value 0)
                      (gm:/ (gm:- (sref b n)
-                                 (summing (i 1 n t) (gm:* (aref this i)
+                                 (gm-summing (i 1 n t) (gm:* (aref this i)
                                                           (aref this (- n i)))))
                            a0 2)))))
 

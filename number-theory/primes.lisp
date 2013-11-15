@@ -10,7 +10,8 @@
    :divides-p
    :divisible-p
    :erastothenes-sieve
-   :ord-p))
+   :ord-p
+   :next-prime))
 
 (in-package :number-theory/primes)
 

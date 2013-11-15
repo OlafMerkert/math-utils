@@ -1,6 +1,8 @@
 (defsystem math-utils
   :depends-on (ol-utils cl-utilities iterate)
   :components ((:file "generic-math")
+               (:file "general-algorithms"
+                      :depends-on ("generic-math"))
                (:file "infinite-math" :depends-on ("generic-math"))
                (:file "infinite-sequence" :depends-on ("generic-math"
                                                        "infinite-math"))
@@ -37,8 +39,15 @@
                                                      "finite-fields"
                                                      "polynomials"
                                                      "fractions"
-                                                     "linear-algebra")
-                        :components ((:file "polynomials-modp")))
+                                                     "linear-algebra"
+                                                     "number-theory")
+                        :serial t
+                        :components ((:file "datastructures")
+                                     (:file "squarefree-factorisation")
+                                     (:file "degree-separation")
+                                     (:file "berlekamp")
+                                     (:file "finite-field-polynomials")
+                                     (:file "rational-polynomials")))
                (:file "valuations" :depends-on ("infinite-math"
                                                 "number-theory"
                                                 "polynomials" "power-series"
