@@ -35,7 +35,8 @@
 ;;; general (infinite) sequence API
 (defgeneric finite-sequence-p (sequence))
 (defgeneric length (sequence))
-
+;; use this shadowing definition only in this package, for the rest of
+;; the world define
 (declaim (inline sequence-length))
 (defun sequence-length (sequence)
   (length sequence))
@@ -47,27 +48,38 @@
   `(set-sref ,iseq ,n ,value))
 
 ;; support special keyword `:start' and `:end' instead of integer
-;; indices. As the end is often infinite, we do an additional check.
-(defmethod sref (sequence (n (eql :start)))
-  (sref sequence (start sequence)))
-(defmethod set-sref (sequence (n (eql :start)) value)
-  (set-sref sequence (start sequence) value))
-
+;; indices. As these can be infinite, we do an additional check.
 (define-condition infinite-index ()
   ((index :initarg :index
           :initform nil
           :accessor index)))
+
+(defmethod sref (sequence (n (eql :start)))
+  (with-slots (start) sequence
+    (if (infinite-p start)
+        (error 'infinite-index :index start)
+        (sref sequence start))))
+
+(defmethod set-sref (sequence (n (eql :start)) value)
+  (with-slots (start) sequence
+    (if (infinite-p start)
+        (error 'infinite-index :index start)
+        (set-sref sequence start value))))
 
 (defmethod sref (sequence (n (eql :end)))
   (with-slots (end) sequence
     (if (infinite-p end)
         (error 'infinite-index :index end)
         (sref sequence end))))
+
 (defmethod set-sref (sequence (n (eql :end)) value)
   (with-slots (end) sequence
     (if (infinite-p end)
         (error 'infinite-index :index end)
         (set-sref sequence end value))))
+
+;; for reasons of symmetry, both `start' and `end' are supposed to be
+;; inclusive (unless they are infinite)
 
 (defgeneric subsequence (sequence start &optional end))
 
@@ -146,7 +158,7 @@
 
 (defmethod length ((iseq infinite-sequence))
   (with-slots (start end) iseq
-    (gm:- end start)))
+    (gm:+ 1 (gm:- end start))))
 
 (defmethod finite-sequence-p ((seq infinite-sequence))
   (numberp (length seq)))
@@ -163,9 +175,9 @@ index `n' to the array index `i'."
 
 (defun ensure-array-size (array size)
   "For an adjustable `array', make sure that it can hold at least
-`size' elements."
-  (if (<= (cl:length array) size)
-      (adjust-array array (+ size array-size-step) :initial-element +uncalculated+)
+`size'+1 elements (i.e. we can get at the index `size')."
+  (if (<= (cl:length array) (+ 1 size))
+      (adjust-array array (+ 1 size array-size-step) :initial-element +uncalculated+)
       array))
 
 (declaim (inline in-range))
@@ -173,7 +185,7 @@ index `n' to the array index `i'."
   "Make sure the given index is valid for the sequence."
   (and (integerp n)
        (i<= (start iseq) n)
-       (i< n (end iseq))))
+       (i<= n (end iseq))))
 
 (define-condition index-out-of-range ()
   ((start :initarg :start :reader start)
@@ -223,7 +235,7 @@ uncalculated values."
       (setf (aref data i)
             value))))
 
-;;; TODO do we actually want mutability??
+;;; todo do we actually want mutability??
 ;;; todo track mutations and allow automatic recomputing
 
 ;;; important mapping and slicing functions
@@ -238,14 +250,14 @@ uncalculated values."
 
 
 
-;;; todo helper functions to quickly transform arrays into infinite
+;;; helper functions to quickly transform arrays into infinite
 ;;; sequences and so on.
 
 (defun compute-all (iseq)
   "For finite sequences, compute all elements of the sequence."
   (if (sequential-filling-p iseq)
-      (sref iseq (- (end iseq) 1))
-      (iter (for i from (start iseq) below (end iseq))
+      (sref iseq (end iseq))
+      (iter (for i from (start iseq) to (end iseq))
             (sref iseq i))))
 
 (define-condition infinite-length-not-supported () ())
@@ -255,24 +267,24 @@ uncalculated values."
   (if (finite-sequence-p iseq)
       (progn
         (compute-all iseq)
-        (subseq (data iseq) 0 (- (end iseq) (start iseq))))
+        (subseq (data iseq) 0 (length iseq)))
       (error 'infinite-length-not-supported)))
 
 (defun array->iseq (array &key (start 0))
   "Generate a finite sequence from an `array'."
   (make-instance 'infinite+-sequence
                  :start start
-                 :end (+ start (length array))
+                 :end (+ start (length array) -1)
                  :data array))
 
 (defun list->iseq (list &key (start 0))
   "Generate a finite sequence from a `list'."
   (make-instance 'infinite+-sequence
                  :start start
-                 :end (+ start (length list))
+                 :end (+ start (length list) -1)
                  :data (coerce list 'vector)))
 
-;;; todo special indirect infinite sequences (useful for slicing and
+;;; special indirect infinite sequences (useful for slicing and
 ;;; shifting?) that allow sharing content by reusing the backing array
 (defclass indirect-sequence (infinite-sequence)
   ((refer-to :initarg :refer-to
@@ -344,7 +356,7 @@ uncalculated values."
 
 (defmethod seq->array ((iseq indirect-sequence))
   (if (finite-sequence-p iseq)
-      (iter (for i from (start iseq) below (end iseq))
+      (iter (for i from (start iseq) to (end iseq))
             (collect (sref iseq i) result-type vector))
       (error 'infinite-length-not-supported)))
 
@@ -361,17 +373,19 @@ uncalculated values."
   value. The `end' slot is automatically set to `start' + (length
   `data'). "))
 
+;; todo see how well this standard-value thing works out, and whether
+;; considering it as a finite sequence is useful
 (defmethod initialize-instance :after ((iseq infinite-sequence/standard-value) &key)
   ;; adjust end
   (with-slots (start end data) iseq
-    (setf end (+ start (length data)))))
+    (setf end (+ start (length data) -1))))
 
 
 (defmethod finite-sequence-p ((iseq infinite-sequence/standard-value))
   t)
 
 (defmethod length ((iseq infinite-sequence/standard-value))
-  (- (end iseq) (start iseq)))
+  (+ 1 (- (end iseq) (start iseq))))
 
 (defmethod sref ((iseq infinite-sequence/standard-value) (n integer))
   (if (in-range iseq n)
@@ -395,14 +409,14 @@ uncalculated values."
 (defun list->iseq/sv (list &key (start 0) standard-value)
   (make-instance 'infinite-sequence/standard-value
                  :start start
-                 :end (+ start (length list))
+                 :end (+ start (length list) -1)
                  :data (coerce list 'vector)
                  :standard-value standard-value ))
 
 (defun array->iseq/sv (array &key (start 0) standard-value)
   (make-instance 'infinite-sequence/standard-value
                  :start start
-                 :end (+ start (length array))
+                 :end (+ start (length array) -1)
                  :data array
                  :standard-value standard-value ))
 
@@ -420,7 +434,7 @@ uncalculated values."
   sequence-offset)
 
 (defmethod end ((sequence sequence))
-  (+ sequence-offset (cl:length sequence)))
+  (+ sequence-offset (cl:length sequence) -1))
 
 (defmethod sref ((array array) (n integer))
   (aref array (- n sequence-offset)))
@@ -433,7 +447,7 @@ uncalculated values."
   (setf (nth (- n sequence-offset) list) value))
 
 (defmethod subsequence ((sequence sequence) start &optional end)
-  (subseq sequence start end))
+  (subseq sequence start (+ 1 end)))
 
 (defmethod map-sequence (function (list list))
   (map 'list function list))
@@ -462,24 +476,24 @@ uncalculated values."
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
 ;;; shorthand notation for most frequent uses
-(defmacro inf+seq (start (index-var) &body generating-expression)
+(defmacro inf+seq (initial-data (index-var) &body generating-expression)
   `(make-instance 'infinite+-sequence
                   :fill-strategy :sequential
-                  :data ,start
+                  :data ,initial-data
                   :generating-function
                   (ilambda (this ,index-var)
                     ,@generating-expression)))
 
-(defmacro finseq (start standard-value)
+(defmacro finseq (initial-data standard-value)
   `(make-instance 'infinite-sequence/standard-value
                   :standard-value ,standard-value
-                  :data ,start))
+                  :data ,initial-data))
 
-;;; todo sequences towards -infinity
-(defmacro inf-seq (start (index-var) &body generating-expression)
+;;; sequences towards -infinity
+(defmacro inf-seq (initial-data (index-var) &body generating-expression)
   `(make-instance 'infinite--sequence
                   :fill-strategy :sequential
-                  :data ,start
+                  :data ,initial-data
                   :generating-function
                   (ilambda (this ,index-var)
                     ,@generating-expression)))
@@ -491,12 +505,12 @@ uncalculated values."
         ((eq n infinity-) infinity+)
         ((eq special :start)
          ;; this is the inclusive lower bound, it should become a
-         ;; exclusive upper bound, so we go one up
-         (cl:- 1 n))
+         ;; inclusive upper bound, so we go one up
+         (cl:- n))
         ((eq special :end)
-         ;; this is the exclusive upper bound, it should become an
+         ;; this is the inclusive upper bound, it should become an
          ;; inclusive lower bound
-         (cl:- 1 n))
+         (cl:- n))
         (t (cl:- n))))
 
 (defclass infinite--sequence (indirect-sequence)
@@ -519,8 +533,6 @@ uncalculated values."
                          :data data
                          :generating-function (lambda (iseq2 n)
                                                 (funcall generating-function iseq2 (- n)))))))
-;; todo there is still a little problem with end being exclusive and
-;; start being inclusive. Do we change this? But then, what about infinity?
 
 ;; todo write some tests to make sure all of this stuff works properly
 
@@ -609,13 +621,14 @@ bounded from below or from above."
            (finally (return (values (subsequence iseq infinity- (+ i 1)) j)))))))
 
 (defmethod strip-if (test (seq sequence) &key (from :start) (limit limit))
-  ;; todo return number of stripped elements
   (ecase from
     (:start
-     (subseq seq (or (position-if-not test seq :end limit)
-                     (min (length seq) limit))))
+     (let* ((highbound (min (length seq) limit))
+            (pos (or (position-if-not test seq :end highbound) highbound)))
+       (values (subseq seq pos) pos)))
     (:end
-     (let ((lowbound (max 0 (- (length seq) limit))))
-       (subseq seq 0 (or (position-if-not test seq :from-end t :start lowbound)
-                         lowbound))))))
+     (let* ((lowbound (max 0 (- (length seq) limit)))
+            (pos (+ 1 (or (position-if-not test seq :from-end t :start lowbound)
+                          lowbound))))
+       (values (subseq seq 0 pos) (- (length seq) pos))))))
 
