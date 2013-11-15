@@ -5,6 +5,7 @@
                         :serial t
                         :components ((:file "packages")
                                      (:file "generic-math-tests")
+                                     (:file "infinite-sequence-tests")
                                      (:file "number-theory-tests")
                                      (:file "polynomial-tests")
                                      (:file "mpolynomial-tests")))))
