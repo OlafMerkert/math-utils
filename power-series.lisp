@@ -57,13 +57,13 @@
 (defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
   meaningful."
-  (not (zero-p (sref (coefficients series) :start))))
+  (not (zero-p (sref (coefficients series) :end))))
 
 (defmethod simplified-p ((series constant-series))
   t)
 
 (defmethod leading-coefficient ((power-series power-series))
-  (let ((lead-coeff (nth-coefficient power-series :start)))
+  (let ((lead-coeff (nth-coefficient power-series :end)))
     (if (not (zero-p lead-coeff))
         lead-coeff
         (error 'unsupported-operation-on-unsimplified))))
