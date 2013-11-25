@@ -84,3 +84,4 @@
       (is (sequence= stripped seq2)))
     ))
 
+;;; todo test standard-value implementation of infinite sequences

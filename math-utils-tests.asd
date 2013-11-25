@@ -8,4 +8,5 @@
                                      (:file "infinite-sequence-tests")
                                      (:file "number-theory-tests")
                                      (:file "polynomial-tests")
+                                     (:file "power-series-tests")
                                      (:file "mpolynomial-tests")))))
