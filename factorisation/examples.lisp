@@ -25,7 +25,7 @@
     (factorise poly)))
 
 (defun example-2 (n)
-  (let ((poly (- (make-monomial n 1) 1)))
+  (let ((poly (gm:- (make-monomial n 1) 1)))
     (dbug "Poly: ~A" poly)
     (factorise poly)))
 

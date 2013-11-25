@@ -1,14 +1,14 @@
 * math-utils
-collect all the useful math algorithms and functions that might come in handy in many places.
-
-* Matrizen
-** ~/lisp/algebra/matrix.lisp
-implements 2dim matrices
-** ~/Projekte/modular-linear-algebra/linalg-mod/linalg.lisp
-implements an abstract datastructure with multidimensional matrices
-
-** TODO Anforderungen
-Generische Operationen zwischen Matrizen (Inverse !)
-und evtl auch mit Nichtmatrizen
-sowie Unterscheidung von Matrizen und Tensoren (Multiplikation)
-Werkzeuge zum Erzeugen von Matrizen
+collect all the useful math algorithms and functions that might come
+in handy in many places.
+* Math data types
+** Finite fields
+** Fractions
+** Polynomials
+** Power/laurent series
+* Infinite sequences
+* Matrices & Linear algebra
+* Polynomial factorisation
+* Elliptic curves
+* Valutations
+* Elementary number theory
