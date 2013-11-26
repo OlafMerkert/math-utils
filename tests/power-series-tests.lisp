@@ -32,7 +32,6 @@
     (for-all ((index1 (gen-integer :min (- array-max-index) :max 9))
               (index2 (gen-integer :min (- array-max-index) :max 0))
               (index3 (gen-integer :min (- array-max-index) :max 3)))
-          
       (is (= index1 (power-series:nth-coefficient ps4 index1)))
       ;; comparison of different models
       (is (= (power-series:nth-coefficient cs index2)
@@ -44,11 +43,11 @@
     (is (gm:= ps2 ps3))))
 
 (test series-simplify
-  (let ((ps1 (power-series:make-power-series 10  0 0 0 8 9 7))
+  (let ((ps1 (power-series:make-power-series% 10  0 0 0 8 9 7))
         (ps2 (power-series:make-power-series/inf 4 (if (>= index -3) 0 4)))
         (ps3 (power-series:make-power-series/inf 6 (/ (+ 1 (^ index 2)))))
-        (ps4 (power-series:make-constant-series 0))
-        (ps5 (power-series:make-power-series 0  0)))
+        ;; (ps4 (power-series:make-constant-series 0))
+        (ps5 (power-series:make-power-series/inf 0 0)))
     (mvbind (simplified leading-zeroes) (gm:simplify ps1)
       (is (= leading-zeroes 3))
       (is (= 7 (power-series:degree simplified)))
@@ -61,10 +60,10 @@
       (is (= leading-zeroes 0))
       (is (= 6 (power-series:degree simplified)))
       (is (= 1/37 (power-series:leading-coefficient simplified))))
-    (mvbind (simplified leading-zeroes) (gm:simplify ps1)
+    (mvbind (simplified leading-zeroes) (gm:simplify ps5)
       (is (minusp leading-zeroes))
       ;; (is (= 7 (power-series:degree simplified)))
-      (is (gm:zero-p (power-series:leading-coefficient simplified))))))
+      (is (gm:zero-p (power-series:nth-coefficient simplified :end))))))
 
 (test series-add)
 

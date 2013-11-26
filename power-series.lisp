@@ -22,13 +22,15 @@
    #:coefficients
    #:make-power-series
    #:make-power-series/inf
-   #:leading-coefficient))
+   #:leading-coefficient
+   #:make-power-series%))
 
 (in-package :power-series)
 
 (declaim (inline finite-coefficients))
 (defun finite-coefficients (&rest coefficients)
-  (finseq (apply #'vector coefficients) 0))
+  ;; todo maybe the reverse operation should go into an iseq function??
+  (seq->iseq/sv (reverse coefficients) :start 0 :end (- (length coefficients) 1) :standard-value 0))
 
 
 (defclass power-series (generic-math-object)
@@ -85,7 +87,7 @@ pipe ends before."
       (make-constant-series (constant-coefficient polynomial))
       (make-instance 'power-series
                      :degree (degree polynomial)
-                     :coefficients (finseq (coefficients polynomial) 0))))
+                     :coefficients (seq->iseq/sv (coefficients polynomial) :start 0 :end (degree polynomial) :standard-value 0))))
 
 (defmethod -> ((target-type power-series) (polynomial polynomial) &key)
   (-> 'power-series polynomial))
@@ -97,24 +99,32 @@ pipe ends before."
   generic-/
   generic-=)
 
-(defun make-power-series (degree leading-coefficient &rest coefficients)
-  "Create a new power-series with finitely many non-zero COEFFICIENTS.
-The LEADING-COEFFICIENT must be non-zero.  If DEGREE is nil, we assume
-you want to define a polynomial, thus the DEGREE is just the number of
-COEFFICIENTS."
-  (when (zero-p leading-coefficient)
-    (error "Cannot define a power series [~A~{ ~A~}] with zero leading coefficient."
-           leading-coefficient coefficients))
+(defun make-power-series% (degree leading-coefficient &rest coefficients)
+  "As `make-power-series', but don't check whether the
+`leading-coefficient' is zero."
   (make-instance 'power-series
-                 :degree (or degree (length coefficients))
-                 :coefficients (apply #'finite-coefficients leading-coefficient coefficients)))
+                 :degree (or degree (- (length coefficients) 1))
+                 :coefficients (seq->iseq/sv (reverse (cons leading-coefficient coefficients))
+                                             :end degree :start infinite-math:infinity-
+                                             :standard-value 0)))
+
+(defun make-power-series (degree leading-coefficient &rest coefficients)
+  "Create a new power-series with finitely many non-zero `coefficients'.
+The `leading-coefficient' must be non-zero. If DEGREE is nil, we
+assume you want to define a polynomial, thus the `degree' is just the
+number of `coefficients'."
+  (if (zero-p leading-coefficient)
+      (error "Cannot define a power series [~A~{ ~A~}] with zero leading coefficient."
+             leading-coefficient coefficients)
+      (apply #'make-power-series% degree leading-coefficient coefficients)))
+
 
 (defmacro make-power-series/inf (degree formula)
   "Create a new power-series with given DEGREE and coefficients given
 by FORMULA where INDEX is anaphorically bound."
   `(make-instance 'power-series
                   :degree ,degree
-                  :coefficients (inf-seq nil (index) ,formula)))
+                  :coefficients (inf-seq nil (index ,degree) ,formula)))
 
 (defparameter default-series-simplification-depth 100)
 
@@ -126,30 +136,33 @@ by FORMULA where INDEX is anaphorically bound."
   of the second value, describing the necessary reduction in degree.
   Additionally, when the series is marked finite, and
   NORMALISATION-DEPTH is reached, we will assume the SERIES is 0."
+  ;; todo treat series with finite data differently (do complete
+  ;; simplification there)
   (with-slots (degree coefficients) series
     (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :end :limit depth)
       (setf coefficients coeff
             degree (- degree stripped))
-      (values series (if (= stripped depth) (- stripped) stripped)))))
+      (values series (if (>= stripped depth) (- stripped) stripped)))))
 
 (defmethod simplify ((series constant-series) &key)
   (values series 0))
 
 ;; todo how about series with finitely many entries
 (defmethod generic-* ((series-a power-series) (series-b power-series))
-  (let ((seq-a (coefficients series-a))
-        (seq-b (coefficients series-b))
-        (deg-a (degree series-a))
-        (deg-b (degree series-b))
-        (degree (+ deg-a deg-b)))
+  (let* ((seq-a (coefficients series-a))
+         (seq-b (coefficients series-b))
+         (deg-a (degree series-a))
+         (deg-b (degree series-b))
+         (degree (+ deg-a deg-b)))
     (make-instance 'power-series
                    :degree degree
+                   ;; todo special case for finite sequences
                    :coefficients
                    (make-instance 'infinite--sequence
                                   :end degree
                                   ;; :fill-strategy :sequential
                                   :generating-function
-                                  (lambda (this n)
+                                  (ilambda (this n)
                                     (gm-summing (i (- n deg-b) deg-a)
                                                 (gm:* (sref seq-a i)
                                                       (sref seq-b (- n i)))))))))
@@ -296,16 +309,16 @@ polynomials."
   "How many coefficient of a power series should be compared in order to say they are equal.")
 
 (defmethod generic-= ((series-1 power-series) (series-2 power-series))
-  "Compare the first CONFIDENCE coefficients of the series.  If they
-match, consider the series equal."
+  "Compare the first `confidence' coefficients of the two series. If
+they match, consider the series equal."
   (when (= (degree series-1)
            (degree series-2))
     (let ((co-1 (coefficients series-1))
           (co-2 (coefficients series-2)))
       (when
-          (iter (for i from 0 to confidence)
-                (always (gm:= (sref co-1 i)
-                              (sref co-2 i))))
+          (iter (for i from 1 to confidence)
+                (for j downfrom (degree series-1))
+                (always (gm:= (sref co-1 j) (sref co-2 j))))
         confidence))))
 ;; TODO fix problems with possibly not yet simplified series (for
 ;; instance a series representing 0, but without "knowing" it)
