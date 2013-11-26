@@ -613,21 +613,20 @@ bounded from below or from above."
 (defparameter limit 1000)
 (defgeneric strip-if (test sequence &key from limit))
 
-
 (defmethod strip-if (test (iseq infinite-sequence) &key (from :start) (limit limit))
   (ecase from
     (:start
      (iter (for i from (start iseq))
            (for j from 0 to limit)
-           (while (i< i (end iseq)))
+           (while (i<= i (end iseq)))
            (while (funcall test (sref iseq i)))
            (finally (return (values (subsequence iseq i) j)))))
     (:end
-     (iter (for i downfrom (- (end iseq) 1))
+     (iter (for i downfrom (end iseq) )
            (for j from 0 to limit)
            (while (i<= (start iseq) i))
            (while (funcall test (sref iseq i)))
-           (finally (return (values (subsequence iseq infinity- (+ i 1)) j)))))))
+           (finally (return (values (subsequence iseq infinity- i) j)))))))
 
 (defmethod strip-if (test (seq sequence) &key (from :start) (limit limit))
   (ecase from

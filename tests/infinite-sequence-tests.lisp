@@ -59,8 +59,6 @@
       (for-all ((index (gen-integer :min 0 :max 20)))
         (is (= (ins:sref seq2 index) (ins:sref seq3 index)))))))
 
-
-
 (test strip-if-seq
   (let ((seq1 #(0 0 0 8 8 0 0 0 0))
         (seq2 #(0 0 8 8 0 0 0 0 0 0)))
@@ -82,6 +80,21 @@
     (mvbind (stripped number) (ins:strip-if #'oddp seq2 :from :end)
       (is (= 0 number))
       (is (sequence= stripped seq2)))
-    ))
+    (let ((iseq1 (ins:seq->iseq/sv seq1 :standard-value 0))
+          (iseq2 (ins:seq->iseq/sv seq2 :standard-value 0))
+          (iseq3 (ins:seq->iseq/sv #(1 1 1 1) :standard-value 0)))
+      (is (= 3 (nth-value 1 (ins:strip-if #'zerop iseq1 :from :start))))
+      (is (= 4 (nth-value 1 (ins:strip-if #'zerop iseq1 :from :end))))
+      (is (= 2 (nth-value 1 (ins:strip-if #'zerop iseq2 :from :start))))
+      (is (= 6 (nth-value 1 (ins:strip-if #'zerop iseq2 :from :end))))
+      (is (= 0 (nth-value 1 (ins:strip-if #'zerop iseq3 :from :start))))
+      (is (= 0 (nth-value 1 (ins:strip-if #'zerop iseq3 :from :end))))
+      ))
+  (let ((iseq3 (ins:inf+seq #(0 0 0 0) (i) (+ 1 (^ i 2))))
+        (iseq4 (ins:inf-seq #(0 0 0 0) (i) (+ 1 (^ i 2)))))
+        (is (= 4 (nth-value 1 (ins:strip-if #'zerop iseq3 :from :start))))
+        (is (= 4 (nth-value 1 (ins:strip-if #'zerop iseq4 :from :end))))
+        (is (= 0 (nth-value 1 (ins:strip-if #'oddp iseq3 :from :start))))
+        (is (= 0 (nth-value 1 (ins:strip-if #'oddp iseq4 :from :end))))))
 
 ;;; todo test standard-value implementation of infinite sequences
