@@ -22,14 +22,14 @@
    #:indirect-sequence
    #:refer-to
    #:index-transform
-   #:finseq
    #:inf+seq
    #:infinite--sequence
    #:inf-seq
    #:map-sequences/or
    #:map-sequences/and
    #:strip-if
-   #:shift))
+   #:shift
+   #:seq->iseq/sv))
 
 (in-package :infinite-sequence)
 
@@ -383,10 +383,15 @@ uncalculated values."
 ;; todo see how well this standard-value thing works out, and whether
 ;; considering it as a finite sequence is useful
 (defmethod initialize-instance :after ((iseq infinite-sequence/standard-value) &key)
-  ;; adjust end
+  ;; adjust `start' or `end' if infinite
   (with-slots (start end data) iseq
-    (setf end (+ start (length data) -1))))
-
+    (cond ((and (infinite-p start) (infinite-p end))
+           (setf start 0
+                 end (- (length data) 1)))
+          ((infinite-p end)
+           (setf end (+ start (length data) -1)))
+          ((infinite-p start)
+           (setf start (- end (length data) -1))))))
 
 (defmethod finite-sequence-p ((iseq infinite-sequence/standard-value))
   t)
@@ -413,11 +418,11 @@ uncalculated values."
 (defmethod seq->array ((iseq infinite-sequence/standard-value))
   (data iseq))
 
-(defun list->iseq/sv (list &key (start 0) standard-value)
+(defun seq->iseq/sv (seq &key (start 0) (end infinity+) standard-value)
   (make-instance 'infinite-sequence/standard-value
                  :start start
-                 :end (+ start (length list) -1)
-                 :data (coerce list 'vector)
+                 :end end
+                 :data (coerce seq 'vector)
                  :standard-value standard-value ))
 
 (defun array->iseq/sv (array &key (start 0) standard-value)
@@ -483,24 +488,21 @@ uncalculated values."
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
 ;;; shorthand notation for most frequent uses
-(defmacro inf+seq (initial-data (index-var) &body generating-expression)
+(defmacro inf+seq (initial-data (index-var &optional (start 0)) &body generating-expression)
   `(make-instance 'infinite+-sequence
                   :fill-strategy :sequential
                   :data ,initial-data
+                  :start ,start
                   :generating-function
                   (ilambda (this ,index-var)
                     ,@generating-expression)))
 
-(defmacro finseq (initial-data standard-value)
-  `(make-instance 'infinite-sequence/standard-value
-                  :standard-value ,standard-value
-                  :data ,initial-data))
-
 ;;; sequences towards -infinity
-(defmacro inf-seq (initial-data (index-var) &body generating-expression)
+(defmacro inf-seq (initial-data (index-var &optional (end 0)) &body generating-expression)
   `(make-instance 'infinite--sequence
                   :fill-strategy :sequential
                   :data ,initial-data
+                  :end ,end
                   :generating-function
                   (ilambda (this ,index-var)
                     ,@generating-expression)))
