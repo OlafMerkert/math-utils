@@ -65,7 +65,36 @@
       ;; (is (= 7 (power-series:degree simplified)))
       (is (gm:zero-p (power-series:nth-coefficient simplified :end))))))
 
-(test series-add)
+(test series-equal
+  (let ((ps1 (power-series:make-power-series     10  8 7 6 5 4 3 2 1))
+        (ps2 (power-series:make-power-series/inf 10 (let ((a (- index 2)))
+                                                      (if (plusp a) a 0))))
+        (ps3 (power-series:make-power-series/inf 0 (if (< index -10000)
+                                                       0 7)))
+        (ps4 (power-series:make-power-series/inf 0 7))
+        (ps5 (power-series:make-power-series/inf 0 (random 80))))
+    (is (gm:= ps1 ps2))
+    (is (gm:= ps1 ps1))
+    (is (gm:= ps2 ps2))
+    (is (gm:= ps3 ps4))
+    (is (gm:= ps5 ps5))))
+
+(test series-add
+  (let ((ps1 (power-series:make-power-series 4  1 1 1 1 1))
+        (ps2 (power-series:make-power-series/inf 4  1))
+        (ps3 (power-series:make-power-series/inf -1  1))
+        (ps4 (power-series:make-power-series 4  1 1 1 1 8))
+        (ps5 (power-series:make-constant-series 7))
+        (ps6 (power-series:make-power-series/inf 4 (if (zerop index) 8 1))))
+    (is (gm:= ps2 (gm:+ ps1 ps3)))
+    (is (gm:= ps1 (gm:- ps2 ps3)))
+    (is (gm:= ps3 (gm:- ps2 ps1)))
+    (is (gm:= ps4 (gm:+ ps1 ps5)))
+    (is (gm:= ps1 (gm:- ps4 ps5)))
+    (is (gm:= ps5 (gm:- ps4 ps1)))
+    (is (gm:= ps6 (gm:+ ps2 ps5)))
+    (is (gm:= ps2 (gm:- ps6 ps5)))
+    (is (gm:= ps5 (gm:- ps6 ps2)))))
 
 (test series-mult)
 

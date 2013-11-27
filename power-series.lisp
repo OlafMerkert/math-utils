@@ -250,7 +250,7 @@ by FORMULA where INDEX is anaphorically bound."
     (make-instance 'power-series
                    :degree (max (degree series-a) (degree series-b))
                    :coefficients
-                   (map-sequences/or #'gm:+ coeff-a coeff-b))))
+                   (map-sequences/or #'gm:+ +uncalculated+ coeff-a coeff-b))))
 
 (defmethod generic-- ((series-a power-series) (series-b power-series))
   "Add two series together.  Careful: This might destroy
@@ -260,7 +260,7 @@ by FORMULA where INDEX is anaphorically bound."
     (make-instance 'power-series
                    :degree (max (degree series-a) (degree series-b))
                    :coefficients
-                   (map-sequences/or #'gm:- coeff-a coeff-b))))
+                   (map-sequences/or #'gm:- 0 coeff-a coeff-b))))
 
 (defmethod generic-+ ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-+ (constant-coefficient series-a)

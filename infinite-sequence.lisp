@@ -415,6 +415,10 @@ uncalculated values."
                  :data (map 'vector function (data iseq))
                  :standard-value (funcall function (standard-value iseq))))
 
+;; todo for a finite subsequence, how about filling up non-specified
+;; entries? would be useful for printing. On the other hand, maybe
+;; se->array and array->iseq/sv should be exactly inverse to each
+;; other.
 (defmethod seq->array ((iseq infinite-sequence/standard-value))
   (data iseq))
 
@@ -546,38 +550,45 @@ uncalculated values."
 ;; todo write some tests to make sure all of this stuff works properly
 
 ;;; very powerful mapping function
-(defun map-sequences/or (function &rest sequences)
-  "Given a `function' that takes between 1 and number of `sequences'
-arguments, build a new sequence, which applies the function on the
-available elements of each index. This means, we are using the maximal
+(defun map-sequences/or (function default &rest sequences)
+  "Given a `function' that takes as many arguments ass there are
+`sequences' arguments, build a new sequence, which applies the
+function on the available elements of each index. Unavailable elements
+are \"substituted\" by `default'. This means, we are using the maximal
 range available (so we take the union, not the intersection of the
 domains of definition). However, all sequences should either be
-bounded from below or from above."
+bounded from below or from above.
+
+ Special treatment happens when `default' is `+uncalculated', then
+`function' should also handle a lesser number of arguments, and the
+`default' value is removed from the arguments list."
   (let ((start (reduce #'imin sequences :key #'start))
         (end   (reduce #'imax sequences :key #'end)))
     (labels ((get-ref (seq i)
                (handler-case (sref seq i)
-                 (index-out-of-range () +uncalculated+)))
+                 (index-out-of-range () default)))
              (get-refs (i)
-               (remove +uncalculated+
-                       (mapcar (lambda (seq) (get-ref seq i)) sequences)))
+               (if (eq default +uncalculated+)
+                   (remove +uncalculated+
+                           #1=(mapcar (lambda (seq) (get-ref seq i)) sequences))
+                   #1#))
              (call-fun (iseq i)
                (declare (ignore iseq))
                (aif (get-refs i)
                     (apply function it)
                     (error 'index-out-of-range :start start :index i :end end))))
       (declare (inline get-refs))
-     (cond ((not (infinite-p start)) ;; bounded below
-            (make-instance 'infinite+-sequence
-                           :start start
-                           :end end
-                           :generating-function #'call-fun))
-           ((not (infinite-p end)) ;; bounded above
-            (make-instance 'infinite--sequence
-                           :start start
-                           :end end
-                           :generating-function #'call-fun))
-           (t (error 'doubly-infinite-not-supported))))))
+      (cond ((not (infinite-p start)) ;; bounded below
+             (make-instance 'infinite+-sequence
+                            :start start
+                            :end end
+                            :generating-function #'call-fun))
+            ((not (infinite-p end)) ;; bounded above
+             (make-instance 'infinite--sequence
+                            :start start
+                            :end end
+                            :generating-function #'call-fun))
+            (t (error 'doubly-infinite-not-supported))))))
 
 (defun map-sequences/and (function &rest sequences)
   "Given a `function' that takes as many arguments as there are
