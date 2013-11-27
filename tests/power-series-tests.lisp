@@ -96,5 +96,24 @@
     (is (gm:= ps2 (gm:- ps6 ps5)))
     (is (gm:= ps5 (gm:- ps6 ps2)))))
 
-(test series-mult)
+
+
+(test series-mult
+  (let ((ps1 (power-series:make-power-series 3  2 2 2 2))
+        (ps2 (power-series:make-constant-series 5))
+        (ps3 (power-series:make-power-series 3  10 10 10 10))
+        (ps4 (power-series:exponential-series 2))
+        (ps5 (power-series:exponential-series 3))
+        (ps6 (power-series:exponential-series 5)))
+    ;; scalar multiplication
+    (is (gm:= ps3 (gm:* ps1 ps2)))
+    (is (gm:= ps3 (gm:* ps1 5)))
+    (is (gm:= ps1 (gm:/ ps3 ps2)))
+    (is (gm:= ps1 (gm:/ ps3 5)))
+    ;; how about degrees?
+    (is (= 6 (power-series:degree (gm:* ps1 ps3))))
+    ;; the exponential series is useful for checking the
+    ;; multiplication algorithm
+    (is (gm:= ps6 (gm:* ps4 ps5)))
+    (is (gm:= ps5 (gm:/ ps6 ps4)))))
 

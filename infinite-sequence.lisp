@@ -651,3 +651,9 @@ bounded from below or from above.
                           lowbound))))
        (values (subseq seq 0 pos) (- (length seq) pos))))))
 
+
+;; todo for infinite sequences, the `this' parameter for the
+;; generating function does no longer make sense, because it is only
+;; useful when we know about all necessary index offsets and
+;; transforms. This is particularly problematic for series toward
+;; infinity-.

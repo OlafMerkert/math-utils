@@ -23,7 +23,8 @@
    #:make-power-series
    #:make-power-series/inf
    #:leading-coefficient
-   #:make-power-series%))
+   #:make-power-series%
+   #:exponential-series))
 
 (in-package :power-series)
 
@@ -154,18 +155,20 @@ by FORMULA where INDEX is anaphorically bound."
          (deg-a (degree series-a))
          (deg-b (degree series-b))
          (degree (+ deg-a deg-b)))
-    (make-instance 'power-series
-                   :degree degree
-                   ;; todo special case for finite sequences
-                   :coefficients
-                   (make-instance 'infinite--sequence
-                                  :end degree
-                                  ;; :fill-strategy :sequential
-                                  :generating-function
-                                  (ilambda (this n)
-                                    (gm-summing (i (- n deg-b) deg-a)
-                                                (gm:* (sref seq-a i)
-                                                      (sref seq-b (- n i)))))))))
+    (make-instance
+     'power-series
+     :degree degree
+     ;; todo special case for finite sequences
+     :coefficients
+     (make-instance
+      'infinite--sequence
+      :end degree
+      :fill-strategy :sequential
+      :generating-function
+      (ilambda (this n)
+        (gm-summing (i deg-a (- n deg-b))
+                    (gm:* (sref seq-a i)
+                          (sref seq-b (- n i)))))))))
 
 (defmethod generic-* ((series-a constant-series) (series-b constant-series))
   (make-constant-series (generic-* (constant-coefficient series-a)
@@ -196,19 +199,22 @@ by FORMULA where INDEX is anaphorically bound."
         (cn (coefficients series-numer))
         (degree (- (degree series-numer)
                    (degree series-denom))))
-    (make-instance 'power-series
-                   :degree degree
-                   :coefficients
-                   (make-instance 'infinite--sequence
-                                  :data (vector (gm:/ (sref cn 0) a0))
-                                  :fill-strategy :sequential
-                                  :generating-function
-                                  (lambda (this n)
-                                    (gm:/ (gm:- (sref cn n)
-                                                (gm-summing (i (- n 1) deg-a)
-                                                            (gm:* (sref an i)
-                                                                  (aref this (- n i)))))
-                                          a0))))))
+    (make-instance
+     'power-series
+     :degree degree
+     :coefficients
+     (make-instance
+      'infinite--sequence
+      :data (vector (gm:/ (sref cn 0) a0))
+      :fill-strategy :sequential
+      :generating-function
+      (lambda (this n)
+        (gm:/ (gm:- (sref cn n)
+                    (gm-summing (i (- n 1) deg-a)
+                                (gm:* (sref an i)
+                                      ;; fix references to `this'
+                                      (aref this (- n i)))))
+              a0))))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
   (make-constant-series (generic-/ (constant-coefficient series-numer)
@@ -385,3 +391,13 @@ they match, consider the series equal."
   (make-constant-series rational))
 
 (default-simple-type-conversion rational power-series)
+
+;;; some special series
+(defun exponential-series (number)
+  "Generate the exponential power series."
+  (make-power-series/inf
+   0
+   (let ((n (- index)))
+     ;; todo make use of previous coefficient for more efficient calculation
+     (gm:/ (gm:^ number n)
+           (combi:factorial n)))))
