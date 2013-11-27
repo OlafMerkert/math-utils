@@ -2,7 +2,8 @@
   (:nicknames :combi)
   (:use :cl :ol :iterate )
   (:export
-   #:binomial))
+   #:binomial
+   #:factorial))
 
 (in-package :elementary-combinatorics)
 
@@ -15,3 +16,10 @@
          (iter (for i from 1 to k)
                (for j downfrom n)
                (multiplying (/ j i))))))
+
+(defun factorial (n)
+  "Calculate the factorial."
+  (if (minusp n)
+      (error "Cannot compute factorial of negative number ~A." n)
+      (iter (for i from 1 to n)
+            (multiplying i))))
