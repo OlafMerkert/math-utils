@@ -208,12 +208,11 @@ by FORMULA where INDEX is anaphorically bound."
       :data (vector (gm:/ (sref cn 0) a0))
       :fill-strategy :sequential
       :generating-function
-      (lambda (this n)
+      (flambda (this n)
         (gm:/ (gm:- (sref cn n)
                     (gm-summing (i (- n 1) deg-a)
                                 (gm:* (sref an i)
-                                      ;; fix references to `this'
-                                      (aref this (- n i)))))
+                                      (this (- n i)))))
               a0))))))
 
 (defmethod generic-/ ((series-numer constant-series) (series-denom constant-series))
@@ -240,10 +239,10 @@ by FORMULA where INDEX is anaphorically bound."
                                   :data (vector (gm:/ (constant-coefficient series-numer) a0))
                                   :fill-strategy :sequential
                                   :generating-function
-                                  (lambda (this n)
+                                  (flambda (this n)
                                     (gm:/ (gm:- (gm-summing (i (- n 1) deg-a)
                                                             (gm:* (sref an i)
-                                                                  (aref this (- n i)))))
+                                                                  (this (- n i)))))
                                           a0))))))
 
 ;; TODO perhaps consider additional simplification for units
@@ -282,19 +281,21 @@ by FORMULA where INDEX is anaphorically bound."
   (let ((a0 (gm:sqrt (nth-coefficient% series 0)))
         (b  (coefficients series))
         (degree (/ (degree series) 2)))
-    (make-instance 'power-series
-                   :degree degree
-                   ;; todo adjust indices
-                   :coefficients
-                   (make-instance 'infinite--sequence
-                                  :data (vector a0)
-                                  :fill-strategy :sequential
-                                  :generating-function
-                                  (lambda (this n)
-                                   (gm:/ (gm:- (sref b n)
-                                               (gm-summing (i 1 n t) (gm:* (aref this i)
-                                                                           (aref this (- n i)))))
-                                         a0 2))))))
+    (make-instance
+     'power-series
+     :degree degree
+     ;; todo adjust indices
+     :coefficients
+     (make-instance
+      'infinite--sequence
+      :data (vector a0)
+      :fill-strategy :sequential
+      :generating-function
+      (flambda (this n)
+        (gm:/ (gm:- (sref b n)
+                    (gm-summing (i 1 n t) (gm:* (this i)
+                                                (this (- n i)))))
+              a0 2))))))
 
 (defmethod gm:sqrt ((series constant-series))
   (multiple-value-bind (root nice) (gm:sqrt (constant-coefficient series))

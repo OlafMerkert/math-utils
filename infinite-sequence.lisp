@@ -29,7 +29,8 @@
    #:map-sequences/and
    #:strip-if
    #:shift
-   #:seq->iseq/sv))
+   #:seq->iseq/sv
+   #:flambda))
 
 (in-package :infinite-sequence)
 
@@ -105,9 +106,9 @@
 
 (defclass infinite+-sequence (infinite-sequence)
   ((data :initarg :data
-          :initform (make-array 100 :initial-element +uncalculated+
-                                :adjustable t)
-          :reader data)
+         :initform (make-array 100 :initial-element +uncalculated+
+                               :adjustable t)
+         :reader data)
    ;; for sequential filling, we need to keep track of the minimal
    ;; non-filled entry in the data array. This should refer to actual
    ;; array indices, not sequence indices.
@@ -118,10 +119,12 @@
                         :initform nil
                         :accessor generating-function)
    ;; the `generating-function' is expected to take two arguments,
-   ;; namely the `infinite+-sequence' which must be treated immutable,
-   ;; and an index `n'. Moreover, for sequential filling, only lower
-   ;; indices may be accessed, and for as-needed filling, be careful
-   ;; to avoid circular dependencies.
+   ;; first a function to retrieve entries of the very same sequence,
+   ;; and an index `n'. Be careful to avoid infinite loops when
+   ;; accessing other entries in the `generating-function'. In
+   ;; sequential filling mode, this might give errors or return
+   ;; `+uncalculated+', but otherwise this can create circular
+   ;; dependencies which are not caught at the moment.
    )
   (:documentation "An infinite sequence on integers, from an arbitrary
   integer N to +infinity. The infinity is realised using a generating
@@ -220,18 +223,32 @@ uncalculated values."
   (with-iseq
     (if (sequential-filling-p iseq)
         (with-slots (generating-function (fs minimal-uncalculated)) iseq
-          (let ((sequence-offset start)) ; special variable
+          (progn
             (iter (for j from (+ start fs))
                   (for k from fs to i)
                   ;; here we make use of the compatibility layer that
                   ;; allows transparent use of the array
                   (setf (aref data k)
-                        (funcall generating-function data j)))
+                        (funcall generating-function
+                                 (lambda (index)
+                                   (aref data (- index start)))
+                                 j)))
             (setf fs (+ i 1))
             (aref data i)))
         ;; TODO track circular dependencies for as-needed filling
         (setf (aref data i)
-              (funcall (generating-function iseq) iseq n)))))
+              (funcall (generating-function iseq)
+                       (lambda (index)
+                         (sref iseq index))
+                       n)))))
+
+;; todo perhaps move
+(defmacro! flambda ((f-arg &rest args) &body body)
+  "With the first argument a function, make it possible to avoid using
+apply or funcall in code by locally binding a function `f-arg'."
+  `(lambda (,g!f-arg ,@args)
+     (flet ((,f-arg (&rest ,g!args) (apply ,g!f-arg ,g!args)))
+       ,@body)))
 
 (defmethod set-sref ((iseq infinite+-sequence) (n integer) value)
   "Manually set position `n' in the sequence `iseq'."
@@ -253,7 +270,7 @@ uncalculated values."
   (make-instance 'infinite+-sequence
                  :start (start iseq)
                  :end (end iseq)
-                 :generating-function (ilambda (iseq2 n)
+                 :generating-function (ilambda (this n)
                                         (funcall function (sref iseq n)))))
 
 
@@ -347,7 +364,7 @@ uncalculated values."
                           :start start
                           :end end
                           :generating-function
-                          (ilambda (iseq2 n)
+                          (ilambda (this n)
                             (funcall function
                                      (sref refer-to (funcall index-transform n))))))
           ((not (infinite-p end))
@@ -355,7 +372,7 @@ uncalculated values."
                           :start start
                           :end end
                           :generating-function
-                          (ilambda (iseq2 n)
+                          (ilambda (this n)
                             (funcall function
                                      (sref refer-to (funcall index-transform n))))))
           (t (error 'doubly-infinite-not-supported)))))
@@ -498,7 +515,7 @@ uncalculated values."
                   :data ,initial-data
                   :start ,start
                   :generating-function
-                  (ilambda (this ,index-var)
+                  (flambda (this ,index-var)
                     ,@generating-expression)))
 
 ;;; sequences towards -infinity
@@ -508,7 +525,7 @@ uncalculated values."
                   :data ,initial-data
                   :end ,end
                   :generating-function
-                  (ilambda (this ,index-var)
+                  (flambda (this ,index-var)
                     ,@generating-expression)))
 
 (defun index- (n &optional special)
@@ -525,6 +542,10 @@ uncalculated values."
          ;; inclusive lower bound
          (cl:- n))
         (t (cl:- n))))
+
+;; todo maybe move
+(defun compose2 (fun1 fun2)
+  (lambda (&rest args) (funcall fun1 (apply fun2 args))))
 
 (defclass infinite--sequence (indirect-sequence)
   ((start :initform infinity-)
@@ -544,8 +565,11 @@ uncalculated values."
                          ;; no need to reverse, that is done by the
                          ;; index-transform
                          :data data
-                         :generating-function (lambda (iseq2 n)
-                                                (funcall generating-function iseq2 (- n)))))))
+                         :generating-function
+                         (lambda (access-function n)
+                           (funcall generating-function
+                                    (compose2 access-function #'-)
+                                    (- n)))))))
 
 ;; todo write some tests to make sure all of this stuff works properly
 
@@ -572,8 +596,8 @@ bounded from below or from above.
                    (remove +uncalculated+
                            #1=(mapcar (lambda (seq) (get-ref seq i)) sequences))
                    #1#))
-             (call-fun (iseq i)
-               (declare (ignore iseq))
+             (call-fun (access-function i)
+               (declare (ignore access-function))
                (aif (get-refs i)
                     (apply function it)
                     (error 'index-out-of-range :start start :index i :end end))))
@@ -600,8 +624,8 @@ bounded from below or from above.
         (end   (reduce #'imin sequences :key #'end)))
     (labels ((get-refs (i)
                (mapcar (lambda (seq) (sref seq i)) sequences))
-             (call-fun (iseq i)
-               (declare (ignore iseq))
+             (call-fun (access-function i)
+               (declare (ignore access-function))
                (aif (get-refs i)
                     (apply function it)
                     (error 'index-out-of-range :start start :index i :end end))))
