@@ -602,15 +602,27 @@ bounded from below or from above.
                     (apply function it)
                     (error 'index-out-of-range :start start :index i :end end))))
       (declare (inline get-refs))
-      (cond ((not (infinite-p start)) ;; bounded below
+      (cond ((and (not (infinite-p start)) ; doubly bounded
+                  (not (infinite-p end)))
+             (make-instance 'infinite-sequence/standard-value
+                            :start start :end end
+                            :standard-value (aif (find-if (clambda typep x! 'infinite-sequence/standard-value) sequences)
+                                                 (standard-value it)
+                                                 (if (eq default +uncalculated+)(error "Cannot find suitable default value for conjunction of finite sequences.")
+                                                     default))
+                            
+                            
+                            :data (iter (for i from start to end)
+                                        (collect (call-fun nil i) result-type vector))))
+             
+            ((not (infinite-p start))   ; bounded below
+
              (make-instance 'infinite+-sequence
-                            :start start
-                            :end end
+                            :start start :end end
                             :generating-function #'call-fun))
-            ((not (infinite-p end)) ;; bounded above
+            ((not (infinite-p end))     ; bounded above
              (make-instance 'infinite--sequence
-                            :start start
-                            :end end
+                            :start start :end end
                             :generating-function #'call-fun))
             (t (error 'doubly-infinite-not-supported))))))
 
