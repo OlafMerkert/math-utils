@@ -63,7 +63,7 @@
     (mvbind (simplified leading-zeroes) (gm:simplify ps5)
       (is (minusp leading-zeroes))
       ;; (is (= 7 (power-series:degree simplified)))
-      (is (gm:zero-p (power-series:nth-coefficient simplified :end))))))
+      (is (gm:zero-p (power-series:nth-coefficient simplified (power-series:degree simplified)))))))
 
 (test series-equal
   (let ((ps1 (power-series:make-power-series     10  8 7 6 5 4 3 2 1))

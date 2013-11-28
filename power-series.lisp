@@ -68,7 +68,7 @@
 (defmethod simplified-p ((series power-series))
   "Test whether the first coefficient is indeed not 0, so the degree is
   meaningful."
-  (not (zero-p (sref (coefficients series) :end))))
+  (not (zero-p (sref (coefficients series) 0))))
 
 (defmethod simplified-p ((series constant-series))
   t)
@@ -134,6 +134,7 @@ by FORMULA where INDEX is anaphorically bound."
                   :degree ,g!degree
                   :coefficients (inf+seq nil (,g!index)
                                   (let ((index (- ,g!degree ,g!index)))
+                                    (declare (ignorable index))
                                     ,formula))))
 
 (defparameter default-series-simplification-depth 100)
@@ -149,7 +150,7 @@ by FORMULA where INDEX is anaphorically bound."
   ;; todo treat series with finite data differently (do complete
   ;; simplification there)
   (with-slots (degree coefficients) series
-    (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :end :limit depth)
+    (mvbind (coeff stripped) (strip-if #'zero-p coefficients :from :start :limit depth)
       ;; todo perhaps integrate shifting into strip-if??
       (setf coefficients (shift coeff (- stripped))
             degree (- degree stripped))
