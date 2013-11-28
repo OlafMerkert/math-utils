@@ -681,3 +681,8 @@ bounded from below or from above.
 ;; useful when we know about all necessary index offsets and
 ;; transforms. This is particularly problematic for series toward
 ;; infinity-.
+
+;;; sometimes, it is more useful to have just very simple sequences
+;;; that start just from 0 and go to infinity+. Together with the
+;;; sequence mapping function we have so far, and indirect sequences,
+;;; we get something slightly nicer than the `lazy-array'

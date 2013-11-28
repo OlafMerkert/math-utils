@@ -232,18 +232,20 @@ by FORMULA where INDEX is anaphorically bound."
         (deg-a (degree series-denom))
         (an (coefficients series-denom)))
     ;; todo adjust indices
-    (make-instance 'power-series
-                   :degree (- (degree series-denom))
-                   :coefficients
-                   (make-instance 'infinite--sequence
-                                  :data (vector (gm:/ (constant-coefficient series-numer) a0))
-                                  :fill-strategy :sequential
-                                  :generating-function
-                                  (flambda (this n)
-                                    (gm:/ (gm:- (gm-summing (i (- n 1) deg-a)
-                                                            (gm:* (sref an i)
-                                                                  (this (- n i)))))
-                                          a0))))))
+    (make-instance
+     'power-series
+     :degree (- (degree series-denom))
+     :coefficients
+     (make-instance
+      'infinite--sequence
+      :data (vector (gm:/ (constant-coefficient series-numer) a0))
+      :fill-strategy :sequential
+      :generating-function
+      (flambda (this n)
+        (gm:/ (gm:- (gm-summing (i (- n 1) deg-a)
+                                (gm:* (sref an i)
+                                      (this (- n i)))))
+              a0))))))
 
 ;; TODO perhaps consider additional simplification for units
 

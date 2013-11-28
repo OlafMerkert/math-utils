@@ -289,10 +289,6 @@ to override this if a better algorithm is available."
 ;; thingy too)
 (defmacro! gm-summing ((var o!start o!stop &optional below) expr)
   `(let ((,g!sum 0))
-     ;; if both ends are inclusive, we don't care about the ordering
-     ,@(unless below
-               `((when (> ,g!start ,g!stop)
-                   (rotatef ,g!start ,g!stop))))
      (do ((,var ,g!start (cl:+ 1 ,var)))
          ((,(if below '>= '>)
             ,var ,g!stop)
