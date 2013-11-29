@@ -104,7 +104,8 @@
         (ps3 (power-series:make-power-series 3  10 10 10 10))
         (ps4 (power-series:exponential-series 2))
         (ps5 (power-series:exponential-series 3))
-        (ps6 (power-series:exponential-series 5)))
+        (ps6 (power-series:exponential-series 5))
+        (ps7 (power-series:exponential-series -2)))
     ;; scalar multiplication
     (is (gm:= ps3 (gm:* ps1 ps2)))
     (is (gm:= ps3 (gm:* ps1 5)))
@@ -115,5 +116,26 @@
     ;; the exponential series is useful for checking the
     ;; multiplication algorithm
     (is (gm:= ps6 (gm:* ps4 ps5)))
-    (is (gm:= ps5 (gm:/ ps6 ps4)))))
+    (is (gm:= ps5 (gm:/ ps6 ps4)))
+    (is (gm:= ps7 (gm:/ ps4)))))
 
+(test series-sqrt
+  (let* ((ps1 (power-series:make-power-series 4  1 8 9 4 2 0 0 7 2 7))
+         (ps2 (gm:^ ps1 2))
+         (ps3 (power-series:exponential-series 1))
+         (ps4 (power-series:exponential-series 2)))
+    (is (gm:= ps1 (gm:sqrt ps2)))
+    (is (gm:= ps3 (gm:sqrt ps4)))))
+
+(test series-rem-trunc
+  (let ((po1 (polynomials:make-polynomial 1 2 3 4 5))
+        (ps1 (power-series:make-power-series 4  1 2 3 4 5))
+        (ps2 (power-series:make-power-series/inf 4 (- 5 index)))
+        (ps3 (power-series:make-power-series/inf -1 (- 5 index))))
+    (is (gm:= ps1 (gm:-> 'power-series:power-series po1)))
+    (is (gm:= po1 (power-series:series-truncate ps1)))
+    (is (gm:= po1 (power-series:series-truncate ps2)))
+    (is (gm:= ps3 (power-series:series-remainder ps2)))
+    (is (gm:= ps3 (power-series:series-remainder ps3)))
+    (is (gm:= 0 (power-series:series-remainder ps1)))
+    (is (gm:= 0 (power-series:series-truncate ps3)))))

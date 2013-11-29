@@ -317,6 +317,27 @@ they match, consider the series equal."
 (defmethod generic-= ((series-1 constant-series) (series-2 constant-series))
   (gm:= (constant-coefficient series-1) (constant-coefficient series-2)))
 
+(defmethod zero-p ((series power-series))
+  (let ((co (coefficients series)))
+    (when (iter (for i from 0 below confidence)
+                (always (zero-p (sref co i))))
+      confidence)))
+
+(defmethod one-p ((series power-series))
+   (let ((co (coefficients series))
+         (constant-index (degree series)))
+    (when (iter (for i from 0 below confidence)
+                (always (if (cl:= i constant-index)
+                            (one-p (sref co i))
+                            (zero-p (sref co i)))))
+      confidence)))
+
+(defmethod zero-p ((series constant-series))
+  (zero-p (constant-coefficient series)))
+
+(defmethod one-p ((series constant-series))
+  (one-p (constant-coefficient series)))
+
 ;; extracting and removing polynomial part of the laurent series
 (defmethod series-truncate ((series power-series))
   "Take the polynomial part of the given SERIES."
@@ -341,12 +362,16 @@ they match, consider the series equal."
     (if (< d 0)
         series ; no polynomial part -> nothing to do
         (make-instance 'power-series
-                       :degree -1 
-                       :coefficients (subsequence (coefficients series)
-                                                  (+ 1 d) infinity+)))))
+                       :degree -1
+                       ;; todo perhaps we can incorporate `shift' into
+                       ;; subsequence?
+                       :coefficients (shift
+                                      (subsequence (coefficients series)
+                                                   (+ 1 d) infinity+)
+                                      (- 0 1 d))))))
 
 (defmethod series-remainder ((series constant-series))
-  (zero series))
+  0)
 
 ;;; reducing mod p
 (defmethod -> ((target-type (eql 'finite-fields:integer-mod)) (power-series power-series) &key (mod 2))

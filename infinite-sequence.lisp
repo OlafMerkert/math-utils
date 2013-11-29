@@ -333,6 +333,8 @@ apply or funcall in code by locally binding a function `f-arg'."
           (refer-to pre-refer-to))))
 
 (defmethod sref ((iseq indirect-sequence) (n integer))
+  ;; no in-range test here, because `indirect-sequence' are also used
+  ;; in conjunction with `infinite-sequence/standard-value'
   (sref (refer-to iseq)
         (funcall (index-transform iseq) n)))
 
