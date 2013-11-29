@@ -34,9 +34,8 @@
 (defmethod valuate-exp (valuation (power-series power-series))
   (make-instance 'power-series-values
                  :degree (degree power-series)
-                 :coefficients (lazy-array-map (val valuation)
-                                               (coefficients power-series)
-                                               infinity+)))
+                 :coefficients (ins:map-sequence (val valuation)
+                                                 (coefficients power-series))))
 
 (defclass polynomial-values (polynomial)
   ())

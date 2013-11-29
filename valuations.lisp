@@ -48,23 +48,23 @@
 (defmethod valuate-exp (valuation (power-series power-series))
   ;; first consider the case of finite series
   (let ((coeff (coefficients power-series)))
-    (aif (lazy-array-finite coeff)
-         (values (v-minimise (lazy-array-take coeff it nil)
+    (aif (ins:finite-sequence-p coeff)
+         (values (v-minimise (ins:seq->array coeff)
                              (val valuation))
                  :finite) 
          ;; in the other case, we have to guess
          (valuate-exp/power-series-infinite valuation coeff (degree power-series)))))
 
 (defun valuate-exp/power-series-infinite (valuation coeffs &optional (degree 0))
+  (declare (ignorable degree))
   (do* ((index 0 (+ 1 index))
-        (val #2=(valuate-exp valuation (lazy-aref coeffs index)) #2#)
+        (val #2=(valuate-exp valuation (ins:sref coeffs index)) #2#)
         (bound val)
         (bound-index 0))
        ;; terminate if the last coeffs did not require increasing the bound
        ((or #1=(<= bounded-count (- index bound-index))
             ;; or we reached the end of our curiosity
             (> index bounded-search-limit))
-        
         (values bound (if #1# bound-index :unbounded)))
     (when (i< val bound)
       (setf bound val

@@ -88,7 +88,8 @@
 (defgeneric map-sequence (function sequence))
 
 (defmacro! bind-seq (sequences o!index &body body)
-  "For `sequences' given by symbols A, write A instead of (sref A index) -- this is intended only for read access."
+  "For `sequences' given by symbols A, write A instead of (sref A
+index) -- this is intended only for read access."
   `(let ,(mapcar #`(,a1 (sref ,a1 ,g!index)) sequences)
      ,@body))
 
