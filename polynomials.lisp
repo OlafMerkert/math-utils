@@ -345,11 +345,11 @@ Keep this in mind when using."
 (bind-multi ((constant rational finite-fields:integer-mod))
   (define->-method (polynomial constant (:var var 'X))
       :coefficients (vector constant))
-
   (create-binary->-wrappers polynomial
       constant
       (:left)
-    generic-/)
+    generic-/
+    div)
   (declare-commutative constant
       polynomial
     generic-+
@@ -364,8 +364,9 @@ Keep this in mind when using."
   (defmethod generic-- ((number constant) (poly polynomial))
     (poly+constant (poly*constant poly -1) number))
   (defmethod generic-* ((number constant) (poly polynomial))
-    (poly*constant poly number)))
-
+    (poly*constant poly number))
+  (defmethod div ((polynomial polynomial) (constant constant))
+   (values (poly*constant polynomial (generic-/ 1 constant)) 0)))
 
 
 ;;; find largest power dividing
