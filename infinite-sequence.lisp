@@ -97,13 +97,17 @@ index) -- this is intended only for read access."
 
 ;;; singly infinite sequences
 (defclass infinite-sequence ()
-  ((start :initarg :start
+  ((name :initarg :name
+         :initform nil)
+   (start :initarg :start
           :initform 0
           :reader start)
    (end :initarg :end
         :initform infinity+
         :reader end))
   (:documentation "base class for infinite sequences."))
+
+(create-standard-print-object infinite-sequence name ("from" start "to" end))
 
 (defclass infinite+-sequence (infinite-sequence)
   ((data :initarg :data
@@ -331,7 +335,9 @@ apply or funcall in code by locally binding a function `f-arg'."
                        (setf pre-refer-to seq)
                        (collect (index-transform seq) at start)))
           (refer-to iseq)
-          (refer-to pre-refer-to))))
+          (refer-to pre-refer-to))
+    (when (and (not (slot-value iseq 'name)) (slot-value pre-refer-to 'name))
+      (setf (slot-value iseq 'name) (format nil "Indirect seq of ~A" (slot-value pre-refer-to 'name))))))
 
 (defmethod sref ((iseq indirect-sequence) (n integer))
   ;; no in-range test here, because `indirect-sequence' are also used
@@ -512,25 +518,25 @@ apply or funcall in code by locally binding a function `f-arg'."
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
 ;;; shorthand notation for most frequent uses
-(defmacro inf+seq (initial-data (index-var &optional (start 0)) &body generating-expression)
-  `(make-instance 'infinite+-sequence
-                  :fill-strategy :sequential
-                  :data ,initial-data
-                  :start ,start
-                  :generating-function
-                  (flambda (this ,index-var)
-                    ,@generating-expression)))
+(bind-multi ((inf+seq inf+seq inf-seq)
+             (infinite+-sequence infinite+-sequence infinite--sequence)
+             (start start end)
+             (:start :start :end))
+  (defmacro inf+seq (initial-data (index-var &optional (start 0)) &body generating-expression)
+    (let (name)
+      (if (keywordp #1=(first generating-expression))
+          (setf name #1#
+                generating-expression (rest generating-expression)))
+      `(make-instance 'infinite+-sequence
+                      :name ,name
+                      :fill-strategy :sequential
+                      :data ,initial-data
+                      :start ,start
+                      :generating-function
+                      (flambda (this ,index-var)
+                        ,@generating-expression)))))
 
 ;;; sequences towards -infinity
-(defmacro inf-seq (initial-data (index-var &optional (end 0)) &body generating-expression)
-  `(make-instance 'infinite--sequence
-                  :fill-strategy :sequential
-                  :data ,initial-data
-                  :end ,end
-                  :generating-function
-                  (flambda (this ,index-var)
-                    ,@generating-expression)))
-
 (defun index- (n &optional special)
   "Special index transform that transparently deals with `special'
   bounds `:start' and `:end' when taking (- n)."
@@ -562,6 +568,8 @@ apply or funcall in code by locally binding a function `f-arg'."
   (with-slots (start end) iseq
     (setf (slot-value iseq 'refer-to)
           (make-instance 'infinite+-sequence
+                         :name (aif (slot-value iseq 'name)
+                                    (format nil "Backing inf- seq ~A" it))
                          :start (index- end :end)
                          :end (index- start :start)
                          :fill-strategy (pass-symbol (- fill-strategy))
