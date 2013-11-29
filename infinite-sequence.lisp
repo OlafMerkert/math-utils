@@ -190,9 +190,14 @@ index `n' to the array index `i'."
 (defun ensure-array-size (array size)
   "For an adjustable `array', make sure that it can hold at least
 `size'+1 elements (i.e. we can get at the index `size')."
+  #|(unless (adjustable-array-p array)
+    (error "Cannot extend ~A to length > ~A" array size))|#
   (if (>= size (cl:length array))
-      (adjust-array array (+ size array-size-step) :initial-element +uncalculated+)
-      array))
+      (values (adjust-array array (+ size array-size-step)
+                            :initial-element +uncalculated+
+                            :fill-pointer t)
+              t)
+      (values array nil)))
 
 (declaim (inline in-range))
 (defun in-range (iseq n)
@@ -236,9 +241,11 @@ uncalculated values."
                   (setf (aref data k)
                         (funcall generating-function
                                  (lambda (index)
-                                   (aref data (- index start)))
+                                   (aref (data iseq) (- index start)))
                                  j)))
             (setf fs (+ i 1))
+            #|(when (eq (aref data i) +uncalculated+)
+              (error "compute-value did not replace +uncalculate+ at index ~A" i))|#
             (aref data i)))
         ;; TODO track circular dependencies for as-needed filling
         (setf (aref data i)
