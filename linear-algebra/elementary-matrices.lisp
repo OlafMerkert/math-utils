@@ -71,17 +71,36 @@ generators of GL(2,k)."))
   "A transposition matrix has order 2."
   matrix)
 
+(define-condition elementary-matrix-automatic-dimension ()
+  ((matrix :initarg :matrix
+           :initform nil)))
+
 ;;; render the transposition matrix
-(gm:define->-method/custom (matrix transposition-matrix)
-  (with-slots (i j) transposition-matrix
-    ;; TODO alert if dimension is automatic
-    (make-matrix (:list (dimensions transposition-matrix))
-        (r s)
-      (cond ((or (= i r s) (= j r s)) 0)
-            ((= r s) 1)
-            ((and (= i r) (= j s)) 1)
-            ((and (= i s) (= j r)) 1)
-            (t 0)))))
+
+(defmacro! define-elementary-matrix-entry-formula
+    (class-name slots indices &body formula)
+  `(progn
+     ;; todo perhaps make `mref' generic
+     (defmethod emref ((,g!matrix ,class-name) &rest ,g!indices)
+       (with-slots ,slots ,g!matrix
+         ;; todo perhaps check for right nr of indices
+         (dbind ,indices ,g!indices
+           ,@formula)))
+     (gm:define->-method/custom (matrix ,class-name)
+       (when (eq :automatic (dimension ,class-name))
+         (error 'elementary-matrix-automatic-dimension
+                :matrix ,class-name))
+       (with-slots ,slots ,class-name
+         (make-matrix (:list (dimensions ,class-name))
+             ,indices ,@formula)))))
+
+(define-elementary-matrix-entry-formula transposition-matrix
+    (i j) (r s)
+  (cond ((or (= i r s) (= j r s)) 0)
+        ((= r s) 1)
+        ((and (= i r) (= j s)) 1)
+        ((and (= i s) (= j r)) 1)
+        (t 0)))
 
 (defmethod gm:generic-* ((transposition-matrix transposition-matrix) (matrix matrix))
   (with-vector-type (matrix)
@@ -119,15 +138,11 @@ generators of GL(2,k)."))
         (error "Cannot invert diagonal matrix with 0 on diagonal ")
         (make-single-diagonal-matrix i (gm:/ factor) dimension))))
 
-
-(gm:define->-method/custom (matrix single-diagonal-matrix)
-  (with-slots (i factor) single-diagonal-matrix
-    ;; TODO alert if dimension is automatic
-    (make-matrix (:list (dimensions single-diagonal-matrix))
-        (r s)
-      (cond ((= i r s) factor)
-            ((= r s) 1)
-            (t 0)))))
+(define-elementary-matrix-entry-formula single-diagonal-matrix
+    (i factor) (r s)
+  (cond ((= i r s) factor)
+        ((= r s) 1)
+        (t 0)))
 
 (defmethod gm:generic-* ((single-diagonal-matrix single-diagonal-matrix) (matrix matrix))
   "Multiply row I with factor."
@@ -179,14 +194,11 @@ generators of GL(2,k)."))
   (with-slots (dimension i j factor) matrix
     (make-add-row/col-matrix i j (gm:- factor) dimension)))
 
-(gm:define->-method/custom (matrix add-row/col-matrix)
-  (with-slots (i j factor) add-row/col-matrix
-    ;; TODO alert if dimension is automatic
-    (make-matrix (:list (dimensions add-row/col-matrix))
-        (r s)
-      (cond ((= r s) 1)
-            ((and (= r i) (= s j)) factor)
-            (t 0)))))
+(define-elementary-matrix-entry-formula add-row/col-matrix
+    (i j factor) (r s)
+  (cond ((= r s) 1)
+        ((and (= r i) (= s j)) factor)
+        (t 0)))
 
 (defmethod gm:generic-* ((add-row-matrix add-row/col-matrix) (matrix matrix))
   (let ((entries (entries matrix)))
