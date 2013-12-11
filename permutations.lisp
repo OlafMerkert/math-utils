@@ -1,5 +1,6 @@
 (defpackage :permutations
   (:use :cl :ol :iterate )
+  (:shadow :compose)
   (:export
    #:permutation-p
    #:inverse
@@ -9,7 +10,8 @@
    #:preimage
    #:cycles
    #:extend
-   #:identity-permutation))
+   #:identity-permutation
+   #:compose))
 
 (in-package :permutations)
 
@@ -113,3 +115,15 @@
                             (compute-cycle start n-cycle)))))))
       (next-cycle)
       (nreverse cycles))))
+
+(defun compose (perm2 perm1)
+  "Composition of permutations as functions, where first `perm1' is
+  applied, then `perm2'. Effectively, this means applying `perm1' onto
+  `perm2'."
+  (let ((l1 (length perm1))
+        (l2 (length perm2)))
+    (unless (<= l1 l2) (error "cannot apply a permutation on a shorter array."))
+    (let ((new-perm (copy-seq perm2)))
+      (iter (for i from 0)
+            (for j in-vector perm1)
+            (setf (aref new-perm i) (aref perm2 j))))))

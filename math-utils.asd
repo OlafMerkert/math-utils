@@ -7,6 +7,7 @@
                (:file "infinite-sequence" :depends-on ("generic-math"
                                                        "infinite-math"))
                (:file "elementary-combinatorics")
+               (:file "permutations")
                (:module "number-theory"
                         :depends-on ("generic-math")
                         :components ((:file "packages")
