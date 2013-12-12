@@ -373,6 +373,42 @@ apply or funcall in code by locally binding a function `f-arg'."
                  :refer-to iseq
                  :index-transform (lambda (n) (- n offset))))
 
+(defgeneric shift0 (iseq)
+  (:documentation "For an `iseq' bounded below, move `start' to 0. The
+  usual behaviour is not to compile `indirect-sequences', because we
+  have not much control over the `index-transform'."))
+
+(defmethod shift0 ((iseq simple-infinite+-sequence))
+  iseq)
+
+(defmethod shift0 ((iseq infinite+-sequence))
+  (with-slots (start end data) iseq
+    (let ((offset start)
+          (function (generating-function iseq)))
+      (make-instance 'simple-infinite+-sequence
+                     :name (name iseq)
+                     :end (gm:- end offset)
+                     ;; todo this data sharing smells like trouble already
+                     :data data
+                     :fill-strategy (minimal-uncalculated iseq)
+                     :generating-function (lambda (this n)
+                                            (funcall function this (+ n offset)))))))
+
+(defmethod shift0 ((iseq infinite-sequence/standard-value))
+  (with-slots (name start end data standard-value) iseq
+    (make-instance 'infinite-sequence/standard-value
+                   :name name
+                   :start 0 :end (- end start)
+                   :data data
+                   :standard-value standard-value)))
+
+(defmethod shift0 ((iseq indirect-sequence))
+  (with-slots (name start end refer-to index-transform) iseq
+    (cond ((not (integerp start))
+           (error 'infinite-index :index start))
+          ;; fall back to using shift
+          (t (shift iseq (- (start iseq)))))))
+
 (define-condition doubly-infinite-not-supported () ())
 
 (defmethod map-sequence (function (iseq indirect-sequence))
