@@ -137,6 +137,15 @@ index) -- this is intended only for read access."
 
 (defmethod initialize-instance :after ((iseq infinite+-sequence) &key)
   (with-slots ((fs minimal-uncalculated) data) iseq
+    (cond ((length=0 data)
+           (setf data (make-array 100 :initial-element +uncalculated+
+                                  :adjustable t)))
+          ((arrayp data)
+           (ensure-adjustable-array data))
+          ((listp data)
+           (setf data (make-array (length data) :adjustable t
+                                  :initial-contents data)))
+          (t (error "invalid data in infinite+-sequence: ~A" data)))
     (cond ((or (null fs) (eq fs :as-needed))
            ;; by default, we don't track minimal filled and just fill
            ;; as needed.
@@ -149,19 +158,9 @@ index) -- this is intended only for read access."
            ;; we determine the first uncalculated index automatically
            ;; and use sequential filling.
            (setf fs (or (position +uncalculated+ data)
-                        (length data)))))
-    (cond ((length=0 data)
-           (setf data (make-array 100 :initial-element +uncalculated+
-                                  :adjustable t)))
-          ((arrayp data)
-           (ensure-adjustable-array data))
-          ((listp data)
-           (setf data (make-array (length data) :adjustable t
-                                  :initial-contents data)))
-          (t (error "invalid data in infinite+-sequence: ~A" data)))))
+                        (length data)))))))
 
 (declaim (inline sequential-filling-p))
-
 (defun sequential-filling-p (iseq)
   (integerp (minimal-uncalculated iseq)))
 
@@ -224,13 +223,13 @@ uncalculated values."
       (ensure-array-size data i)
       (let ((value (aref data i)))
         (if (eq value +uncalculated+)
-            (compute-value iseq n)
+            (compute-value iseq n i start)
             value)))))
 
-(defun compute-value (iseq n)
-  "Fill position `n' in the sequence `iseq' using the
-`generating-function'."
-  (with-iseq
+(defun compute-value (iseq n &optional (i n) (start 0))
+  "Fill position `n' corresponding to `data' element `i' in the
+sequence `iseq' using the `generating-function'."
+  (with-iseq/s
     (if (sequential-filling-p iseq)
         (with-slots (generating-function (fs minimal-uncalculated)) iseq
           (progn
@@ -240,9 +239,12 @@ uncalculated values."
                   ;; allows transparent use of the array
                   (setf (aref data k)
                         (funcall generating-function
-                                 (lambda (index)
-                                   (aref (data iseq) (- index start)))
-                                 j)))
+                                 (if (zerop start)
+                                     (lambda (index)
+                                       (aref (data iseq) index))
+                                     (lambda (index)
+                                          (aref (data iseq) (- index start)))
+                                  j))))
             (setf fs (+ i 1))
             #|(when (eq (aref data i) +uncalculated+)
               (error "compute-value did not replace +uncalculate+ at index ~A" i))|#
@@ -266,9 +268,8 @@ apply or funcall in code by locally binding a function `f-arg'."
   "Manually set position `n' in the sequence `iseq'."
   (when-in-range
     (with-iseq
-      (ensure-array-size (data iseq) i)
-      (setf (aref data i)
-            value))))
+      (ensure-array-size data i)
+      (setf (aref data i) value))))
 
 ;;; todo do we actually want mutability??
 ;;; todo track mutations and allow automatic recomputing
@@ -308,17 +309,18 @@ apply or funcall in code by locally binding a function `f-arg'."
 
 (defun array->iseq (array &key (start 0))
   "Generate a finite sequence from an `array'."
-  (make-instance 'infinite+-sequence
-                 :start start
-                 :end (+ start (length array) -1)
-                 :data array))
+  (if (zerop start)
+      (make-instance 'simple-infinite+-sequence
+                     :end (- (length array) 1)
+                     :data array)
+      (make-instance 'infinite+-sequence
+                     :start start
+                     :end (+ start (length array) -1)
+                     :data array)))
 
 (defun list->iseq (list &key (start 0))
   "Generate a finite sequence from a `list'."
-  (make-instance 'infinite+-sequence
-                 :start start
-                 :end (+ start (length list) -1)
-                 :data (coerce list 'vector)))
+  (array->iseq (coerce list 'vector) :start start))
 
 ;;; special indirect infinite sequences (useful for slicing and
 ;;; shifting?) that allow sharing content by reusing the backing array
@@ -525,23 +527,37 @@ apply or funcall in code by locally binding a function `f-arg'."
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
 ;;; shorthand notation for most frequent uses
-(bind-multi ((inf+seq inf+seq inf-seq)
-             (infinite+-sequence infinite+-sequence infinite--sequence)
-             (start start end)
-             (:start :start :end))
-  (defmacro inf+seq (initial-data (index-var &optional (start 0)) &body generating-expression)
-    (let (name)
-      (if (keywordp #1=(first generating-expression))
-          (setf name #1#
-                generating-expression (rest generating-expression)))
-      `(make-instance 'infinite+-sequence
-                      :name ,name
-                      :fill-strategy :sequential
-                      :data ,initial-data
-                      :start ,start
-                      :generating-function
-                      (flambda (this ,index-var)
-                        ,@generating-expression)))))
+(defmacro inf+seq (initial-data (index-var &optional (start 0 simple-p)) &body generating-expression)
+  (let (name)
+    (if (keywordp #1=(first generating-expression))
+        (setf name #1#
+              generating-expression (rest generating-expression)))
+    (if simple-p
+        `(make-instance 'simple-infinite+-sequence
+                        :name ,name
+                        :fill-strategy :sequential
+                        :data ,initial-data
+                        :generating-function (flambda (this ,index-var) ,@generating-expression))
+        `(make-instance 'infinite+-sequence
+                        :name ,name
+                        :fill-strategy :sequential
+                        :data ,initial-data
+                        :start ,start
+                        :generating-function
+                        (flambda (this ,index-var) ,@generating-expression)))))
+
+(defmacro inf-seq (initial-data (index-var &optional (end 0)) &body generating-expression)
+  (let (name)
+    (if (keywordp (first generating-expression))
+        (setf name (first generating-expression)
+              generating-expression (rest generating-expression)))
+    `(make-instance 'infinite--sequence
+                    :name ,name
+                    :fill-strategy :sequential
+                    :data ,initial-data
+                    :end ,end
+                    :generating-function
+                    (flambda (this ,index-var) ,@generating-expression))))
 
 ;;; sequences towards -infinity
 (defun index- (n &optional special)
@@ -626,7 +642,8 @@ bounded from below or from above.
                             :start start :end end
                             :standard-value (aif (find-if (clambda typep x! 'infinite-sequence/standard-value) sequences)
                                                  (standard-value it)
-                                                 (if (eq default +uncalculated+)(error "Cannot find suitable default value for conjunction of finite sequences.")
+                                                 (if (eq default +uncalculated+)
+                                                     (error "Cannot find suitable default value for conjunction of finite sequences.")
                                                      default))
                             
                             
@@ -716,3 +733,36 @@ bounded from below or from above.
 ;;; that start just from 0 and go to infinity+. Together with the
 ;;; sequence mapping function we have so far, and indirect sequences,
 ;;; we get something slightly nicer than the `lazy-array'
+
+(defclass simple-infinity+-sequence (infinite+-sequence)
+  ()
+  (:documentation "An infinite sequence, always starting from 0 and
+  going to infinity. Has essentially the same behaviour as
+  `infinite+-sequence', only we don't do offsets."))
+
+(defmethod length ((iseq simple-infinity+-sequence))
+  (end iseq))
+
+(defmacro with-iseq/s (&body body)
+  `(with-slots (data) iseq
+     ,@body))
+
+(defmethod sref ((iseq simple-infinity+-sequence) (n integer))
+  (with-iseq/s
+    (ensure-array-size data n)
+    (let ((value (aref data n)))
+      (if (eq value +uncalculated+)
+          (compute-value iseq n)
+          value))))
+
+(defmethod set-sref ((iseq simple-infinity+-sequence) (n integer) value)
+  (with-iseq/s
+    (ensure-array-size data n)
+    (setf (aref data n) value)))
+
+(defmethod map-sequence (function (iseq simple-infinity+-sequence))
+  (make-instance 'simple-infinity+-sequence
+                 :end (end iseq)
+                 :generating-function (ilambda (this n) (funcall function (sref iseq n)))))
+
+
