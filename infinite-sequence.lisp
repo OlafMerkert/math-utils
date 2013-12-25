@@ -135,6 +135,12 @@ index) -- this is intended only for read access."
   integer N to +infinity. The infinity is realised using a generating
   function."))
 
+(defclass simple-infinite+-sequence (infinite+-sequence)
+  ()
+  (:documentation "An infinite sequence, always starting from 0 and
+  going to infinity. Has essentially the same behaviour as
+  `infinite+-sequence', only we don't do offsets."))
+
 (defmethod initialize-instance :after ((iseq infinite+-sequence) &key)
   (with-slots ((fs minimal-uncalculated) data) iseq
     (cond ((length=0 data)
@@ -243,8 +249,8 @@ sequence `iseq' using the `generating-function'."
                                      (lambda (index)
                                        (aref (data iseq) index))
                                      (lambda (index)
-                                          (aref (data iseq) (- index start)))
-                                  j))))
+                                          (aref (data iseq) (- index start))))
+                                 j)))
             (setf fs (+ i 1))
             #|(when (eq (aref data i) +uncalculated+)
               (error "compute-value did not replace +uncalculate+ at index ~A" i))|#
@@ -394,14 +400,6 @@ apply or funcall in code by locally binding a function `f-arg'."
                      :generating-function (lambda (this n)
                                             (funcall function this (+ n offset)))))))
 
-(defmethod shift0 ((iseq infinite-sequence/standard-value))
-  (with-slots (name start end data standard-value) iseq
-    (make-instance 'infinite-sequence/standard-value
-                   :name name
-                   :start 0 :end (- end start)
-                   :data data
-                   :standard-value standard-value)))
-
 (defmethod shift0 ((iseq indirect-sequence))
   (with-slots (name start end refer-to index-transform) iseq
     (cond ((not (integerp start))
@@ -485,6 +483,14 @@ apply or funcall in code by locally binding a function `f-arg'."
                  :end (end iseq)
                  :data (map 'vector function (data iseq))
                  :standard-value (funcall function (standard-value iseq))))
+
+(defmethod shift0 ((iseq infinite-sequence/standard-value))
+  (with-slots (name start end data standard-value) iseq
+    (make-instance 'infinite-sequence/standard-value
+                   :name name
+                   :start 0 :end (- end start)
+                   :data data
+                   :standard-value standard-value)))
 
 ;; todo for a finite subsequence, how about filling up non-specified
 ;; entries? would be useful for printing. On the other hand, maybe
@@ -770,20 +776,14 @@ bounded from below or from above.
 ;;; sequence mapping function we have so far, and indirect sequences,
 ;;; we get something slightly nicer than the `lazy-array'
 
-(defclass simple-infinity+-sequence (infinite+-sequence)
-  ()
-  (:documentation "An infinite sequence, always starting from 0 and
-  going to infinity. Has essentially the same behaviour as
-  `infinite+-sequence', only we don't do offsets."))
-
-(defmethod length ((iseq simple-infinity+-sequence))
+(defmethod length ((iseq simple-infinite+-sequence))
   (end iseq))
 
 (defmacro with-iseq/s (&body body)
   `(with-slots (data) iseq
      ,@body))
 
-(defmethod sref ((iseq simple-infinity+-sequence) (n integer))
+(defmethod sref ((iseq simple-infinite+-sequence) (n integer))
   (with-iseq/s
     (ensure-array-size data n)
     (let ((value (aref data n)))
@@ -791,13 +791,13 @@ bounded from below or from above.
           (compute-value iseq n)
           value))))
 
-(defmethod set-sref ((iseq simple-infinity+-sequence) (n integer) value)
+(defmethod set-sref ((iseq simple-infinite+-sequence) (n integer) value)
   (with-iseq/s
     (ensure-array-size data n)
     (setf (aref data n) value)))
 
-(defmethod map-sequence (function (iseq simple-infinity+-sequence))
-  (make-instance 'simple-infinity+-sequence
+(defmethod map-sequence (function (iseq simple-infinite+-sequence))
+  (make-instance 'simple-infinite+-sequence
                  :end (end iseq)
                  :generating-function (ilambda (this n) (funcall function (sref iseq n)))))
 
