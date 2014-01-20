@@ -170,11 +170,6 @@ index) -- this is intended only for read access."
 (defun sequential-filling-p (iseq)
   (integerp (minimal-uncalculated iseq)))
 
-;; (defclass infinite-sequence ()
-;;   ()
-;;   (:documentation "An infinite sequence on integers, covering all
-;;   integers"))
-
 (defmethod length ((iseq infinite-sequence))
   (with-slots (start end) iseq
     (gm:+ 1 (gm:- end start))))
@@ -185,7 +180,7 @@ index) -- this is intended only for read access."
 (defmacro with-iseq (&body body)
   "Bind slots `start' and `data'. Moreover, transform the sequence
 index `n' to the array index `i'."
-  `(with-slots (start data) iseq
+  `(with-accessors ((start start) (data data)) iseq
      (let ((i (- n start)))
        ,@body)))
 
@@ -247,9 +242,9 @@ sequence `iseq' using the `generating-function'."
                         (funcall generating-function
                                  (if (zerop start)
                                      (lambda (index)
-                                       (aref (data iseq) index))
+                                       (aref data index))
                                      (lambda (index)
-                                          (aref (data iseq) (- index start))))
+                                          (aref data (- index start))))
                                  j)))
             (setf fs (+ i 1))
             #|(when (eq (aref data i) +uncalculated+)
@@ -569,12 +564,12 @@ apply or funcall in code by locally binding a function `f-arg'."
                                                          (lambda (x) (member x '(aref lazy-aref)))
                                                          fill-form)))))|#
 ;;; shorthand notation for most frequent uses
-(defmacro inf+seq (initial-data (index-var &optional (start 0 simple-p)) &body generating-expression)
+(defmacro inf+seq (initial-data (index-var &optional (start 0 non-simple-p)) &body generating-expression)
   (let (name)
     (if (keywordp #1=(first generating-expression))
         (setf name #1#
               generating-expression (rest generating-expression)))
-    (if simple-p
+    (if (not non-simple-p)
         `(make-instance 'simple-infinite+-sequence
                         :name ,name
                         :fill-strategy :sequential
@@ -780,7 +775,7 @@ bounded from below or from above.
   (end iseq))
 
 (defmacro with-iseq/s (&body body)
-  `(with-slots (data) iseq
+  `(with-accessors ((data data)) iseq
      ,@body))
 
 (defmethod sref ((iseq simple-infinite+-sequence) (n integer))

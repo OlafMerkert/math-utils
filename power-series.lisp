@@ -276,8 +276,9 @@ by FORMULA where INDEX is anaphorically bound."
      :degree degree
      ;; todo adjust indices
      :coefficients
-     (inf+seq  (vector a0)
+     (inf+seq (vector a0)
          (n)
+       :power-series-sqrt
        (gm:/ (gm:- (sref b n)
                    (gm-summing (i 1 n t) (gm:* (this i)
                                                (this (- n i)))))
