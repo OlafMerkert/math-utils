@@ -783,12 +783,14 @@ bounded from below or from above.
      ,@body))
 
 (defmethod sref ((iseq simple-infinite+-sequence) (n integer))
-  (with-iseq/s
-    (ensure-array-size data n)
-    (let ((value (aref data n)))
-      (if (eq value +uncalculated+)
-          (compute-value iseq n)
-          value))))
+  (if (not (and (<= 0 n) (i<= n (end iseq))))
+      (error 'index-out-of-range :index n :start 0 :end (end iseq))
+      (with-iseq/s
+        (ensure-array-size data n)
+        (let ((value (aref data n)))
+          (if (eq value +uncalculated+)
+              (compute-value iseq n)
+              value)))))
 
 (defmethod set-sref ((iseq simple-infinite+-sequence) (n integer) value)
   (with-iseq/s
