@@ -18,12 +18,14 @@
              (format stream "Factorisation of integer ~A will potentially take very long."
                      (input-integer condition)))))
 
-(defun factorise% (n &optional (s (floor (sqrt n))))
+(defun factorise% (n &optional s)
   "Find all the prime factors of the given integer and return them in
 a list, sorted by size. Multiple factors appear multiple times. We search for factors "
   (with-simple-restart (factorise-anyway "Factorise integer despite its size.")
-    (when (> (integer-length n) 50)
-      (error 'factorisation-large-input :input-integer n)))
+    (unless s ; default value for s
+      (setf s (floor (sqrt n)))
+      (when (> (integer-length n) 50)
+        (error 'factorisation-large-input :input-integer n))))
   ;; TODO add restart allowing to factorise up to a certain factor
   ;; size -- that is allow adjusting s
   (if (minusp n)
@@ -53,7 +55,7 @@ a list, sorted by size. Multiple factors appear multiple times. We search for fa
 (defun factorise (n &optional (compress t) factor-bound)
   "As factorise%, but if compress is t, compress the list of
   factors."
-  (compress-wrap (if factor-bound (factorise% n factor-bound) (factorise% n)) compress))
+  (compress-wrap (factorise% n factor-bound) compress))
 
 (defun factor-into-prime-powers (n)
   "give a list of all the maximal prime power p^e dividing N."
