@@ -152,6 +152,7 @@ index) -- this is intended only for read access."
            (setf data (make-array (length data) :adjustable t
                                   :initial-contents data)))
           (t (error "invalid data in infinite+-sequence: ~A" data)))
+    (assert (adjustable-array-p (data iseq)))
     (cond ((or (null fs) (eq fs :as-needed))
            ;; by default, we don't track minimal filled and just fill
            ;; as needed.
@@ -180,7 +181,7 @@ index) -- this is intended only for read access."
 (defmacro with-iseq (&body body)
   "Bind slots `start' and `data'. Moreover, transform the sequence
 index `n' to the array index `i'."
-  `(with-accessors ((start start) (data data)) iseq
+  `(with-slots (start data) iseq
      (let ((i (- n start)))
        ,@body)))
 
@@ -191,11 +192,14 @@ index `n' to the array index `i'."
   "For an adjustable `array', make sure that it can hold at least
 `size'+1 elements (i.e. we can get at the index `size')."
   #|(unless (adjustable-array-p array)
-    (error "Cannot extend ~A to length > ~A" array size))|#
+  (error "Cannot extend ~A to length > ~A" array size))|#
   (if (>= size (cl:length array))
-      (values (adjust-array array (+ size array-size-step)
-                            :initial-element +uncalculated+
-                            :fill-pointer t)
+      (values (if (array-has-fill-pointer-p array)
+                  (adjust-array array (+ size array-size-step)
+                                :initial-element +uncalculated+
+                                :fill-pointer t)
+                  (adjust-array array (+ size array-size-step)
+                                   :initial-element +uncalculated+))
               t)
       (values array nil)))
 
@@ -244,11 +248,11 @@ sequence `iseq' using the `generating-function'."
                                      (lambda (index)
                                        (aref data index))
                                      (lambda (index)
-                                          (aref data (- index start))))
+                                       (aref data (- index start))))
                                  j)))
             (setf fs (+ i 1))
             #|(when (eq (aref data i) +uncalculated+)
-              (error "compute-value did not replace +uncalculate+ at index ~A" i))|#
+            (error "compute-value did not replace +uncalculate+ at index ~A" i))|#
             (aref data i)))
         ;; TODO track circular dependencies for as-needed filling
         (setf (aref data i)
@@ -775,7 +779,7 @@ bounded from below or from above.
   (end iseq))
 
 (defmacro with-iseq/s (&body body)
-  `(with-accessors ((data data)) iseq
+  `(with-slots (data) iseq
      ,@body))
 
 (defmethod sref ((iseq simple-infinite+-sequence) (n integer))
