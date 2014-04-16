@@ -7,7 +7,8 @@
    :factorise
    :factor-into-prime-powers
    :factorise-over-s
-   :divisors))
+   :divisors
+   :factorise-fraction))
 
 (in-package :number-theory/factorisation)
 
@@ -23,13 +24,13 @@
 a list, sorted by size. Multiple factors appear multiple times. We search for factors "
   (with-simple-restart (factorise-anyway "Factorise integer despite its size.")
     (unless s ; default value for s
-      (setf s (floor (sqrt n)))
+      (setf s (isqrt (abs n)))
       (when (> (integer-length n) 50)
         (error 'factorisation-large-input :input-integer n))))
   ;; TODO add restart allowing to factorise up to a certain factor
   ;; size -- that is allow adjusting s
   (if (minusp n)
-      (list* -1 (factorise% (- n)))
+      (list* -1 (factorise% (- n) s))
       (do ((i 2)
            (m n)
            (divs nil))
@@ -82,6 +83,15 @@ a list, sorted by size. Multiple factors appear multiple times. We search for fa
   "As factorise-over-s%, but if compress is t, compress the list of
   factors."
   (compress-wrap (factorise-over-s% n s) compress))
+
+;;; todo rework factorisation code, compare with poly factorisation
+(defun factorise-fraction (frac &optional (function 'factorise) &rest args)
+  (let ((num-factors (apply function (numerator frac) args))
+        (den-factors (mapcar (lambda (x) (if (consp x)
+                                        (cons (car x) (- (cdr x)))
+                                        (cons x -1)))
+                             (apply function (denominator frac) args))))
+    (sort (nconc num-factors den-factors) #'< :key #'unbox1)))
 
 (defun divisors (n)
   "Produce a list of all natural numbers dividing the number `n'."
