@@ -98,7 +98,8 @@ index) -- this is intended only for read access."
 ;;; singly infinite sequences
 (defclass infinite-sequence ()
   ((name :initarg :name
-         :initform nil)
+         :initform nil
+         :reader name)
    (start :initarg :start
           :initform 0
           :reader start)
@@ -184,6 +185,10 @@ index `n' to the array index `i'."
   `(with-slots (start data) iseq
      (let ((i (- n start)))
        ,@body)))
+
+(defmacro with-iseq/s (&body body)
+  `(with-slots (data) iseq
+     ,@body))
 
 (defparameter array-size-step 10
   "By how much we extend array-size when an array is too small.")
@@ -777,10 +782,6 @@ bounded from below or from above.
 
 (defmethod length ((iseq simple-infinite+-sequence))
   (end iseq))
-
-(defmacro with-iseq/s (&body body)
-  `(with-slots (data) iseq
-     ,@body))
 
 (defmethod sref ((iseq simple-infinite+-sequence) (n integer))
   (if (not (and (<= 0 n) (i<= n (end iseq))))
