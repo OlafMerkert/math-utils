@@ -33,7 +33,8 @@
                                                               "polynomials"))
                (:file "power-series"  :depends-on ("generic-math"
                                                    "polynomials"
-                                                   "finite-fields"))
+                                                   "finite-fields"
+                                                   "elementary-combinatorics"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
                (:module "factorisation" :depends-on ("generic-math"
