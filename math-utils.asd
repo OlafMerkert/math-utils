@@ -35,6 +35,8 @@
                                                    "polynomials"
                                                    "finite-fields"
                                                    "elementary-combinatorics"))
+               (:file "heights" :depends-on ("fractions"
+                                             "polynomials"))
                (:module "elliptic-curves" :depends-on ("generic-math" "number-theory") 
                         :components ((:file "weierstrass")))
                (:module "factorisation" :depends-on ("generic-math"
