@@ -54,6 +54,9 @@
 (defmethod degree ((fraction fraction))
   (- (degree (numerator fraction)) (degree (denominator fraction))))
 
+(defmethod leading-coefficient ((number number))
+  number)
+
 (defmethod leading-coefficient ((polynomial polynomial))
   (if (simplified-p polynomial)
       (nth-coefficient% polynomial 0)

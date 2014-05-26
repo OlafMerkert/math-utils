@@ -1,6 +1,7 @@
 (defpackage :math-utils-tests
   (:use :cl :ol :iterate :5am)
-  (:export))
+  (:export
+   #:math-utils))
 
 (in-package :math-utils-tests)
 
