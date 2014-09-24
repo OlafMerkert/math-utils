@@ -12,3 +12,24 @@ in handy in many places.
 * Elliptic curves
 * Valutations
 * Elementary number theory
+* Verbesserungen
+** TODO verbesserte Potenzreihen
+- [ ] Praezisionsberuecksichtigung
+- [ ] Variablenname
+** DONE Polynomfaktorisierung
+** API fuer polynomiale Datenstrukturen
+*** TODO sparse Polynome?
+eventuell sind sparse Polynome nuetzlich
+*** TODO multivariate Polynome
+*** TODO monomial orders
+Siehe Cox, Little, O'Shea: "Using Algebraic Geometry" und "Ideals,
+Varieties and Algorithms"
+** TODO lineare Algebra verbessern
+** TODO Verzahnung von verschiedenen Datentypen verbessern
+** Klarere Trennung von Algorithmen zur Berechnung und Benutzerschnittstelle.
+ist das ueberhaupt moeglich? Wir wollen ja schon bei der
+Implementation von generischen Funktionen profitieren.
+** TODO verbesserte Eingabe von Polynomen
+infix?
+sparse Polynome (zur Eingabe)
+multivariate Polynome
