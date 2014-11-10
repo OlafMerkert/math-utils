@@ -41,7 +41,8 @@
   (with-slots (numerator denominator modulus) object
     (if (= denominator 1)
         (format stream "[~A at ~A]" numerator modulus)
-        (format stream "[~A/~A at ~A]" numerator denominator modulus))))
+        (format stream "[~A/~A at ~A]" numerator denominator modulus)))
+  object)
 
 (defmethod print-object/tex ((object integer-loc) stream)
   (with-slots (numerator denominator) object

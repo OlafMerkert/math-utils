@@ -501,4 +501,5 @@ elementwise operations."
 
 (defmethod print-object ((vector vector) stream)
   (print-unreadable-object (vector stream :type t)
-    (print-vector stream (entries vector))))
+    (print-vector stream (entries vector)))
+  vector)

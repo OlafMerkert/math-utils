@@ -27,7 +27,8 @@
 
 (defmethod print-object ((object integer-mod) stream)
   (with-slots (remainder modulus) object
-    (format stream "[~A mod ~A]" remainder modulus)))
+    (format stream "[~A mod ~A]" remainder modulus))
+  object)
 
 (defmethod print-object/tex ((object integer-mod) stream)
   (with-slots (remainder modulus) object

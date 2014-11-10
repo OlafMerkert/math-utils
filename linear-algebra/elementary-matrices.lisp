@@ -231,4 +231,5 @@ generators of GL(2,k)."))
 ;;; simple print output
 (defmethod print-object ((elementary-matrix elementary-matrix) stream)
   (print-unreadable-object (elementary-matrix stream :type t)
-    (vectors::print-vector stream (entries (-> 'matrix elementary-matrix)))))
+    (vectors::print-vector stream (entries (-> 'matrix elementary-matrix))))
+  elementary-matrix)

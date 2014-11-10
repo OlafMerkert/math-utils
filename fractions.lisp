@@ -82,7 +82,8 @@ simplification."
                   :denominator (gm:* (numerator b) (denominator a)))))
 
 (defmethod print-object ((fraction fraction) stream)
-  (format stream "[~A / ~A]" (numerator fraction) (denominator fraction)))
+  (format stream "[~A / ~A]" (numerator fraction) (denominator fraction))
+  fraction)
 
 ;;; use german abbrevation ggt for the greatest common divisor, so we
 ;;; don't have to bother with name collisions
