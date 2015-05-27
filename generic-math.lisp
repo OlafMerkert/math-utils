@@ -67,7 +67,7 @@
 (defclass generic-math-object ()
   ()
   (:documentation "an abstract root class for all mathematical
-  objects (except for primtive types like numbers.)"))
+  objects (except for primitive types like numbers.)"))
 
 (defmacro! define-generic-binary-operation
     (name unit &optional single-argument reduce-right)

@@ -663,7 +663,7 @@ range available (so we take the union, not the intersection of the
 domains of definition). However, all sequences should either be
 bounded from below or from above.
 
- Special treatment happens when `default' is `+uncalculated', then
+ Special treatment happens when `default' is `+uncalculated+', then
 `function' should also handle a lesser number of arguments, and the
 `default' value is removed from the arguments list."
   (let ((start (reduce #'imin sequences :key #'start))
