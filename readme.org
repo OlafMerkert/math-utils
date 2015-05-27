@@ -33,3 +33,8 @@ Implementation von generischen Funktionen profitieren.
 infix?
 sparse Polynome (zur Eingabe)
 multivariate Polynome
+* Tasks
+** TODO define a condition type when taking square roots fails
+   [[file:finite-fields.lisp::(error%20"~A%20has%20no%20square%20root%20mod%20~A"%20r%20p))))][file:finite-fields.lisp::(error "~A has no square root mod ~A" r p))))]]
+** TODO make wider use of definition macro for generic-? methods
+   [[file:ultrametric-valuation-estimates.lisp::(def-gm-operation/sym%20-%20valuation-estimate%20(a%20b)][file:ultrametric-valuation-estimates.lisp::(def-gm-operation/sym - valuation-estimate (a b)]]
