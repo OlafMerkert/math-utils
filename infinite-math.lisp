@@ -13,7 +13,8 @@
    #:i>=
    #:i>
    #:imax
-   #:imin))
+   #:imin
+   #:i=))
 
 (in-package :infinite-math)
 
@@ -25,6 +26,11 @@
 (defun infinite-p (x)
   (or (eq x infinity+)
       (eq x infinity-)))
+
+(defun i= (a b)
+  (cond ((and (eq a infinity+) (eq b infinity+)) t)
+        ((and (eq a infinity-) (eq b infinity-)) t)
+        ((and (numberp a) (numberp b)) (= a b))))
 
 (defun i< (a b)
   "comparing numbers and infinite numbers."
