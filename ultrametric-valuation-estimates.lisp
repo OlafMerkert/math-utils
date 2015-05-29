@@ -1,5 +1,5 @@
 (defpackage :ultrametric-valuation-estimates
-  (:nicknames :valest)
+  (:nicknames :uv-est)
   #.gm:+gm-shadow-imports+
   #.gm:+frac-shadow-imports+
   (:use :cl :ol :iterate
