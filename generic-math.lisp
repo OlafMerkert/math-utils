@@ -43,7 +43,8 @@
    #:divr
    #:gm-summing
    #:+cl-shadow-imports+
-   #:+ol-shadow-imports+))
+   #:+ol-shadow-imports+
+   #:cubic-root))
 
 (in-package :generic-math)
 
@@ -223,6 +224,19 @@ to override this if a better algorithm is available."
 
 (defmethod sqrt ((number number))
   (values (cl:sqrt number) t))
+
+(defgeneric cubic-root (number)
+  (:documentation "Find a cubic root of NUMBER and try to preserve the
+   type of number if possible. Return two values, with the first being
+   the result, the second indicating whether type preservation was
+   successfull." ))
+
+(defmethod cubic-root ((number (eql 0)))
+  0)
+
+(defmethod cubic-root ((number (eql 1)))
+  1)
+
 
 (defgeneric -> (target-type number &key)
   (:documentation "Transform a NUMBER, if possible to target type,
