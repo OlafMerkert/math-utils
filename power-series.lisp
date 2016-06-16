@@ -274,7 +274,6 @@ by FORMULA where INDEX is anaphorically bound."
     (make-instance
      'power-series
      :degree degree
-     ;; todo adjust indices
      :coefficients
      (inf+seq (vector a0)
          (n)
@@ -312,7 +311,6 @@ divisible by 3."
     (make-instance
      'power-series
      :degree degree
-     ;; todo verify indices
      :coefficients
      (inf+seq (vector a0)
          (n)
