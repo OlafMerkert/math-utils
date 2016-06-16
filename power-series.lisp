@@ -300,6 +300,8 @@ polynomials."
         (values root nil))))
 
 (defmethod gm:cubic-root ((series power-series))
+  "Calculate a cubic root of this series, as long as the degree is
+divisible by 3."
   (unless (and (simplified-p series)
                (zerop (mod (degree series) 3)))
     (error "Cannot take the cubic root of SERIES ~A unless the degree is known to be divisible by 3!" series))
@@ -324,6 +326,10 @@ polynomials."
                                                (gm:* (this i) (this j) (this (- n i j)))))))
              a0d)))))
 
+(defmethod gm:cubic-root ((polynomial polynomial))
+  "Wih power-series available, we can also take the cubic roots of
+  polynomials."
+  (gm:cubic-root (-> 'power-series polynomial)))
 
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")
