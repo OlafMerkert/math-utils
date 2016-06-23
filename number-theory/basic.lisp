@@ -30,7 +30,7 @@ Return (values D U V) with D = U * M + V * N. (recursive version)"
   (if (zerop n)
       (values (abs m) (signum m) 0)
       (multiple-value-bind (q r) (floor m n)
-        (multiple-value-bind (d u v) (xgcd n r)
+        (multiple-value-bind (d u v) (xgcd/rec n r)
           (values d v (- u (* v q)))))))
 
 ;;; square roots of rationals and integers
