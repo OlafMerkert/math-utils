@@ -274,7 +274,6 @@ by FORMULA where INDEX is anaphorically bound."
     (make-instance
      'power-series
      :degree degree
-     ;; todo adjust indices
      :coefficients
      (inf+seq (vector a0)
          (n)
@@ -298,6 +297,37 @@ polynomials."
     (if (gm:= (gm:expt root-poly 2) polynomial)
         (values root-poly t)
         (values root nil))))
+
+(defmethod gm:cubic-root ((series power-series))
+  "Calculate a cubic root of this series, as long as the degree is
+divisible by 3."
+  (unless (and (simplified-p series)
+               (zerop (mod (degree series) 3)))
+    (error "Cannot take the cubic root of SERIES ~A unless the degree is known to be divisible by 3!" series))
+  (let* ((a0 (gm:cubic-root (leading-coefficient series)))
+         (a0d (gm:* 3 (gm:^ a0 2)))
+         (b (coefficients series))
+         (degree (/ (degree series) 3)))
+    (make-instance
+     'power-series
+     :degree degree
+     :coefficients
+     (inf+seq (vector a0)
+         (n)
+       :power-series-cubic-root
+       (gm:/ (gm:- (sref b n)
+                   (gm-summing (i 0 n t)
+                               (if (zerop i)
+                                   (gm-summing (j 1 (- n i) t)
+                                               (gm:* (this i) (this j) (this (- n i j))))
+                                   (gm-summing (j 0 (- n i))
+                                               (gm:* (this i) (this j) (this (- n i j)))))))
+             a0d)))))
+
+(defmethod gm:cubic-root ((polynomial polynomial))
+  "Wih power-series available, we can also take the cubic roots of
+  polynomials."
+  (gm:cubic-root (-> 'power-series polynomial)))
 
 (defparameter confidence 40
   "How many coefficient of a power series should be compared in order to say they are equal.")

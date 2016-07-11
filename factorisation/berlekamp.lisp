@@ -119,10 +119,10 @@
     (if (cl:= dim 1)
         (list (make-factor :base poly))
         (let* ((basis-polynomials
-               (mapcar (lambda (v) (simplify
-                               (make-instance 'polynomial
-                                              :var (var poly)
-                                              :coefficients (reverse (entries v)))))
-                       vectors))
+                (mapcar (lambda (v) (simplify
+                                (make-instance 'polynomial
+                                               :var (var poly)
+                                               :coefficients (reverse (entries v)))))
+                        vectors))
                (basis-polynomials (remove-if #'constant-p basis-polynomials)))
           (berlekamp-find-factors poly basis-polynomials p dim)))))

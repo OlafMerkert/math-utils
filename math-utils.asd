@@ -65,4 +65,18 @@
                         :components ((:file "vectors")
                                      (:file "elementary-matrices" :depends-on ("vectors"))
                                      (:file "linear-solve" :depends-on ("vectors" "elementary-matrices"))
-                                     (:file "chinese-remainder-thm" :depends-on ("vectors"))))))
+                                     (:file "chinese-remainder-thm" :depends-on ("vectors"))))
+               (:file "ultrametric-valuation-estimates" :depends-on ("generic-math"
+                                                                     "infinite-math"
+                                                                     "fractions"
+                                                                     "polynomials"
+                                                                     "power-series"))
+               (:file "packages" :depends-on ("generic-math"
+                                              "polynomials"
+                                              "finite-fields"
+                                              "linear-algebra"
+                                              "infinite-math"
+                                              "factorisation"
+                                              "fractions"
+                                              "number-theory"))
+               ))

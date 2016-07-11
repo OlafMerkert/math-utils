@@ -52,9 +52,6 @@ The main use of this function is to refine factorisations."
         (mapcan #'on-factor factorisation)
         (reduce #'merge-factorisations% factorisation :key #'on-factor))))
 
-
-
-
 (defun merge-factorisations% (list1 list2)
   "Take two lists of `factors', and merge them together, accounting
 for factors appearing in both lists by adding multiplicities. This is
