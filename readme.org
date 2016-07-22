@@ -9,21 +9,27 @@ Pretty (or just understable) output to the REPL (or even exporting to LaTeX) is 
 * Functionality
 ** Mathematical data structures
 Of course the Common Lisp type =number= is supported naturally.
-*** Finite fields
++ Finite fields ::
 For now only those of prime characteristic (no field extensions available).
-*** Fractions
++ Fractions ::
 This is mostly to support fractions of polynomials.
-*** Polynomials
++ Polynomials ::
 While there is some code for multivariate polynomials, it has not been tested extensively and is still missing the division algorithm.
-*** Power/Laurent series
-** Infinite sequences
-** Matrices & Linear algebra
++ Power/Laurent series ::
++ Infinite sequences ::
++ Matrices & Linear algebra ::
++ Elliptic curves ::
+Only Weierstrass model supported for now
 ** Polynomial factorisation
 There is an implementation of the Berlekamp algorithm, but it might still be buggy.
-** Elliptic curves
-Only Weierstrass model supported for now
-** Valutations
+** Valuations
+only p-adic valuations (and valuations for power series)
+
+There is also some code to transparently compute with bounds for ultrametric valuations and track (see [[file:ultrametric-valuation-estimates.lisp][ultrametric-valuation-estimates]]).
 ** Elementary number theory
++ Greatest common divisor
++ integer factorisation
++ primality tests
 * Improvements
 ** TODO verbesserte Potenzreihen
 - [ ] Praezisionsberuecksichtigung
