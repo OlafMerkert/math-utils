@@ -1,18 +1,30 @@
 * math-utils
-collect all the useful math algorithms and functions that might come
-in handy in many places.
-* Math data types
-** Finite fields
-** Fractions
-** Polynomials
-** Power/laurent series
-* Infinite sequences
-* Matrices & Linear algebra
-* Polynomial factorisation
-* Elliptic curves
-* Valutations
-* Elementary number theory
-* Verbesserungen
+The attempt to unify all the math code I wrote in Lisp, which I started to do during my masters degree. Apart from some basic number theory, it mostly deals with implementing various mathematical data structures and some basic algorithms.
+
+The naive idea was to use CLOS to model operations involving different types of math objects, which only worked to some degree. Ultimately, this is not enough and creates problems. Check out [[http://www.sagemath.org/][SageMath]] for how a better architecture could look like (but even there you get limitations).
+
+There are some tests available, so the basic functionality required for my =continued-fractions= project should be in working order.
+
+Pretty (or just understable) output to the REPL (or even exporting to LaTeX) is implemented separately in the =math-formatter= project.
+* Functionality
+** Mathematical data structures
+Of course the Common Lisp type =number= is supported naturally.
+*** Finite fields
+For now only those of prime characteristic (no field extensions available).
+*** Fractions
+This is mostly to support fractions of polynomials.
+*** Polynomials
+While there is some code for multivariate polynomials, it has not been tested extensively and is still missing the division algorithm.
+*** Power/Laurent series
+** Infinite sequences
+** Matrices & Linear algebra
+** Polynomial factorisation
+There is an implementation of the Berlekamp algorithm, but it might still be buggy.
+** Elliptic curves
+Only Weierstrass model supported for now
+** Valutations
+** Elementary number theory
+* Improvements
 ** TODO verbesserte Potenzreihen
 - [ ] Praezisionsberuecksichtigung
 - [ ] Variablenname
@@ -26,7 +38,7 @@ Siehe Cox, Little, O'Shea: "Using Algebraic Geometry" und "Ideals,
 Varieties and Algorithms"
 ** TODO lineare Algebra verbessern
 ** TODO Verzahnung von verschiedenen Datentypen verbessern
-** Klarere Trennung von Algorithmen zur Berechnung und Benutzerschnittstelle.
+** Klarere Trennung von Algorithmen zur Berechnung und Benutzerschnittstelle
 ist das ueberhaupt moeglich? Wir wollen ja schon bei der
 Implementation von generischen Funktionen profitieren.
 ** TODO verbesserte Eingabe von Polynomen
@@ -38,3 +50,4 @@ multivariate Polynome
    [[file:finite-fields.lisp::(error%20"~A%20has%20no%20square%20root%20mod%20~A"%20r%20p))))][file:finite-fields.lisp::(error "~A has no square root mod ~A" r p))))]]
 ** TODO make wider use of definition macro for generic-? methods
    [[file:ultrametric-valuation-estimates.lisp::(def-gm-operation/sym%20-%20valuation-estimate%20(a%20b)][file:ultrametric-valuation-estimates.lisp::(def-gm-operation/sym - valuation-estimate (a b)]]
+** TODO increase test coverage
