@@ -1,5 +1,4 @@
 (defpackage :linear-algebra/vectors
-  (:nicknames :vectors)
   (:shadow :vector)
   (:use :cl :ol :iterate)
   (:export

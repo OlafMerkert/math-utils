@@ -1,9 +1,9 @@
 (defpackage :chinese-remainder-theorem
   (:nicknames :crt)
-  (:shadowing-import-from :vectors :vector)
+  (:shadowing-import-from :linear-algebra/vectors :vector)
   (:use :cl :ol :iterate
         :finite-fields
-        :vectors)
+        :linear-algebra/vectors)
   (:export))
 
 (in-package :chinese-remainder-theorem)
